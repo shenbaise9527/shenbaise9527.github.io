@@ -3,7 +3,22 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://shenbaise9527.github.io/tags/cgo/</loc>
+    <lastmod>2020-11-03T21:35:24+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://shenbaise9527.github.io/tags/go/</loc>
+    <lastmod>2020-11-03T21:35:24+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://shenbaise9527.github.io/posts/</loc>
+    <lastmod>2020-11-03T21:35:24+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://shenbaise9527.github.io/tags/</loc>
     <lastmod>2020-11-03T21:35:24+08:00</lastmod>
   </url>
   
@@ -20,10 +35,6 @@
   <url>
     <loc>https://shenbaise9527.github.io/about/</loc>
     <lastmod>2020-11-03T21:33:28+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shenbaise9527.github.io/tags/</loc>
   </url>
   
 </urlset>
