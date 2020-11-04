@@ -3,11 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://shenbaise9527.github.io/tags/</loc>
+    <loc>https://shenbaise9527.github.io/posts/</loc>
+    <lastmod>2020-11-03T21:35:24+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://shenbaise9527.github.io/</loc>
+    <lastmod>2020-11-03T21:35:24+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://shenbaise9527.github.io/posts/cgo/</loc>
+    <lastmod>2020-11-03T21:35:24+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://shenbaise9527.github.io/about/</loc>
+    <lastmod>2020-11-03T21:33:28+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://shenbaise9527.github.io/tags/</loc>
   </url>
   
 </urlset>
