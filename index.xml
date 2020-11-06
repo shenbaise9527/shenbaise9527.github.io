@@ -14,9 +14,7 @@
       <pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
       
       <guid>https://shenbaise9527.github.io/posts/cgo/</guid>
-      <description>起因 公司有个公共的加解密库,供所有后端C++服务调用的,但最近要使用Go来实现个服务需要用到加解密,而Go并没有提供AES-256-ECB的加解密库,所以决定用cgo来调用这个公共的加解密库.
-Window 在window下加解密库是提供的DLL,用Go的syscall.NewLazyDLL可以非常方便的加载DLL,window下基本没有遇到障碍.
-package main import ( &amp;#34;fmt&amp;#34; &amp;#34;syscall&amp;#34; &amp;#34;unsafe&amp;#34; ) // MICrypt 接口. type MICrypt struct { MIFreeSafeHandle *syscall.LazyProc MIGetDecryptDataLen *syscall.LazyProc MIGetEncryptDataLen *syscall.LazyProc MIGetSafeHandle *syscall.LazyProc MILoad *syscall.LazyProc MITransDecrypt *syscall.LazyProc MITransEncrypt *syscall.LazyProc } func main() { lib := syscall.NewLazyDLL(&amp;#34;crypto64.dll&amp;#34;) c := &amp;amp;MICrypt{ MIGetSafeHandle: lib.NewProc(&amp;#34;MIGetSafeHandle&amp;#34;), MIFreeSafeHandle: lib.NewProc(&amp;#34;MIFreeSafeHandle&amp;#34;), MIGetDecryptDataLen: lib.NewProc(&amp;#34;MIGetDecryptDataLen&amp;#34;), MIGetEncryptDataLen: lib.NewProc(&amp;#34;MIGetEncryptDataLen&amp;#34;), MILoad: lib.NewProc(&amp;#34;MILoad&amp;#34;), MITransDecrypt: lib.NewProc(&amp;#34;MITransDecrypt&amp;#34;), MITransEncrypt: lib.NewProc(&amp;#34;MITransEncrypt&amp;#34;), } // 待加密字符串. 	msg := []byte(&amp;#34;I am test trans crypto!&amp;#34;) h, _, _ := c.</description>
+      <description>起因 公司有个公共的加解密库,供所有后端C++服务调用的,但最近要使用Go来实现个服务需要用到加解密,而Go并没有提供AES-256-ECB的</description>
     </item>
     
     <item>
