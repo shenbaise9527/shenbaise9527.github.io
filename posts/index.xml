@@ -6,8 +6,190 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 07 Nov 2020 13:22:04 +0800</lastBuildDate>
+		<lastBuildDate>Sat, 07 Nov 2020 13:27:24 +0800</lastBuildDate>
 		<atom:link href="https://shenbaise9527.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>gRPC系列之连接异常机制</title>
+			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</link>
+			<pubDate>Sat, 07 Nov 2020 13:27:24 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</guid>
+			<description>连接server端失败的处理 重试机制 // 重点关注addrConn.resetTransport方法. func (ac *addrConn) resetTransport() { // 代码逻辑放在一个死循环里的. for</description>
+			<content type="html"><![CDATA[<h2 id="连接server端失败的处理">连接server端失败的处理</h2>
+<h3 id="重试机制">重试机制</h3>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 重点关注addrConn.resetTransport方法.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ac</span> <span class="o">*</span><span class="nx">addrConn</span><span class="p">)</span> <span class="nf">resetTransport</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 代码逻辑放在一个死循环里的.
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">i</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="nx">ac</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">resolveNow</span><span class="p">(</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">ResolveNowOptions</span><span class="p">{})</span>
+		<span class="p">}</span>
+
+        <span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+        <span class="c1">// 当连接关闭时直接返回.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Shutdown</span> <span class="p">{</span>
+			<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+
+        <span class="nx">addrs</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">addrs</span>
+        <span class="c1">// 获取backoff时间,根据重试的次数会计算出不同的时间,算法后面重点关注.
+</span><span class="c1"></span>		<span class="nx">backoffFor</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">bs</span><span class="p">.</span><span class="nf">Backoff</span><span class="p">(</span><span class="nx">ac</span><span class="p">.</span><span class="nx">backoffIdx</span><span class="p">)</span>
+        <span class="c1">// This will be the duration that dial gets to finish.
+</span><span class="c1"></span>        <span class="c1">// 超时时间,默认20秒.
+</span><span class="c1"></span>		<span class="nx">dialDuration</span> <span class="o">:=</span> <span class="nx">minConnectTimeout</span>
+		<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">minConnectTimeout</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">dialDuration</span> <span class="p">=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nf">minConnectTimeout</span><span class="p">()</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">dialDuration</span> <span class="p">&lt;</span> <span class="nx">backoffFor</span> <span class="p">{</span>
+			<span class="c1">// Give dial more time as we keep failing to connect.
+</span><span class="c1"></span>			<span class="nx">dialDuration</span> <span class="p">=</span> <span class="nx">backoffFor</span>
+		<span class="p">}</span>
+		<span class="c1">// We can potentially spend all the time trying the first address, and
+</span><span class="c1"></span>		<span class="c1">// if the server accepts the connection and then hangs, the following
+</span><span class="c1"></span>		<span class="c1">// addresses will never be tried.
+</span><span class="c1"></span>		<span class="c1">//
+</span><span class="c1"></span>		<span class="c1">// The spec doesn&#39;t mention what should be done for multiple addresses.
+</span><span class="c1"></span>		<span class="c1">// https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md#proposed-backoff-algorithm
+</span><span class="c1"></span>		<span class="nx">connectDeadline</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Add</span><span class="p">(</span><span class="nx">dialDuration</span><span class="p">)</span>
+
+        <span class="c1">// 更新状态为连接中.
+</span><span class="c1"></span>		<span class="nx">ac</span><span class="p">.</span><span class="nf">updateConnectivityState</span><span class="p">(</span><span class="nx">connectivity</span><span class="p">.</span><span class="nx">Connecting</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">transport</span> <span class="p">=</span> <span class="kc">nil</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+        <span class="c1">// 尝试连接服务端.
+</span><span class="c1"></span>		<span class="nx">newTr</span><span class="p">,</span> <span class="nx">addr</span><span class="p">,</span> <span class="nx">reconnect</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nf">tryAllAddrs</span><span class="p">(</span><span class="nx">addrs</span><span class="p">,</span> <span class="nx">connectDeadline</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="c1">// After exhausting all addresses, the addrConn enters
+</span><span class="c1"></span>			<span class="c1">// TRANSIENT_FAILURE.
+</span><span class="c1"></span>            <span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+            <span class="c1">// 如果失败了,且状态为Shutdown直接返回.
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Shutdown</span> <span class="p">{</span>
+				<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+				<span class="k">return</span>
+            <span class="p">}</span>
+            <span class="c1">// 标记状态为失败.
+</span><span class="c1"></span>			<span class="nx">ac</span><span class="p">.</span><span class="nf">updateConnectivityState</span><span class="p">(</span><span class="nx">connectivity</span><span class="p">.</span><span class="nx">TransientFailure</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+			<span class="c1">// Backoff.
+</span><span class="c1"></span>			<span class="nx">b</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">resetBackoff</span>
+			<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+            <span class="c1">// 根据backoff时间创建定时器.
+</span><span class="c1"></span>			<span class="nx">timer</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTimer</span><span class="p">(</span><span class="nx">backoffFor</span><span class="p">)</span>
+			<span class="k">select</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">timer</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span>
+                <span class="c1">// backoff时间到,增加backoff次数,继续循环去尝试连接.
+</span><span class="c1"></span>				<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+				<span class="nx">ac</span><span class="p">.</span><span class="nx">backoffIdx</span><span class="o">++</span>
+				<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+            <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">b</span><span class="p">:</span>
+                <span class="c1">// 外部重置了backoff,马上重新循环去尝试连接.
+</span><span class="c1"></span>				<span class="nx">timer</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
+            <span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ac</span><span class="p">.</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+                <span class="c1">// context取消了或超时了,直接返回.
+</span><span class="c1"></span>				<span class="nx">timer</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
+				<span class="k">return</span>
+			<span class="p">}</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Shutdown</span> <span class="p">{</span>
+			<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="nx">newTr</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">curAddr</span> <span class="p">=</span> <span class="nx">addr</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">transport</span> <span class="p">=</span> <span class="nx">newTr</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">backoffIdx</span> <span class="p">=</span> <span class="mi">0</span>
+
+		<span class="nx">hctx</span><span class="p">,</span> <span class="nx">hcancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">ac</span><span class="p">.</span><span class="nx">ctx</span><span class="p">)</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nf">startHealthCheck</span><span class="p">(</span><span class="nx">hctx</span><span class="p">)</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+		<span class="c1">// Block until the created transport is down. And when this happens,
+</span><span class="c1"></span>		<span class="c1">// we restart from the top of the addr list.
+</span><span class="c1"></span>		<span class="o">&lt;-</span><span class="nx">reconnect</span><span class="p">.</span><span class="nf">Done</span><span class="p">()</span>
+		<span class="nf">hcancel</span><span class="p">()</span>
+		<span class="c1">// restart connecting - the top of the loop will set state to
+</span><span class="c1"></span>		<span class="c1">// CONNECTING.  This is against the current connectivity semantics doc,
+</span><span class="c1"></span>		<span class="c1">// however it allows for graceful behavior for RPCs not yet dispatched
+</span><span class="c1"></span>		<span class="c1">// - unfortunate timing would otherwise lead to the RPC failing even
+</span><span class="c1"></span>		<span class="c1">// though the TRANSIENT_FAILURE state (called for by the doc) would be
+</span><span class="c1"></span>		<span class="c1">// instantaneous.
+</span><span class="c1"></span>		<span class="c1">//
+</span><span class="c1"></span>		<span class="c1">// Ideally we should transition to Idle here and block until there is
+</span><span class="c1"></span>		<span class="c1">// RPC activity that leads to the balancer requesting a reconnect of
+</span><span class="c1"></span>		<span class="c1">// the associated SubConn.
+</span><span class="c1"></span>	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p><strong>总结</strong></p>
+<ol>
+<li>当连接失败后会等待一段时间之后再尝试重连,时间间隔的算法依赖于backoff.Strategy接口的Backoff方法.</li>
+<li>利用context的超时控制或取消机制,直接结束.</li>
+</ol>
+<h3 id="backoff算法">Backoff算法</h3>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 在DialContext函数中,当没有设置bs自定义参数时,会默认设置为DefaultExponential.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">bs</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">bs</span> <span class="p">=</span> <span class="nx">backoff</span><span class="p">.</span><span class="nx">DefaultExponential</span>
+    <span class="p">}</span>
+    
+<span class="c1">// internal/backoffG/backoff.go
+</span><span class="c1"></span><span class="kd">var</span> <span class="nx">DefaultExponential</span> <span class="p">=</span> <span class="nx">Exponential</span><span class="p">{</span><span class="nx">Config</span><span class="p">:</span> <span class="nx">grpcbackoff</span><span class="p">.</span><span class="nx">DefaultConfig</span><span class="p">}</span>
+
+<span class="c1">// backoff/backoff.go
+</span><span class="c1">// DefaultConfig is a backoff configuration with the default values specfied
+</span><span class="c1">// at https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md.
+</span><span class="c1">//
+</span><span class="c1">// This should be useful for callers who want to configure backoff with
+</span><span class="c1">// non-default values only for a subset of the options.
+</span><span class="c1"></span><span class="kd">var</span> <span class="nx">DefaultConfig</span> <span class="p">=</span> <span class="nx">Config</span><span class="p">{</span>
+    <span class="c1">// 第一次失败之后的延迟时间.
+</span><span class="c1"></span>    <span class="nx">BaseDelay</span><span class="p">:</span>  <span class="mf">1.0</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span>
+    <span class="c1">// 多次失败之后的时间乘数.
+</span><span class="c1"></span>    <span class="nx">Multiplier</span><span class="p">:</span> <span class="mf">1.6</span><span class="p">,</span>
+    <span class="c1">// 随机因子.
+</span><span class="c1"></span>    <span class="nx">Jitter</span><span class="p">:</span>     <span class="mf">0.2</span><span class="p">,</span>
+    <span class="c1">// 最大延迟时间.
+</span><span class="c1"></span>	<span class="nx">MaxDelay</span><span class="p">:</span>   <span class="mi">120</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">// Backoff returns the amount of time to wait before the next retry given the
+</span><span class="c1">// number of retries.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">bc</span> <span class="nx">Exponential</span><span class="p">)</span> <span class="nf">Backoff</span><span class="p">(</span><span class="nx">retries</span> <span class="kt">int</span><span class="p">)</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="p">{</span>
+    <span class="c1">// 当重试次数为0时直接返回BaseDelay,为1秒.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">retries</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">bc</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">BaseDelay</span>
+	<span class="p">}</span>
+	<span class="nx">backoff</span><span class="p">,</span> <span class="nx">max</span> <span class="o">:=</span> <span class="nb">float64</span><span class="p">(</span><span class="nx">bc</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">BaseDelay</span><span class="p">),</span> <span class="nb">float64</span><span class="p">(</span><span class="nx">bc</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">MaxDelay</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">backoff</span> <span class="p">&lt;</span> <span class="nx">max</span> <span class="o">&amp;&amp;</span> <span class="nx">retries</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+        <span class="c1">// 当backoff小于max且重试次数大于0时不断的乘以Multiplier.
+</span><span class="c1"></span>		<span class="nx">backoff</span> <span class="o">*=</span> <span class="nx">bc</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">Multiplier</span>
+		<span class="nx">retries</span><span class="o">--</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">backoff</span> <span class="p">&gt;</span> <span class="nx">max</span> <span class="p">{</span>
+		<span class="nx">backoff</span> <span class="p">=</span> <span class="nx">max</span>
+    <span class="p">}</span>
+    <span class="c1">// 对时间加上一个随机数.
+</span><span class="c1"></span>	<span class="c1">// Randomize backoff delays so that if a cluster of requests start at
+</span><span class="c1"></span>	<span class="c1">// the same time, they won&#39;t operate in lockstep.
+</span><span class="c1"></span>	<span class="nx">backoff</span> <span class="o">*=</span> <span class="mi">1</span> <span class="o">+</span> <span class="nx">bc</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">Jitter</span><span class="o">*</span><span class="p">(</span><span class="nx">grpcrand</span><span class="p">.</span><span class="nf">Float64</span><span class="p">()</span><span class="o">*</span><span class="mi">2</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">backoff</span> <span class="p">&lt;</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="mi">0</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">backoff</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><p><strong>总结</strong></p>
+<ol>
+<li>可以通过grpc.WithConnectParams和grpc.WithBackoff来设置自定义的backoff策略,在自定义策略里可以定义重试的时间间隔.</li>
+<li>默认的backoff策略,第一次重试间隔为1秒,第二次为1*1.6+随机数&hellip;第N次为1*1.6^N +随机数(其中1*1.6^N最大不能超过120秒).</li>
+</ol>
+]]></content>
+		</item>
 		
 		<item>
 			<title>gRPC系列之client和server的timetou机制</title>
