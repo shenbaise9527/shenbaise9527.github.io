@@ -7,7 +7,16 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Fri, 06 Nov 2020 22:05:51 +0800</lastBuildDate><atom:link href="https://shenbaise9527.github.io/tags/grpc/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 07 Nov 2020 11:47:48 +0800</lastBuildDate><atom:link href="https://shenbaise9527.github.io/tags/grpc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>gRPC系列之server端调用</title>
+      <link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+      <pubDate>Sat, 07 Nov 2020 11:47:48 +0800</pubDate>
+      
+      <guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+      <description>NewServer创建gRPC服务对象 主要是基于grpc-go的1.33.1版本Unary RPC来分析. // NewServer creates a gRPC server which has no service registered and has not // started to accept</description>
+    </item>
+    
     <item>
       <title>gRPC系列之初识</title>
       <link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</link>
