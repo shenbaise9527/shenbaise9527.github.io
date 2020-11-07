@@ -6,8 +6,1257 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 07 Nov 2020 11:47:48 +0800</lastBuildDate>
+		<lastBuildDate>Sat, 07 Nov 2020 13:22:04 +0800</lastBuildDate>
 		<atom:link href="https://shenbaise9527.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>gRPC系列之client和server的timetou机制</title>
+			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</link>
+			<pubDate>Sat, 07 Nov 2020 13:22:04 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</guid>
+			<description>客户端超时的处理 客户端在调用rpc接口时带timeout的context是如何传递给服务端的. // 在调用对应的rpc方法时设置了超时时间为3秒</description>
+			<content type="html"><![CDATA[<h2 id="客户端超时的处理">客户端超时的处理</h2>
+<p>客户端在调用rpc接口时带timeout的context是如何传递给服务端的.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 在调用对应的rpc方法时设置了超时时间为3秒.
+</span><span class="c1"></span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="mi">3</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+<span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+<span class="nx">reply</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">SayHello</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">pb</span><span class="p">.</span><span class="nx">HelloRequest</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;zhou&#34;</span><span class="p">})</span>
+
+<span class="c1">// 调用SayHello方法最终会调用到invoke函数(call.go文件中).
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">invoke</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">method</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">reply</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">CallOption</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">cs</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newClientStream</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">unaryStreamDesc</span><span class="p">,</span> <span class="nx">cc</span><span class="p">,</span> <span class="nx">method</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">SendMsg</span><span class="p">(</span><span class="nx">req</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">RecvMsg</span><span class="p">(</span><span class="nx">reply</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// 在newClientStream方法中会创建clientStream对象,ctx会赋值给该对象的ctx字段.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newClientStream</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">desc</span> <span class="o">*</span><span class="nx">StreamDesc</span><span class="p">,</span> <span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">method</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">CallOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">_</span> <span class="nx">ClientStream</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">......</span>
+    <span class="c1">// 前面代码都不关注,这里生成clientStream对象,关注其ctx字段.
+</span><span class="c1"></span>	<span class="nx">cs</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">clientStream</span><span class="p">{</span>
+		<span class="nx">callHdr</span><span class="p">:</span>      <span class="nx">callHdr</span><span class="p">,</span>
+		<span class="nx">ctx</span><span class="p">:</span>          <span class="nx">ctx</span><span class="p">,</span>
+		<span class="nx">methodConfig</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">mc</span><span class="p">,</span>
+		<span class="nx">opts</span><span class="p">:</span>         <span class="nx">opts</span><span class="p">,</span>
+		<span class="nx">callInfo</span><span class="p">:</span>     <span class="nx">c</span><span class="p">,</span>
+		<span class="nx">cc</span><span class="p">:</span>           <span class="nx">cc</span><span class="p">,</span>
+		<span class="nx">desc</span><span class="p">:</span>         <span class="nx">desc</span><span class="p">,</span>
+		<span class="nx">codec</span><span class="p">:</span>        <span class="nx">c</span><span class="p">.</span><span class="nx">codec</span><span class="p">,</span>
+		<span class="nx">cp</span><span class="p">:</span>           <span class="nx">cp</span><span class="p">,</span>
+		<span class="nx">comp</span><span class="p">:</span>         <span class="nx">comp</span><span class="p">,</span>
+		<span class="nx">cancel</span><span class="p">:</span>       <span class="nx">cancel</span><span class="p">,</span>
+		<span class="nx">beginTime</span><span class="p">:</span>    <span class="nx">beginTime</span><span class="p">,</span>
+		<span class="nx">firstAttempt</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">disableRetry</span> <span class="p">{</span>
+		<span class="nx">cs</span><span class="p">.</span><span class="nx">retryThrottler</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">retryThrottler</span><span class="p">.</span><span class="nf">Load</span><span class="p">().(</span><span class="o">*</span><span class="nx">retryThrottler</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">cs</span><span class="p">.</span><span class="nx">binlog</span> <span class="p">=</span> <span class="nx">binarylog</span><span class="p">.</span><span class="nf">GetMethodLogger</span><span class="p">(</span><span class="nx">method</span><span class="p">)</span>
+
+    <span class="c1">// 在newAttemptLocked中会通过负载均衡算法来选择Ready状态的连接.
+</span><span class="c1"></span>	<span class="c1">// Only this initial attempt has stats/tracing.
+</span><span class="c1"></span>	<span class="c1">// TODO(dfawley): move to newAttempt when per-attempt stats are implemented.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">newAttemptLocked</span><span class="p">(</span><span class="nx">sh</span><span class="p">,</span> <span class="nx">trInfo</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cs</span><span class="p">.</span><span class="nf">finish</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 在withRetry中最终会调用op函数,该函数会调用到csAttempt.newStream方法.
+</span><span class="c1"></span>	<span class="nx">op</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">csAttempt</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">a</span><span class="p">.</span><span class="nf">newStream</span><span class="p">()</span> <span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">withRetry</span><span class="p">(</span><span class="nx">op</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">bufferForRetryLocked</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">op</span><span class="p">)</span> <span class="p">});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cs</span><span class="p">.</span><span class="nf">finish</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+    <span class="o">......</span>
+    <span class="c1">// 下面的也不用关注了.
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nx">cs</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">csAttempt</span><span class="p">)</span> <span class="nf">newStream</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">cs</span> <span class="o">:=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">cs</span>
+    <span class="nx">cs</span><span class="p">.</span><span class="nx">callHdr</span><span class="p">.</span><span class="nx">PreviousAttempts</span> <span class="p">=</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">numRetries</span>
+    <span class="c1">// 这里会调用NewStream方法,t指向的是http2Client对象,cs是指向clientStream对象的.
+</span><span class="c1"></span>	<span class="nx">s</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">t</span><span class="p">.</span><span class="nf">NewStream</span><span class="p">(</span><span class="nx">cs</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">callHdr</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">err</span><span class="p">.(</span><span class="nx">transport</span><span class="p">.</span><span class="nx">PerformedIOError</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+			<span class="c1">// Return without converting to an RPC error so retry code can
+</span><span class="c1"></span>			<span class="c1">// inspect.
+</span><span class="c1"></span>			<span class="k">return</span> <span class="nx">err</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="nf">toRPCErr</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">cs</span><span class="p">.</span><span class="nx">attempt</span><span class="p">.</span><span class="nx">s</span> <span class="p">=</span> <span class="nx">s</span>
+	<span class="nx">cs</span><span class="p">.</span><span class="nx">attempt</span><span class="p">.</span><span class="nx">p</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">parser</span><span class="p">{</span><span class="nx">r</span><span class="p">:</span> <span class="nx">s</span><span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// NewStream creates a stream and registers it into the transport as &#34;active&#34;
+</span><span class="c1">// streams.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">http2Client</span><span class="p">)</span> <span class="nf">NewStream</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">callHdr</span> <span class="o">*</span><span class="nx">CallHdr</span><span class="p">)</span> <span class="p">(</span><span class="nx">_</span> <span class="o">*</span><span class="nx">Stream</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">ctx</span> <span class="p">=</span> <span class="nx">peer</span><span class="p">.</span><span class="nf">NewContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">t</span><span class="p">.</span><span class="nf">getPeer</span><span class="p">())</span>
+    <span class="c1">// 重点关注createHeaderFields,这个方法会处理HEADERS的数据,来传播表头数据.
+</span><span class="c1"></span>    <span class="nx">headerFields</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.</span><span class="nf">createHeaderFields</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">callHdr</span><span class="p">)</span>
+    
+    <span class="o">......</span>
+    <span class="c1">// 下面的代码不关注.
+</span><span class="c1"></span><span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">http2Client</span><span class="p">)</span> <span class="nf">createHeaderFields</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">callHdr</span> <span class="o">*</span><span class="nx">CallHdr</span><span class="p">)</span> <span class="p">([]</span><span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 主要处理HEADERS头部数据.
+</span><span class="c1"></span>    <span class="o">......</span>
+
+    <span class="c1">// 支持的字段.
+</span><span class="c1"></span>	<span class="nx">headerFields</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">hfLen</span><span class="p">)</span>
+	<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;:method&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="s">&#34;POST&#34;</span><span class="p">})</span>
+	<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;:scheme&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">t</span><span class="p">.</span><span class="nx">scheme</span><span class="p">})</span>
+	<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;:path&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">callHdr</span><span class="p">.</span><span class="nx">Method</span><span class="p">})</span>
+	<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;:authority&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">callHdr</span><span class="p">.</span><span class="nx">Host</span><span class="p">})</span>
+	<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;content-type&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">grpcutil</span><span class="p">.</span><span class="nf">ContentType</span><span class="p">(</span><span class="nx">callHdr</span><span class="p">.</span><span class="nx">ContentSubtype</span><span class="p">)})</span>
+	<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;user-agent&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">t</span><span class="p">.</span><span class="nx">userAgent</span><span class="p">})</span>
+	<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;te&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="s">&#34;trailers&#34;</span><span class="p">})</span>
+	<span class="k">if</span> <span class="nx">callHdr</span><span class="p">.</span><span class="nx">PreviousAttempts</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;grpc-previous-rpc-attempts&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nx">callHdr</span><span class="p">.</span><span class="nx">PreviousAttempts</span><span class="p">)})</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">callHdr</span><span class="p">.</span><span class="nx">SendCompress</span> <span class="o">!=</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;grpc-encoding&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">callHdr</span><span class="p">.</span><span class="nx">SendCompress</span><span class="p">})</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;grpc-accept-encoding&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">callHdr</span><span class="p">.</span><span class="nx">SendCompress</span><span class="p">})</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 重点在这里,获取ctx的deadline时间,然后放入头部中的grpc-timeout字段中,客户端就是利用这个来吧超时时间传递到服务端的.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">dl</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Deadline</span><span class="p">();</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="c1">// Send out timeout regardless its value. The server can detect timeout context by itself.
+</span><span class="c1"></span>		<span class="c1">// TODO(mmukhi): Perhaps this field should be updated when actually writing out to the wire.
+</span><span class="c1"></span>		<span class="nx">timeout</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Until</span><span class="p">(</span><span class="nx">dl</span><span class="p">)</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;grpc-timeout&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nx">grpcutil</span><span class="p">.</span><span class="nf">EncodeDuration</span><span class="p">(</span><span class="nx">timeout</span><span class="p">)})</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">authData</span> <span class="p">{</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nf">encodeMetadataHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)})</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">callAuthData</span> <span class="p">{</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nf">encodeMetadataHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)})</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">b</span> <span class="o">:=</span> <span class="nx">stats</span><span class="p">.</span><span class="nf">OutgoingTags</span><span class="p">(</span><span class="nx">ctx</span><span class="p">);</span> <span class="nx">b</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;grpc-tags-bin&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nf">encodeBinHeader</span><span class="p">(</span><span class="nx">b</span><span class="p">)})</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">b</span> <span class="o">:=</span> <span class="nx">stats</span><span class="p">.</span><span class="nf">OutgoingTrace</span><span class="p">(</span><span class="nx">ctx</span><span class="p">);</span> <span class="nx">b</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;grpc-trace-bin&#34;</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nf">encodeBinHeader</span><span class="p">(</span><span class="nx">b</span><span class="p">)})</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">md</span><span class="p">,</span> <span class="nx">added</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">metadata</span><span class="p">.</span><span class="nf">FromOutgoingContextRaw</span><span class="p">(</span><span class="nx">ctx</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">k</span> <span class="kt">string</span>
+		<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">vv</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">md</span> <span class="p">{</span>
+			<span class="c1">// HTTP doesn&#39;t allow you to set pseudoheaders after non pseudoheaders were set.
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nf">isReservedHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">)</span> <span class="p">{</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+			<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">vv</span> <span class="p">{</span>
+				<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nf">encodeMetadataHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)})</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">vv</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">added</span> <span class="p">{</span>
+			<span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">vv</span> <span class="p">{</span>
+				<span class="k">if</span> <span class="nx">i</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+					<span class="nx">k</span> <span class="p">=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">ToLower</span><span class="p">(</span><span class="nx">v</span><span class="p">)</span>
+					<span class="k">continue</span>
+				<span class="p">}</span>
+				<span class="c1">// HTTP doesn&#39;t allow you to set pseudoheaders after non pseudoheaders were set.
+</span><span class="c1"></span>				<span class="k">if</span> <span class="nf">isReservedHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">)</span> <span class="p">{</span>
+					<span class="k">continue</span>
+				<span class="p">}</span>
+				<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nf">encodeMetadataHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)})</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">md</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.</span><span class="nx">md</span><span class="p">.(</span><span class="o">*</span><span class="nx">metadata</span><span class="p">.</span><span class="nx">MD</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">vv</span> <span class="o">:=</span> <span class="k">range</span> <span class="o">*</span><span class="nx">md</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nf">isReservedHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">)</span> <span class="p">{</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+			<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">vv</span> <span class="p">{</span>
+				<span class="nx">headerFields</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">headerFields</span><span class="p">,</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">Value</span><span class="p">:</span> <span class="nf">encodeMetadataHeader</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)})</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">headerFields</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div><p><strong>总结</strong></p>
+<ol>
+<li>在调用rpc接口时设置了超时的context,会最终传递到http2Client对象中,然后在处理HEADERS时会把deadline时间设置到头部参数<code>grpc-timeout</code>中,传递到服务端.</li>
+<li>http2Client对象是在调用<code>Dial</code>或<code>DialContext</code>过程中生成的,每个Endpoint对应一个该对象.</li>
+</ol>
+<h2 id="服务端超时处理">服务端超时处理</h2>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// HandleStreams receives incoming streams using the given handler. This is
+</span><span class="c1">// typically run in a separate goroutine.
+</span><span class="c1">// traceCtx attaches trace to ctx and returns the new context.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">http2Server</span><span class="p">)</span> <span class="nf">HandleStreams</span><span class="p">(</span><span class="nx">handle</span> <span class="kd">func</span><span class="p">(</span><span class="o">*</span><span class="nx">Stream</span><span class="p">),</span> <span class="nx">traceCtx</span> <span class="kd">func</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">defer</span> <span class="nb">close</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">readerDone</span><span class="p">)</span>
+	<span class="k">for</span> <span class="p">{</span>
+        <span class="c1">// 该函数主要接收客户端发送过来的数据,重点关注处理HEADERS部分的数据.
+</span><span class="c1"></span>        <span class="o">......</span>
+
+		<span class="k">switch</span> <span class="nx">frame</span> <span class="o">:=</span> <span class="nx">frame</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="o">*</span><span class="nx">http2</span><span class="p">.</span><span class="nx">MetaHeadersFrame</span><span class="p">:</span>
+            <span class="c1">// 当frame类型为HEADERS时的处理.
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">t</span><span class="p">.</span><span class="nf">operateHeaders</span><span class="p">(</span><span class="nx">frame</span><span class="p">,</span> <span class="nx">handle</span><span class="p">,</span> <span class="nx">traceCtx</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">t</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+				<span class="k">break</span>
+            <span class="p">}</span>
+            
+        <span class="c1">// 其它暂不关注.
+</span><span class="c1"></span>        <span class="o">......</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// operateHeader takes action on the decoded headers.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">http2Server</span><span class="p">)</span> <span class="nf">operateHeaders</span><span class="p">(</span><span class="nx">frame</span> <span class="o">*</span><span class="nx">http2</span><span class="p">.</span><span class="nx">MetaHeadersFrame</span><span class="p">,</span> <span class="nx">handle</span> <span class="kd">func</span><span class="p">(</span><span class="o">*</span><span class="nx">Stream</span><span class="p">),</span> <span class="nx">traceCtx</span> <span class="kd">func</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="nx">fatal</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">streamID</span> <span class="o">:=</span> <span class="nx">frame</span><span class="p">.</span><span class="nf">Header</span><span class="p">().</span><span class="nx">StreamID</span>
+	<span class="nx">state</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">decodeState</span><span class="p">{</span>
+		<span class="nx">serverSide</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="c1">// 获取HEADERS里的数据.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">h2code</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">state</span><span class="p">.</span><span class="nf">decodeHeader</span><span class="p">(</span><span class="nx">frame</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">status</span><span class="p">.</span><span class="nf">FromError</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+			<span class="nx">t</span><span class="p">.</span><span class="nx">controlBuf</span><span class="p">.</span><span class="nf">put</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">cleanupStream</span><span class="p">{</span>
+				<span class="nx">streamID</span><span class="p">:</span> <span class="nx">streamID</span><span class="p">,</span>
+				<span class="nx">rst</span><span class="p">:</span>      <span class="kc">true</span><span class="p">,</span>
+				<span class="nx">rstCode</span><span class="p">:</span>  <span class="nx">h2code</span><span class="p">,</span>
+				<span class="nx">onWrite</span><span class="p">:</span>  <span class="kd">func</span><span class="p">()</span> <span class="p">{},</span>
+			<span class="p">})</span>
+		<span class="p">}</span>
+		<span class="k">return</span> <span class="kc">false</span>
+	<span class="p">}</span>
+
+	<span class="nx">buf</span> <span class="o">:=</span> <span class="nf">newRecvBuffer</span><span class="p">()</span>
+	<span class="nx">s</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">Stream</span><span class="p">{</span>
+		<span class="nx">id</span><span class="p">:</span>             <span class="nx">streamID</span><span class="p">,</span>
+		<span class="nx">st</span><span class="p">:</span>             <span class="nx">t</span><span class="p">,</span>
+		<span class="nx">buf</span><span class="p">:</span>            <span class="nx">buf</span><span class="p">,</span>
+		<span class="nx">fc</span><span class="p">:</span>             <span class="o">&amp;</span><span class="nx">inFlow</span><span class="p">{</span><span class="nx">limit</span><span class="p">:</span> <span class="nb">uint32</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">initialWindowSize</span><span class="p">)},</span>
+		<span class="nx">recvCompress</span><span class="p">:</span>   <span class="nx">state</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">encoding</span><span class="p">,</span>
+		<span class="nx">method</span><span class="p">:</span>         <span class="nx">state</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">method</span><span class="p">,</span>
+		<span class="nx">contentSubtype</span><span class="p">:</span> <span class="nx">state</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">contentSubtype</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">frame</span><span class="p">.</span><span class="nf">StreamEnded</span><span class="p">()</span> <span class="p">{</span>
+		<span class="c1">// s is just created by the caller. No lock needed.
+</span><span class="c1"></span>		<span class="nx">s</span><span class="p">.</span><span class="nx">state</span> <span class="p">=</span> <span class="nx">streamReadDone</span>
+    <span class="p">}</span>
+    <span class="c1">// 当有设置超时时,Stream对象的ctx设置为Timeout的.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">state</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">timeoutSet</span> <span class="p">{</span>
+		<span class="nx">s</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nx">cancel</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">state</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">timeout</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">s</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nx">cancel</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 其它暂不关注.
+</span><span class="c1"></span>    <span class="o">......</span>
+	<span class="k">return</span> <span class="kc">false</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">d</span> <span class="o">*</span><span class="nx">decodeState</span><span class="p">)</span> <span class="nf">decodeHeader</span><span class="p">(</span><span class="nx">frame</span> <span class="o">*</span><span class="nx">http2</span><span class="p">.</span><span class="nx">MetaHeadersFrame</span><span class="p">)</span> <span class="p">(</span><span class="nx">http2</span><span class="p">.</span><span class="nx">ErrCode</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// frame.Truncated is set to true when framer detects that the current header
+</span><span class="c1"></span>	<span class="c1">// list size hits MaxHeaderListSize limit.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">frame</span><span class="p">.</span><span class="nx">Truncated</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">http2</span><span class="p">.</span><span class="nx">ErrCodeFrameSize</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;peer header list size exceeded limit&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 处理HEADERS.
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">hf</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">frame</span><span class="p">.</span><span class="nx">Fields</span> <span class="p">{</span>
+		<span class="nx">d</span><span class="p">.</span><span class="nf">processHeaderField</span><span class="p">(</span><span class="nx">hf</span><span class="p">)</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 其它暂不关注.
+</span><span class="c1"></span>    <span class="o">......</span>
+
+	<span class="k">return</span> <span class="nx">http2</span><span class="p">.</span><span class="nx">ErrCodeProtocol</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span> <span class="nx">d</span><span class="p">.</span><span class="nf">constructHTTPErrMsg</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">d</span> <span class="o">*</span><span class="nx">decodeState</span><span class="p">)</span> <span class="nf">processHeaderField</span><span class="p">(</span><span class="nx">f</span> <span class="nx">hpack</span><span class="p">.</span><span class="nx">HeaderField</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">switch</span> <span class="nx">f</span><span class="p">.</span><span class="nx">Name</span> <span class="p">{</span>
+    <span class="c1">// 其它暂不关注.
+</span><span class="c1"></span>    <span class="o">......</span>
+
+    <span class="k">case</span> <span class="s">&#34;grpc-timeout&#34;</span><span class="p">:</span>
+        <span class="c1">// 如果有该字段,解析超时时间,在这里就和客户端联系起来了.
+</span><span class="c1"></span>		<span class="nx">d</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">timeoutSet</span> <span class="p">=</span> <span class="kc">true</span>
+		<span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+		<span class="k">if</span> <span class="nx">d</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">timeout</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">decodeTimeout</span><span class="p">(</span><span class="nx">f</span><span class="p">.</span><span class="nx">Value</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">d</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">grpcErr</span> <span class="p">=</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Internal</span><span class="p">,</span> <span class="s">&#34;transport: malformed time-out: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="c1">// 其它暂不关注.
+</span><span class="c1"></span>    <span class="o">......</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 经过上述分析,带超时的context已经赋值给Stream的ctx字段了.
+</span><span class="c1">// 最后这个ctx会被传递给RPC接口的第一个参数,这样在服务端的接口中就能感知到超时了.
+</span></code></pre></div><p><strong>总结</strong></p>
+<ol>
+<li>服务端在收到HEADERS之后,会解析所有参数,如果有<code>grpc-timeout</code>,就会设置一个带timeout的context,然后传递到rpc接口中.</li>
+</ol>
+<h2 id="抓包">抓包</h2>
+<p><img src="/images/grpc-timeout.png" alt="timeout" title="带timeout的HEADERS">
+从图中可以看到HEADERS中有参数<code>grpc-timeout</code>,值为2994000u,超时时间为2994毫秒.</p>
+]]></content>
+		</item>
+		
+		<item>
+			<title>gRPC系列之client端调用</title>
+			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+			<pubDate>Sat, 07 Nov 2020 13:16:47 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+			<description>Dail/DailContext与服务端建立连接 // 直接调用的DialContext. // Dial creates a client connection to the given target. func Dial(target string, opts ...DialOption) (*ClientConn, error) { return DialContext(context.Background(), target, opts...) } // Dial</description>
+			<content type="html"><![CDATA[<h2 id="daildailcontext与服务端建立连接">Dail/DailContext与服务端建立连接</h2>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 直接调用的DialContext.
+</span><span class="c1">// Dial creates a client connection to the given target.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Dial</span><span class="p">(</span><span class="nx">target</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">DialOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">DialContext</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">target</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// DialContext默认是非阻塞的,不会等待连接成功,而是在后台处理连接逻辑.可以用grpc.WithBlock()来设置为阻塞的.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">DialContext</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">target</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">DialOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">conn</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 生成conn.
+</span><span class="c1"></span>	<span class="nx">cc</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">ClientConn</span><span class="p">{</span>
+		<span class="nx">target</span><span class="p">:</span>            <span class="nx">target</span><span class="p">,</span>
+		<span class="nx">csMgr</span><span class="p">:</span>             <span class="o">&amp;</span><span class="nx">connectivityStateManager</span><span class="p">{},</span>
+		<span class="nx">conns</span><span class="p">:</span>             <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="o">*</span><span class="nx">addrConn</span><span class="p">]</span><span class="kd">struct</span><span class="p">{}),</span>
+		<span class="nx">dopts</span><span class="p">:</span>             <span class="nf">defaultDialOptions</span><span class="p">(),</span>
+		<span class="nx">blockingpicker</span><span class="p">:</span>    <span class="nf">newPickerWrapper</span><span class="p">(),</span>
+		<span class="nx">czData</span><span class="p">:</span>            <span class="nb">new</span><span class="p">(</span><span class="nx">channelzData</span><span class="p">),</span>
+		<span class="nx">firstResolveEvent</span><span class="p">:</span> <span class="nx">grpcsync</span><span class="p">.</span><span class="nf">NewEvent</span><span class="p">(),</span>
+	<span class="p">}</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">retryThrottler</span><span class="p">.</span><span class="nf">Store</span><span class="p">((</span><span class="o">*</span><span class="nx">retryThrottler</span><span class="p">)(</span><span class="kc">nil</span><span class="p">))</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">cancel</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">())</span>
+
+    <span class="c1">// 处理DiaoOption,来设置自定义参数.
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">opt</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">opts</span> <span class="p">{</span>
+		<span class="nx">opt</span><span class="p">.</span><span class="nf">apply</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">)</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 处理一元RPC的拦截器.
+</span><span class="c1"></span>	<span class="nf">chainUnaryClientInterceptors</span><span class="p">(</span><span class="nx">cc</span><span class="p">)</span>
+    <span class="c1">// 处理流式RPC的拦截器.
+</span><span class="c1"></span>	<span class="nf">chainStreamClientInterceptors</span><span class="p">(</span><span class="nx">cc</span><span class="p">)</span>
+
+	<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">cc</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+		<span class="p">}</span>
+	<span class="p">}()</span>
+
+	<span class="k">if</span> <span class="nx">channelz</span><span class="p">.</span><span class="nf">IsOn</span><span class="p">()</span> <span class="p">{</span>
+        <span class="o">......</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="p">!</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">insecure</span> <span class="p">{</span>
+        <span class="c1">// 校验认证相关.
+</span><span class="c1"></span>        <span class="o">......</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">TransportCredentials</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">CredsBundle</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">errCredentialsConflict</span>
+        <span class="p">}</span>
+        <span class="c1">// PerRPCCredentials是指设置了自定义认证.
+</span><span class="c1"></span>		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">cd</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">PerRPCCredentials</span> <span class="p">{</span>
+            <span class="c1">// 判断自定义认证是否依赖TLS.
+</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">cd</span><span class="p">.</span><span class="nf">RequireTransportSecurity</span><span class="p">()</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">errTransportCredentialsMissing</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+    <span class="o">......</span>
+
+    <span class="c1">// 超时控制.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">timeout</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">cancel</span> <span class="nx">context</span><span class="p">.</span><span class="nx">CancelFunc</span>
+		<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">timeout</span><span class="p">)</span>
+		<span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+	<span class="p">}</span>
+	<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">select</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+			<span class="k">switch</span> <span class="p">{</span>
+			<span class="k">case</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span> <span class="o">==</span> <span class="nx">err</span><span class="p">:</span>
+				<span class="nx">conn</span> <span class="p">=</span> <span class="kc">nil</span>
+			<span class="k">case</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="p">!</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">returnLastError</span><span class="p">:</span>
+				<span class="nx">conn</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span>
+			<span class="k">default</span><span class="p">:</span>
+				<span class="nx">conn</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;%v: %v&#34;</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">(),</span> <span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="k">default</span><span class="p">:</span>
+		<span class="p">}</span>
+	<span class="p">}()</span>
+
+    <span class="o">......</span>
+
+    <span class="c1">// 解析target的格式,识别出对应的Scheme和Endpoint.
+</span><span class="c1"></span>	<span class="c1">// Determine the resolver to use.
+</span><span class="c1"></span>	<span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span> <span class="p">=</span> <span class="nx">grpcutil</span><span class="p">.</span><span class="nf">ParseTarget</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">target</span><span class="p">)</span>
+	<span class="nx">unixScheme</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">HasPrefix</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">target</span><span class="p">,</span> <span class="s">&#34;unix:&#34;</span><span class="p">)</span>
+    <span class="nx">channelz</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;parsed scheme: %q&#34;</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
+    
+    <span class="c1">// 根据Scheme来获取对应的Resolver.
+</span><span class="c1"></span>    <span class="c1">// 如gRPC默认支持的dns,就是在dns包的init函数中调用了resolver.Register()来注册dns Resolver.
+</span><span class="c1"></span>	<span class="nx">resolverBuilder</span> <span class="o">:=</span> <span class="nx">cc</span><span class="p">.</span><span class="nf">getResolver</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">resolverBuilder</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="c1">// 如果获取失败,就采用默认的Resolver来解析,即passthrough.
+</span><span class="c1"></span>		<span class="c1">// If resolver builder is still nil, the parsed target&#39;s scheme is
+</span><span class="c1"></span>		<span class="c1">// not registered. Fallback to default resolver and set Endpoint to
+</span><span class="c1"></span>		<span class="c1">// the original target.
+</span><span class="c1"></span>		<span class="nx">channelz</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;scheme %q not registered, fallback to default scheme&#34;</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
+		<span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span> <span class="p">=</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Target</span><span class="p">{</span>
+			<span class="nx">Scheme</span><span class="p">:</span>   <span class="nx">resolver</span><span class="p">.</span><span class="nf">GetDefaultScheme</span><span class="p">(),</span>
+			<span class="nx">Endpoint</span><span class="p">:</span> <span class="nx">target</span><span class="p">,</span>
+		<span class="p">}</span>
+		<span class="nx">resolverBuilder</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nf">getResolver</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">resolverBuilder</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;could not get resolver for default scheme: %q&#34;</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+    <span class="o">......</span>
+    <span class="c1">// 认证相关.
+</span><span class="c1"></span>    <span class="c1">// banlancer的相关Option.
+</span><span class="c1"></span>	<span class="nx">cc</span><span class="p">.</span><span class="nx">balancerBuildOpts</span> <span class="p">=</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">{</span>
+		<span class="nx">DialCreds</span><span class="p">:</span>        <span class="nx">credsClone</span><span class="p">,</span>
+		<span class="nx">CredsBundle</span><span class="p">:</span>      <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">CredsBundle</span><span class="p">,</span>
+		<span class="nx">Dialer</span><span class="p">:</span>           <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">Dialer</span><span class="p">,</span>
+		<span class="nx">ChannelzParentID</span><span class="p">:</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span>
+		<span class="nx">Target</span><span class="p">:</span>           <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">,</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 调用Resolver对象的Build方法,在Build内部会调用cc.UpdateState来更新服务端地址.
+</span><span class="c1"></span>	<span class="c1">// Build the resolver.
+</span><span class="c1"></span>	<span class="nx">rWrapper</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newCCResolverWrapper</span><span class="p">(</span><span class="nx">cc</span><span class="p">,</span> <span class="nx">resolverBuilder</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to build resolver: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">resolverWrapper</span> <span class="p">=</span> <span class="nx">rWrapper</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+    <span class="c1">// 当调用grpc.WithBlock()后会阻塞直到连接成功建立.
+</span><span class="c1"></span>	<span class="c1">// A blocking dial blocks until the clientConn is ready.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">block</span> <span class="p">{</span>
+		<span class="k">for</span> <span class="p">{</span>
+            <span class="c1">// 循环判断连接的状态是否为Ready.
+</span><span class="c1"></span>			<span class="nx">s</span> <span class="o">:=</span> <span class="nx">cc</span><span class="p">.</span><span class="nf">GetState</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">s</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Ready</span> <span class="p">{</span>
+				<span class="k">break</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">FailOnNonTempDialError</span> <span class="o">&amp;&amp;</span> <span class="nx">s</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">TransientFailure</span> <span class="p">{</span>
+				<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nf">connectionError</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+					<span class="nx">terr</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">err</span><span class="p">.(</span><span class="kd">interface</span> <span class="p">{</span>
+						<span class="nf">Temporary</span><span class="p">()</span> <span class="kt">bool</span>
+					<span class="p">})</span>
+					<span class="k">if</span> <span class="nx">ok</span> <span class="o">&amp;&amp;</span> <span class="p">!</span><span class="nx">terr</span><span class="p">.</span><span class="nf">Temporary</span><span class="p">()</span> <span class="p">{</span>
+						<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+					<span class="p">}</span>
+				<span class="p">}</span>
+			<span class="p">}</span>
+			<span class="k">if</span> <span class="p">!</span><span class="nx">cc</span><span class="p">.</span><span class="nf">WaitForStateChange</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span> <span class="p">{</span>
+				<span class="c1">// ctx got timeout or canceled.
+</span><span class="c1"></span>				<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nf">connectionError</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">returnLastError</span> <span class="p">{</span>
+					<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+				<span class="p">}</span>
+				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">cc</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// newCCResolverWrapper uses the resolver.Builder to build a Resolver and
+</span><span class="c1">// returns a ccResolverWrapper object which wraps the newly built resolver.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newCCResolverWrapper</span><span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">rb</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Builder</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">ccResolverWrapper</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ccr</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">ccResolverWrapper</span><span class="p">{</span>
+		<span class="nx">cc</span><span class="p">:</span>   <span class="nx">cc</span><span class="p">,</span>
+		<span class="nx">done</span><span class="p">:</span> <span class="nx">grpcsync</span><span class="p">.</span><span class="nf">NewEvent</span><span class="p">(),</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">credsClone</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">TransportCredentials</span>
+	<span class="k">if</span> <span class="nx">creds</span> <span class="o">:=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">TransportCredentials</span><span class="p">;</span> <span class="nx">creds</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">credsClone</span> <span class="p">=</span> <span class="nx">creds</span><span class="p">.</span><span class="nf">Clone</span><span class="p">()</span>
+	<span class="p">}</span>
+	<span class="nx">rbo</span> <span class="o">:=</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">{</span>
+		<span class="nx">DisableServiceConfig</span><span class="p">:</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">disableServiceConfig</span><span class="p">,</span>
+		<span class="nx">DialCreds</span><span class="p">:</span>            <span class="nx">credsClone</span><span class="p">,</span>
+		<span class="nx">CredsBundle</span><span class="p">:</span>          <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">CredsBundle</span><span class="p">,</span>
+		<span class="nx">Dialer</span><span class="p">:</span>               <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">Dialer</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+	<span class="c1">// We need to hold the lock here while we assign to the ccr.resolver field
+</span><span class="c1"></span>	<span class="c1">// to guard against a data race caused by the following code path,
+</span><span class="c1"></span>	<span class="c1">// rb.Build--&gt;ccr.ReportError--&gt;ccr.poll--&gt;ccr.resolveNow, would end up
+</span><span class="c1"></span>	<span class="c1">// accessing ccr.resolver which is being assigned here.
+</span><span class="c1"></span>	<span class="nx">ccr</span><span class="p">.</span><span class="nx">resolverMu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+    <span class="k">defer</span> <span class="nx">ccr</span><span class="p">.</span><span class="nx">resolverMu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+    <span class="c1">// 主要是调用对应的Resolver的Build方法.
+</span><span class="c1"></span>	<span class="nx">ccr</span><span class="p">.</span><span class="nx">resolver</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">rb</span><span class="p">.</span><span class="nf">Build</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">,</span> <span class="nx">ccr</span><span class="p">,</span> <span class="nx">rbo</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">ccr</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// 下面以gRPC默认的dns Resolver举例.
+</span><span class="c1">// Build creates and starts a DNS resolver that watches the name resolution of the target.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">dnsBuilder</span><span class="p">)</span> <span class="nf">Build</span><span class="p">(</span><span class="nx">target</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Target</span><span class="p">,</span> <span class="nx">cc</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">opts</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">)</span> <span class="p">(</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Resolver</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">host</span><span class="p">,</span> <span class="nx">port</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">parseTarget</span><span class="p">(</span><span class="nx">target</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">,</span> <span class="nx">defaultPort</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 支持IP地址形式的target.
+</span><span class="c1"></span>	<span class="c1">// IP address.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">ipAddr</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nf">formatIP</span><span class="p">(</span><span class="nx">host</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+        <span class="nx">addr</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">{{</span><span class="nx">Addr</span><span class="p">:</span> <span class="nx">ipAddr</span> <span class="o">+</span> <span class="s">&#34;:&#34;</span> <span class="o">+</span> <span class="nx">port</span><span class="p">}}</span>
+        <span class="c1">// 调用cc.UpdateState,cc实际上是ccResolverWrapper对象.
+</span><span class="c1"></span>		<span class="nx">cc</span><span class="p">.</span><span class="nf">UpdateState</span><span class="p">(</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">State</span><span class="p">{</span><span class="nx">Addresses</span><span class="p">:</span> <span class="nx">addr</span><span class="p">})</span>
+		<span class="k">return</span> <span class="nx">deadResolver</span><span class="p">{},</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 需要进行dns解析.
+</span><span class="c1"></span>	<span class="c1">// DNS address (non-IP).
+</span><span class="c1"></span>	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">())</span>
+	<span class="nx">d</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dnsResolver</span><span class="p">{</span>
+		<span class="nx">host</span><span class="p">:</span>                 <span class="nx">host</span><span class="p">,</span>
+		<span class="nx">port</span><span class="p">:</span>                 <span class="nx">port</span><span class="p">,</span>
+		<span class="nx">ctx</span><span class="p">:</span>                  <span class="nx">ctx</span><span class="p">,</span>
+		<span class="nx">cancel</span><span class="p">:</span>               <span class="nx">cancel</span><span class="p">,</span>
+		<span class="nx">cc</span><span class="p">:</span>                   <span class="nx">cc</span><span class="p">,</span>
+		<span class="nx">rn</span><span class="p">:</span>                   <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{},</span> <span class="mi">1</span><span class="p">),</span>
+		<span class="nx">disableServiceConfig</span><span class="p">:</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">DisableServiceConfig</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">target</span><span class="p">.</span><span class="nx">Authority</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+		<span class="nx">d</span><span class="p">.</span><span class="nx">resolver</span> <span class="p">=</span> <span class="nx">defaultResolver</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">d</span><span class="p">.</span><span class="nx">resolver</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">customAuthorityResolver</span><span class="p">(</span><span class="nx">target</span><span class="p">.</span><span class="nx">Authority</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+    <span class="nx">d</span><span class="p">.</span><span class="nx">wg</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1">// 具体的解析过程在watcher中,解析成功后也会调用cc.UpdateState.
+</span><span class="c1"></span>	<span class="k">go</span> <span class="nx">d</span><span class="p">.</span><span class="nf">watcher</span><span class="p">()</span>
+	<span class="nx">d</span><span class="p">.</span><span class="nf">ResolveNow</span><span class="p">(</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">ResolveNowOptions</span><span class="p">{})</span>
+	<span class="k">return</span> <span class="nx">d</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// 所有Resolver的Build方法都会来调用到UpdateState方法.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ccr</span> <span class="o">*</span><span class="nx">ccResolverWrapper</span><span class="p">)</span> <span class="nf">UpdateState</span><span class="p">(</span><span class="nx">s</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">State</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">ccr</span><span class="p">.</span><span class="nx">done</span><span class="p">.</span><span class="nf">HasFired</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">channelz</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">ccr</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;ccResolverWrapper: sending update to cc: %v&#34;</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">channelz</span><span class="p">.</span><span class="nf">IsOn</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">ccr</span><span class="p">.</span><span class="nf">addChannelzTraceEvent</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span>
+	<span class="p">}</span>
+    <span class="nx">ccr</span><span class="p">.</span><span class="nx">curState</span> <span class="p">=</span> <span class="nx">s</span>
+    <span class="c1">// 主要关注updateResolverState,ccr.cc是ClientConn对象.
+</span><span class="c1"></span>	<span class="nx">ccr</span><span class="p">.</span><span class="nf">poll</span><span class="p">(</span><span class="nx">ccr</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">updateResolverState</span><span class="p">(</span><span class="nx">ccr</span><span class="p">.</span><span class="nx">curState</span><span class="p">,</span> <span class="kc">nil</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">updateResolverState</span><span class="p">(</span><span class="nx">s</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">defer</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">firstResolveEvent</span><span class="p">.</span><span class="nf">Fire</span><span class="p">()</span>
+    <span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+
+    <span class="o">......</span>
+
+	<span class="kd">var</span> <span class="nx">ret</span> <span class="kt">error</span>
+	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">disableServiceConfig</span> <span class="o">||</span> <span class="nx">s</span><span class="p">.</span><span class="nx">ServiceConfig</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="c1">// 没有设置ServiceConfig,进入到该分支,主要处理balancer对象.
+</span><span class="c1"></span>		<span class="nx">cc</span><span class="p">.</span><span class="nf">maybeApplyDefaultServiceConfig</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">)</span>
+		<span class="c1">// TODO: do we need to apply a failing LB policy if there is no
+</span><span class="c1"></span>		<span class="c1">// default, per the error handling design?
+</span><span class="c1"></span>	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="o">......</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">balCfg</span> <span class="nx">serviceconfig</span><span class="p">.</span><span class="nx">LoadBalancingConfig</span>
+	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">balancerBuilder</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">sc</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">sc</span><span class="p">.</span><span class="nx">lbConfig</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">balCfg</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">sc</span><span class="p">.</span><span class="nx">lbConfig</span><span class="p">.</span><span class="nx">cfg</span>
+	<span class="p">}</span>
+
+	<span class="nx">cbn</span> <span class="o">:=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">curBalancerName</span>
+	<span class="nx">bw</span> <span class="o">:=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">balancerWrapper</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">cbn</span> <span class="o">!=</span> <span class="nx">grpclbName</span> <span class="p">{</span>
+		<span class="c1">// Filter any grpclb addresses since we don&#39;t have the grpclb balancer.
+</span><span class="c1"></span>		<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">);</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">GRPCLB</span> <span class="p">{</span>
+				<span class="nb">copy</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">[</span><span class="nx">i</span><span class="p">:],</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">[</span><span class="nx">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span>
+				<span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+			<span class="nx">i</span><span class="o">++</span>
+		<span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">// 主要处理连接的逻辑,在后面要重点关注.
+</span><span class="c1"></span>	<span class="nx">uccsErr</span> <span class="o">:=</span> <span class="nx">bw</span><span class="p">.</span><span class="nf">updateClientConnState</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">ClientConnState</span><span class="p">{</span><span class="nx">ResolverState</span><span class="p">:</span> <span class="nx">s</span><span class="p">,</span> <span class="nx">BalancerConfig</span><span class="p">:</span> <span class="nx">balCfg</span><span class="p">})</span>
+	<span class="k">if</span> <span class="nx">ret</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">ret</span> <span class="p">=</span> <span class="nx">uccsErr</span> <span class="c1">// prefer ErrBadResolver state since any other error is
+</span><span class="c1"></span>		<span class="c1">// currently meaningless to the caller.
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">ret</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">maybeApplyDefaultServiceConfig</span><span class="p">(</span><span class="nx">addrs</span> <span class="p">[]</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">sc</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cc</span><span class="p">.</span><span class="nf">applyServiceConfigAndBalancer</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">sc</span><span class="p">,</span> <span class="nx">addrs</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">defaultServiceConfig</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cc</span><span class="p">.</span><span class="nf">applyServiceConfigAndBalancer</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">defaultServiceConfig</span><span class="p">,</span> <span class="nx">addrs</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">// 默认会走到该分支.
+</span><span class="c1"></span>		<span class="nx">cc</span><span class="p">.</span><span class="nf">applyServiceConfigAndBalancer</span><span class="p">(</span><span class="nx">emptyServiceConfig</span><span class="p">,</span> <span class="nx">addrs</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">applyServiceConfigAndBalancer</span><span class="p">(</span><span class="nx">sc</span> <span class="o">*</span><span class="nx">ServiceConfig</span><span class="p">,</span> <span class="nx">addrs</span> <span class="p">[]</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">sc</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="c1">// should never reach here.
+</span><span class="c1"></span>		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">sc</span> <span class="p">=</span> <span class="nx">sc</span>
+
+    <span class="o">......</span>
+
+	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">balancerBuilder</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="c1">// Only look at balancer types and switch balancer if balancer dial
+</span><span class="c1"></span>		<span class="c1">// option is not set.
+</span><span class="c1"></span>        <span class="o">......</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">balancerWrapper</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="c1">// Balancer dial option was set, and this is the first time handling
+</span><span class="c1"></span>        <span class="c1">// resolved addresses. Build a balancer with dopts.balancerBuilder.
+</span><span class="c1"></span>        <span class="c1">// 调用grpc.WithBalancerName()设置了balancerBuiler,进入该分支.
+</span><span class="c1"></span>		<span class="nx">cc</span><span class="p">.</span><span class="nx">curBalancerName</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">balancerBuilder</span><span class="p">.</span><span class="nf">Name</span><span class="p">()</span>
+		<span class="nx">cc</span><span class="p">.</span><span class="nx">balancerWrapper</span> <span class="p">=</span> <span class="nf">newCCBalancerWrapper</span><span class="p">(</span><span class="nx">cc</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">balancerBuilder</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">balancerBuildOpts</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">newCCBalancerWrapper</span><span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">b</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">Builder</span><span class="p">,</span> <span class="nx">bopts</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">)</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span> <span class="p">{</span>
+	<span class="nx">ccb</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">ccBalancerWrapper</span><span class="p">{</span>
+		<span class="nx">cc</span><span class="p">:</span>       <span class="nx">cc</span><span class="p">,</span>
+		<span class="nx">scBuffer</span><span class="p">:</span> <span class="nx">buffer</span><span class="p">.</span><span class="nf">NewUnbounded</span><span class="p">(),</span>
+		<span class="nx">done</span><span class="p">:</span>     <span class="nx">grpcsync</span><span class="p">.</span><span class="nf">NewEvent</span><span class="p">(),</span>
+		<span class="nx">subConns</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="o">*</span><span class="nx">acBalancerWrapper</span><span class="p">]</span><span class="kd">struct</span><span class="p">{}),</span>
+    <span class="p">}</span>
+    <span class="c1">// watcher会持续观察连接的状态变更,重点关注.
+</span><span class="c1"></span>    <span class="k">go</span> <span class="nx">ccb</span><span class="p">.</span><span class="nf">watcher</span><span class="p">()</span>
+    <span class="c1">// 调用banlancer.Builder对象的Build方法来构建banlancer.
+</span><span class="c1"></span>    <span class="c1">// 注意banlancer.Builder和base.PickerBuilder这两个接口.
+</span><span class="c1"></span>    <span class="c1">// 自定义的负载均衡算法一般都是实现PickerBuilder或V2PickerBuilder接口,再通过base.NewBalancerBuilder包装成banlancer.Builder接口,实际对象是base.baseBuilder,这里Build返回的实际是base.baseBalancer对象(其实现了balancer.Balancer接口).
+</span><span class="c1"></span>	<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span> <span class="p">=</span> <span class="nx">b</span><span class="p">.</span><span class="nf">Build</span><span class="p">(</span><span class="nx">ccb</span><span class="p">,</span> <span class="nx">bopts</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">ccb</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">bb</span> <span class="o">*</span><span class="nx">baseBuilder</span><span class="p">)</span> <span class="nf">Build</span><span class="p">(</span><span class="nx">cc</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">opt</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">)</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">Balancer</span> <span class="p">{</span>
+    <span class="c1">// 返回的是baseBalancer对象.
+</span><span class="c1"></span>	<span class="nx">bal</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">baseBalancer</span><span class="p">{</span>
+        <span class="c1">// 这里cc对象是ccBalancerWrapper.
+</span><span class="c1"></span>		<span class="nx">cc</span><span class="p">:</span>              <span class="nx">cc</span><span class="p">,</span>
+		<span class="nx">pickerBuilder</span><span class="p">:</span>   <span class="nx">bb</span><span class="p">.</span><span class="nx">pickerBuilder</span><span class="p">,</span>
+		<span class="nx">v2PickerBuilder</span><span class="p">:</span> <span class="nx">bb</span><span class="p">.</span><span class="nx">v2PickerBuilder</span><span class="p">,</span>
+
+		<span class="nx">subConns</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">]</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">),</span>
+		<span class="nx">scStates</span><span class="p">:</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">]</span><span class="nx">connectivity</span><span class="p">.</span><span class="nx">State</span><span class="p">),</span>
+		<span class="nx">csEvltr</span><span class="p">:</span>  <span class="o">&amp;</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">ConnectivityStateEvaluator</span><span class="p">{},</span>
+		<span class="nx">config</span><span class="p">:</span>   <span class="nx">bb</span><span class="p">.</span><span class="nx">config</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="c1">// Initialize picker to a picker that always returns
+</span><span class="c1"></span>	<span class="c1">// ErrNoSubConnAvailable, because when state of a SubConn changes, we
+</span><span class="c1"></span>	<span class="c1">// may call UpdateState with this picker.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">bb</span><span class="p">.</span><span class="nx">pickerBuilder</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="c1">// 当前还没有与服务端建立连接,先设置一个返回error的Picker对象.
+</span><span class="c1"></span>		<span class="nx">bal</span><span class="p">.</span><span class="nx">picker</span> <span class="p">=</span> <span class="nf">NewErrPicker</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">ErrNoSubConnAvailable</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">bal</span><span class="p">.</span><span class="nx">v2Picker</span> <span class="p">=</span> <span class="nf">NewErrPickerV2</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">ErrNoSubConnAvailable</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">bal</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">ccb</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span><span class="p">)</span> <span class="nf">updateClientConnState</span><span class="p">(</span><span class="nx">ccs</span> <span class="o">*</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">ClientConnState</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancerMu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+    <span class="k">defer</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">balancerMu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+    <span class="c1">// 调用了Balancer接口的方法,这里实际上是base.baseBalancer对象.
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span><span class="p">.</span><span class="nf">UpdateClientConnState</span><span class="p">(</span><span class="o">*</span><span class="nx">ccs</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">baseBalancer</span><span class="p">)</span> <span class="nf">UpdateClientConnState</span><span class="p">(</span><span class="nx">s</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">ClientConnState</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="c1">// TODO: handle s.ResolverState.ServiceConfig?
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">logger</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">logger</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;base.baseBalancer: got new ClientConn state: &#34;</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="c1">// Successful resolution; clear resolver error and ensure we return nil.
+</span><span class="c1"></span>	<span class="nx">b</span><span class="p">.</span><span class="nx">resolverErr</span> <span class="p">=</span> <span class="kc">nil</span>
+	<span class="c1">// addrsSet is the set converted from addrs, it&#39;s used for quick lookup of an address.
+</span><span class="c1"></span>	<span class="nx">addrsSet</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">]</span><span class="kd">struct</span><span class="p">{})</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">a</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">s</span><span class="p">.</span><span class="nx">ResolverState</span><span class="p">.</span><span class="nx">Addresses</span> <span class="p">{</span>
+		<span class="nx">addrsSet</span><span class="p">[</span><span class="nx">a</span><span class="p">]</span> <span class="p">=</span> <span class="kd">struct</span><span class="p">{}{}</span>
+		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">subConns</span><span class="p">[</span><span class="nx">a</span><span class="p">];</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+            <span class="c1">// 创建连接,会调用到ccBalancerWrapper的NewSubConn方法,返回的实际上acBalancerWrapper对象.
+</span><span class="c1"></span>			<span class="c1">// a is a new address (not existing in b.subConns).
+</span><span class="c1"></span>			<span class="nx">sc</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">NewSubConn</span><span class="p">([]</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">{</span><span class="nx">a</span><span class="p">},</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">NewSubConnOptions</span><span class="p">{</span><span class="nx">HealthCheckEnabled</span><span class="p">:</span> <span class="nx">b</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">HealthCheck</span><span class="p">})</span>
+			<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">logger</span><span class="p">.</span><span class="nf">Warningf</span><span class="p">(</span><span class="s">&#34;base.baseBalancer: failed to create new SubConn: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+				<span class="k">continue</span>
+			<span class="p">}</span>
+            <span class="nx">b</span><span class="p">.</span><span class="nx">subConns</span><span class="p">[</span><span class="nx">a</span><span class="p">]</span> <span class="p">=</span> <span class="nx">sc</span>
+            <span class="c1">// 初始状态默认为空闲.
+</span><span class="c1"></span>            <span class="nx">b</span><span class="p">.</span><span class="nx">scStates</span><span class="p">[</span><span class="nx">sc</span><span class="p">]</span> <span class="p">=</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Idle</span>
+            <span class="c1">// 连接服务端.
+</span><span class="c1"></span>			<span class="nx">sc</span><span class="p">.</span><span class="nf">Connect</span><span class="p">()</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="nx">a</span><span class="p">,</span> <span class="nx">sc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">b</span><span class="p">.</span><span class="nx">subConns</span> <span class="p">{</span>
+		<span class="c1">// a was removed by resolver.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">addrsSet</span><span class="p">[</span><span class="nx">a</span><span class="p">];</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+			<span class="nx">b</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">RemoveSubConn</span><span class="p">(</span><span class="nx">sc</span><span class="p">)</span>
+			<span class="nb">delete</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">subConns</span><span class="p">,</span> <span class="nx">a</span><span class="p">)</span>
+			<span class="c1">// Keep the state of this sc in b.scStates until sc&#39;s state becomes Shutdown.
+</span><span class="c1"></span>			<span class="c1">// The entry will be deleted in UpdateSubConnState.
+</span><span class="c1"></span>		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="c1">// If resolver state contains no addresses, return an error so ClientConn
+</span><span class="c1"></span>	<span class="c1">// will trigger re-resolve. Also records this as an resolver error, so when
+</span><span class="c1"></span>	<span class="c1">// the overall state turns transient failure, the error message will have
+</span><span class="c1"></span>	<span class="c1">// the zero address information.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">ResolverState</span><span class="p">.</span><span class="nx">Addresses</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="nx">b</span><span class="p">.</span><span class="nf">ResolverError</span><span class="p">(</span><span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;produced zero addresses&#34;</span><span class="p">))</span>
+		<span class="k">return</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">ErrBadResolverState</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// 建立连接.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">acbw</span> <span class="o">*</span><span class="nx">acBalancerWrapper</span><span class="p">)</span> <span class="nf">Connect</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">acbw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">acbw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="nx">acbw</span><span class="p">.</span><span class="nx">ac</span><span class="p">.</span><span class="nf">connect</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="c1">// 最终会调用到这个connect方法.
+</span><span class="c1">// connect starts creating a transport.
+</span><span class="c1">// It does nothing if the ac is not IDLE.
+</span><span class="c1">// TODO(bar) Move this to the addrConn section.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ac</span> <span class="o">*</span><span class="nx">addrConn</span><span class="p">)</span> <span class="nf">connect</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Shutdown</span> <span class="p">{</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">return</span> <span class="nx">errConnClosing</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">!=</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Idle</span> <span class="p">{</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="c1">// Update connectivity state within the lock to prevent subsequent or
+</span><span class="c1"></span>	<span class="c1">// concurrent calls from resetting the transport more than once.
+</span><span class="c1"></span>	<span class="nx">ac</span><span class="p">.</span><span class="nf">updateConnectivityState</span><span class="p">(</span><span class="nx">connectivity</span><span class="p">.</span><span class="nx">Connecting</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+	<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+    <span class="c1">// 采用异步的方式来与服务端建立连接的.
+</span><span class="c1"></span>    <span class="c1">// Start a goroutine connecting to the server asynchronously.
+</span><span class="c1"></span>	<span class="k">go</span> <span class="nx">ac</span><span class="p">.</span><span class="nf">resetTransport</span><span class="p">()</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">ac</span> <span class="o">*</span><span class="nx">addrConn</span><span class="p">)</span> <span class="nf">resetTransport</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+
+        <span class="o">......</span>
+
+        <span class="c1">// 尝试去建立连接.
+</span><span class="c1"></span>		<span class="nx">newTr</span><span class="p">,</span> <span class="nx">addr</span><span class="p">,</span> <span class="nx">reconnect</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nf">tryAllAddrs</span><span class="p">(</span><span class="nx">addrs</span><span class="p">,</span> <span class="nx">connectDeadline</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="c1">// 错误处理.
+</span><span class="c1"></span>            <span class="o">......</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Shutdown</span> <span class="p">{</span>
+			<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="nx">newTr</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">curAddr</span> <span class="p">=</span> <span class="nx">addr</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">transport</span> <span class="p">=</span> <span class="nx">newTr</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">backoffIdx</span> <span class="p">=</span> <span class="mi">0</span>
+
+        <span class="nx">hctx</span><span class="p">,</span> <span class="nx">hcancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">ac</span><span class="p">.</span><span class="nx">ctx</span><span class="p">)</span>
+        <span class="c1">// 重点关注startHealthCheck方法.
+</span><span class="c1"></span>		<span class="nx">ac</span><span class="p">.</span><span class="nf">startHealthCheck</span><span class="p">(</span><span class="nx">hctx</span><span class="p">)</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+		<span class="c1">// Block until the created transport is down. And when this happens,
+</span><span class="c1"></span>		<span class="c1">// we restart from the top of the addr list.
+</span><span class="c1"></span>		<span class="o">&lt;-</span><span class="nx">reconnect</span><span class="p">.</span><span class="nf">Done</span><span class="p">()</span>
+		<span class="nf">hcancel</span><span class="p">()</span>
+		<span class="c1">// restart connecting - the top of the loop will set state to
+</span><span class="c1"></span>		<span class="c1">// CONNECTING.  This is against the current connectivity semantics doc,
+</span><span class="c1"></span>		<span class="c1">// however it allows for graceful behavior for RPCs not yet dispatched
+</span><span class="c1"></span>		<span class="c1">// - unfortunate timing would otherwise lead to the RPC failing even
+</span><span class="c1"></span>		<span class="c1">// though the TRANSIENT_FAILURE state (called for by the doc) would be
+</span><span class="c1"></span>		<span class="c1">// instantaneous.
+</span><span class="c1"></span>		<span class="c1">//
+</span><span class="c1"></span>		<span class="c1">// Ideally we should transition to Idle here and block until there is
+</span><span class="c1"></span>		<span class="c1">// RPC activity that leads to the balancer requesting a reconnect of
+</span><span class="c1"></span>		<span class="c1">// the associated SubConn.
+</span><span class="c1"></span>	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// startHealthCheck starts the health checking stream (RPC) to watch the health
+</span><span class="c1">// stats of this connection if health checking is requested and configured.
+</span><span class="c1">//
+</span><span class="c1">// LB channel health checking is enabled when all requirements below are met:
+</span><span class="c1">// 1. it is not disabled by the user with the WithDisableHealthCheck DialOption
+</span><span class="c1">// 2. internal.HealthCheckFunc is set by importing the grpc/health package
+</span><span class="c1">// 3. a service config with non-empty healthCheckConfig field is provided
+</span><span class="c1">// 4. the load balancer requests it
+</span><span class="c1">//
+</span><span class="c1">// It sets addrConn to READY if the health checking stream is not started.
+</span><span class="c1">//
+</span><span class="c1">// Caller must hold ac.mu.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ac</span> <span class="o">*</span><span class="nx">addrConn</span><span class="p">)</span> <span class="nf">startHealthCheck</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 整个函数的重点是调用ac.updateConnecttivityState来设置状态.
+</span><span class="c1"></span>	<span class="kd">var</span> <span class="nx">healthcheckManagingState</span> <span class="kt">bool</span>
+	<span class="k">defer</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nx">healthcheckManagingState</span> <span class="p">{</span>
+            <span class="c1">// 设置连接状态为Ready.
+</span><span class="c1"></span>			<span class="nx">ac</span><span class="p">.</span><span class="nf">updateConnectivityState</span><span class="p">(</span><span class="nx">connectivity</span><span class="p">.</span><span class="nx">Ready</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}()</span>
+
+	<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">disableHealthCheck</span> <span class="p">{</span>
+		<span class="k">return</span>
+    <span class="p">}</span>
+    <span class="c1">// 若没有设置healthCheckConfig直接返回.
+</span><span class="c1"></span>	<span class="nx">healthCheckConfig</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">healthCheckConfig</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">healthCheckConfig</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">ac</span><span class="p">.</span><span class="nx">scopts</span><span class="p">.</span><span class="nx">HealthCheckEnabled</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">healthCheckFunc</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">healthCheckFunc</span>
+	<span class="k">if</span> <span class="nx">healthCheckFunc</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="c1">// The health package is not imported to set health check function.
+</span><span class="c1"></span>		<span class="c1">//
+</span><span class="c1"></span>		<span class="c1">// TODO: add a link to the health check doc in the error message.
+</span><span class="c1"></span>		<span class="nx">channelz</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;Health check is requested but health check function is not set.&#34;</span><span class="p">)</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">healthcheckManagingState</span> <span class="p">=</span> <span class="kc">true</span>
+
+	<span class="c1">// Set up the health check helper functions.
+</span><span class="c1"></span>	<span class="nx">currentTr</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">transport</span>
+	<span class="nx">newStream</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">method</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="kd">interface</span><span class="p">{},</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">transport</span> <span class="o">!=</span> <span class="nx">currentTr</span> <span class="p">{</span>
+			<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Canceled</span><span class="p">,</span> <span class="s">&#34;the provided transport is no longer valid to use&#34;</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">return</span> <span class="nf">newNonRetryClientStream</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">StreamDesc</span><span class="p">{</span><span class="nx">ServerStreams</span><span class="p">:</span> <span class="kc">true</span><span class="p">},</span> <span class="nx">method</span><span class="p">,</span> <span class="nx">currentTr</span><span class="p">,</span> <span class="nx">ac</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="c1">// headlthCheckFunc最终会调用到下面的函数,来设置连接状态.
+</span><span class="c1"></span>	<span class="nx">setConnectivityState</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">s</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">lastErr</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+		<span class="k">defer</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">transport</span> <span class="o">!=</span> <span class="nx">currentTr</span> <span class="p">{</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+		<span class="nx">ac</span><span class="p">.</span><span class="nf">updateConnectivityState</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="nx">lastErr</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="c1">// Start the health checking stream.
+</span><span class="c1"></span>	<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// healthCheckFunc默认值是health.clientHealthCheck函数(health/client.go文件中).
+</span><span class="c1"></span>		<span class="nx">err</span> <span class="o">:=</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nf">healthCheckFunc</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">newStream</span><span class="p">,</span> <span class="nx">setConnectivityState</span><span class="p">,</span> <span class="nx">healthCheckConfig</span><span class="p">.</span><span class="nx">ServiceName</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Code</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="o">==</span> <span class="nx">codes</span><span class="p">.</span><span class="nx">Unimplemented</span> <span class="p">{</span>
+				<span class="nx">channelz</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;Subchannel health check is unimplemented at server side, thus health check is disabled&#34;</span><span class="p">)</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+				<span class="nx">channelz</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;HealthCheckFunc exits with unexpected error %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}()</span>
+<span class="p">}</span>
+
+<span class="c1">// Note: this requires a lock on ac.mu.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ac</span> <span class="o">*</span><span class="nx">addrConn</span><span class="p">)</span> <span class="nf">updateConnectivityState</span><span class="p">(</span><span class="nx">s</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">lastErr</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">s</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="p">=</span> <span class="nx">s</span>
+	<span class="nx">channelz</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;Subchannel Connectivity change to %v&#34;</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+	<span class="nx">ac</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">handleSubConnStateChange</span><span class="p">(</span><span class="nx">ac</span><span class="p">.</span><span class="nx">acbw</span><span class="p">,</span> <span class="nx">s</span><span class="p">,</span> <span class="nx">lastErr</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">handleSubConnStateChange</span><span class="p">(</span><span class="nx">sc</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">,</span> <span class="nx">s</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">conns</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="c1">// TODO(bar switching) send updates to all balancer wrappers when balancer
+</span><span class="c1"></span>	<span class="c1">// gracefully switching is supported.
+</span><span class="c1"></span>	<span class="nx">cc</span><span class="p">.</span><span class="nx">balancerWrapper</span><span class="p">.</span><span class="nf">handleSubConnStateChange</span><span class="p">(</span><span class="nx">sc</span><span class="p">,</span> <span class="nx">s</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">ccb</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span><span class="p">)</span> <span class="nf">handleSubConnStateChange</span><span class="p">(</span><span class="nx">sc</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">,</span> <span class="nx">s</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// When updating addresses for a SubConn, if the address in use is not in
+</span><span class="c1"></span>	<span class="c1">// the new addresses, the old ac will be tearDown() and a new ac will be
+</span><span class="c1"></span>	<span class="c1">// created. tearDown() generates a state change with Shutdown state, we
+</span><span class="c1"></span>	<span class="c1">// don&#39;t want the balancer to receive this state change. So before
+</span><span class="c1"></span>	<span class="c1">// tearDown() on the old ac, ac.acbw (acWrapper) will be set to nil, and
+</span><span class="c1"></span>	<span class="c1">// this function will be called with (nil, Shutdown). We don&#39;t need to call
+</span><span class="c1"></span>	<span class="c1">// balancer method in this case.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">sc</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+    <span class="p">}</span>
+    <span class="c1">// 最终会向scBuffer里写入连接的状态信息,还记得之前需要重点关注的ccBalancerWrapper对象的watcher方法么.
+</span><span class="c1"></span>	<span class="nx">ccb</span><span class="p">.</span><span class="nx">scBuffer</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">scStateUpdate</span><span class="p">{</span>
+		<span class="nx">sc</span><span class="p">:</span>    <span class="nx">sc</span><span class="p">,</span>
+		<span class="nx">state</span><span class="p">:</span> <span class="nx">s</span><span class="p">,</span>
+		<span class="nx">err</span><span class="p">:</span>   <span class="nx">err</span><span class="p">,</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// watcher balancer functions sequentially, so the balancer can be implemented
+</span><span class="c1">// lock-free.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ccb</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span><span class="p">)</span> <span class="nf">watcher</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="k">select</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="nx">t</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">ccb</span><span class="p">.</span><span class="nx">scBuffer</span><span class="p">.</span><span class="nf">Get</span><span class="p">():</span>
+            <span class="c1">// 从scBuffer中获取数据.
+</span><span class="c1"></span>			<span class="nx">ccb</span><span class="p">.</span><span class="nx">scBuffer</span><span class="p">.</span><span class="nf">Load</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">done</span><span class="p">.</span><span class="nf">HasFired</span><span class="p">()</span> <span class="p">{</span>
+				<span class="k">break</span>
+			<span class="p">}</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancerMu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+            <span class="nx">su</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.(</span><span class="o">*</span><span class="nx">scStateUpdate</span><span class="p">)</span>
+            <span class="c1">// 调用Balancer接口的UpdateSubConnState来设置连接的状态,这里balancer对象是base.baseBalancer对象.
+</span><span class="c1"></span>			<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span><span class="p">.</span><span class="nf">UpdateSubConnState</span><span class="p">(</span><span class="nx">su</span><span class="p">.</span><span class="nx">sc</span><span class="p">,</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConnState</span><span class="p">{</span><span class="nx">ConnectivityState</span><span class="p">:</span> <span class="nx">su</span><span class="p">.</span><span class="nx">state</span><span class="p">,</span> <span class="nx">ConnectionError</span><span class="p">:</span> <span class="nx">su</span><span class="p">.</span><span class="nx">err</span><span class="p">})</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancerMu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ccb</span><span class="p">.</span><span class="nx">done</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+        <span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">done</span><span class="p">.</span><span class="nf">HasFired</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+			<span class="nx">scs</span> <span class="o">:=</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">subConns</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">subConns</span> <span class="p">=</span> <span class="kc">nil</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="k">for</span> <span class="nx">acbw</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">scs</span> <span class="p">{</span>
+				<span class="nx">ccb</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">removeAddrConn</span><span class="p">(</span><span class="nx">acbw</span><span class="p">.</span><span class="nf">getAddrConn</span><span class="p">(),</span> <span class="nx">errConnDrain</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nf">UpdateState</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">State</span><span class="p">{</span><span class="nx">ConnectivityState</span><span class="p">:</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Connecting</span><span class="p">,</span> <span class="nx">Picker</span><span class="p">:</span> <span class="kc">nil</span><span class="p">})</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">baseBalancer</span><span class="p">)</span> <span class="nf">UpdateSubConnState</span><span class="p">(</span><span class="nx">sc</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">,</span> <span class="nx">state</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConnState</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">s</span> <span class="o">:=</span> <span class="nx">state</span><span class="p">.</span><span class="nx">ConnectivityState</span>
+
+    <span class="o">......</span>
+
+    <span class="c1">// 中间代码忽略,重点关注下面的.
+</span><span class="c1"></span>	<span class="c1">// Regenerate picker when one of the following happens:
+</span><span class="c1"></span>	<span class="c1">//  - this sc entered or left ready
+</span><span class="c1"></span>	<span class="c1">//  - the aggregated state of balancer is TransientFailure
+</span><span class="c1"></span>	<span class="c1">//    (may need to update error message)
+</span><span class="c1"></span>	<span class="k">if</span> <span class="p">(</span><span class="nx">s</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Ready</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="nx">oldS</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Ready</span><span class="p">)</span> <span class="o">||</span>
+		<span class="nx">b</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">TransientFailure</span> <span class="p">{</span>
+        <span class="c1">// 获取Picker接口的对象.
+</span><span class="c1"></span>		<span class="nx">b</span><span class="p">.</span><span class="nf">regeneratePicker</span><span class="p">()</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 这里cc对象是ccBalancerWrapper对象(实现了balancer.ClientConn接口).
+</span><span class="c1"></span>	<span class="nx">b</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">UpdateState</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">State</span><span class="p">{</span><span class="nx">ConnectivityState</span><span class="p">:</span> <span class="nx">b</span><span class="p">.</span><span class="nx">state</span><span class="p">,</span> <span class="nx">Picker</span><span class="p">:</span> <span class="nx">b</span><span class="p">.</span><span class="nx">picker</span><span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// regeneratePicker takes a snapshot of the balancer, and generates a picker
+</span><span class="c1">// from it. The picker is
+</span><span class="c1">//  - errPicker if the balancer is in TransientFailure,
+</span><span class="c1">//  - built by the pickerBuilder with all READY SubConns otherwise.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">baseBalancer</span><span class="p">)</span> <span class="nf">regeneratePicker</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">b</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">TransientFailure</span> <span class="p">{</span>
+		<span class="nx">b</span><span class="p">.</span><span class="nx">picker</span> <span class="p">=</span> <span class="nf">NewErrPicker</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nf">mergeErrors</span><span class="p">())</span>
+		<span class="k">return</span>
+    <span class="p">}</span>
+    <span class="c1">// 记录状态为Ready的连接.
+</span><span class="c1"></span>	<span class="nx">readySCs</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">]</span><span class="nx">SubConnInfo</span><span class="p">)</span>
+
+	<span class="c1">// Filter out all ready SCs from full subConn map.
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">addr</span><span class="p">,</span> <span class="nx">sc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">b</span><span class="p">.</span><span class="nx">subConns</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">st</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">scStates</span><span class="p">[</span><span class="nx">sc</span><span class="p">];</span> <span class="nx">ok</span> <span class="o">&amp;&amp;</span> <span class="nx">st</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Ready</span> <span class="p">{</span>
+			<span class="nx">readySCs</span><span class="p">[</span><span class="nx">sc</span><span class="p">]</span> <span class="p">=</span> <span class="nx">SubConnInfo</span><span class="p">{</span><span class="nx">Address</span><span class="p">:</span> <span class="nx">addr</span><span class="p">}</span>
+		<span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">// 调用PickerBuilder接口的Build方法来生成Picker接口,供后续负载均衡使用,一般自定义负载均衡算法是需要实现这两个接口的.
+</span><span class="c1"></span>	<span class="nx">b</span><span class="p">.</span><span class="nx">picker</span> <span class="p">=</span> <span class="nx">b</span><span class="p">.</span><span class="nx">pickerBuilder</span><span class="p">.</span><span class="nf">Build</span><span class="p">(</span><span class="nx">PickerBuildInfo</span><span class="p">{</span><span class="nx">ReadySCs</span><span class="p">:</span> <span class="nx">readySCs</span><span class="p">})</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">ccb</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span><span class="p">)</span> <span class="nf">UpdateState</span><span class="p">(</span><span class="nx">s</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">State</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ccb</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">defer</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">subConns</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 设置ClientConn的blockingpicker对象的picker字段.
+</span><span class="c1"></span>	<span class="c1">// Update picker before updating state.  Even though the ordering here does
+</span><span class="c1"></span>	<span class="c1">// not matter, it can lead to multiple calls of Pick in the common start-up
+</span><span class="c1"></span>	<span class="c1">// case where we wait for ready and then perform an RPC.  If the picker is
+</span><span class="c1"></span>	<span class="c1">// updated later, we could call the &#34;connecting&#34; picker when the state is
+</span><span class="c1"></span>	<span class="c1">// updated, and then call the &#34;ready&#34; picker after the picker gets updated.
+</span><span class="c1"></span>	<span class="nx">ccb</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">blockingpicker</span><span class="p">.</span><span class="nf">updatePicker</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">Picker</span><span class="p">)</span>
+	<span class="nx">ccb</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">csMgr</span><span class="p">.</span><span class="nf">updateState</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">ConnectivityState</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><h2 id="调用rpc接口">调用RPC接口</h2>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">helloServiceClient</span><span class="p">)</span> <span class="nf">SayHello</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">in</span> <span class="o">*</span><span class="nx">HelloRequest</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">CallOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">HelloReply</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">out</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">HelloReply</span><span class="p">)</span>
+    <span class="c1">// 这里cc是ClientConn对象,调用其Invoke方法,定义在call.go文件里.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;/HelloService/SayHello&#34;</span><span class="p">,</span> <span class="nx">in</span><span class="p">,</span> <span class="nx">out</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">out</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// Invoke sends the RPC request on the wire and returns after response is
+</span><span class="c1">// received.  This is typically called by generated code.
+</span><span class="c1">//
+</span><span class="c1">// All errors returned by Invoke are compatible with the status package.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">Invoke</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">method</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">args</span><span class="p">,</span> <span class="nx">reply</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">CallOption</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="c1">// allow interceptor to see all applicable call options, which means those
+</span><span class="c1"></span>	<span class="c1">// configured as defaults from dial option as well as per-call options
+</span><span class="c1"></span>	<span class="nx">opts</span> <span class="p">=</span> <span class="nf">combine</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">callOptions</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">unaryInt</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="c1">// 如果有设置客户端拦截器,最终也会调用到invoke函数.
+</span><span class="c1"></span>		<span class="k">return</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nf">unaryInt</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">method</span><span class="p">,</span> <span class="nx">args</span><span class="p">,</span> <span class="nx">reply</span><span class="p">,</span> <span class="nx">cc</span><span class="p">,</span> <span class="nx">invoke</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="c1">// 没有就直接调用invoke函数.
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nf">invoke</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">method</span><span class="p">,</span> <span class="nx">args</span><span class="p">,</span> <span class="nx">reply</span><span class="p">,</span> <span class="nx">cc</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">invoke</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">method</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">reply</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">CallOption</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="c1">// 该函数内部会使用负载均衡算法,来选出一个连接.
+</span><span class="c1"></span>	<span class="nx">cs</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newClientStream</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">unaryStreamDesc</span><span class="p">,</span> <span class="nx">cc</span><span class="p">,</span> <span class="nx">method</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">SendMsg</span><span class="p">(</span><span class="nx">req</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">RecvMsg</span><span class="p">(</span><span class="nx">reply</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">newClientStream</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">desc</span> <span class="o">*</span><span class="nx">StreamDesc</span><span class="p">,</span> <span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">method</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">CallOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">_</span> <span class="nx">ClientStream</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 前面代码可以不关注.
+</span><span class="c1"></span>    <span class="o">......</span>
+
+	<span class="nx">cs</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">clientStream</span><span class="p">{</span>
+		<span class="nx">callHdr</span><span class="p">:</span>      <span class="nx">callHdr</span><span class="p">,</span>
+		<span class="nx">ctx</span><span class="p">:</span>          <span class="nx">ctx</span><span class="p">,</span>
+		<span class="nx">methodConfig</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">mc</span><span class="p">,</span>
+		<span class="nx">opts</span><span class="p">:</span>         <span class="nx">opts</span><span class="p">,</span>
+		<span class="nx">callInfo</span><span class="p">:</span>     <span class="nx">c</span><span class="p">,</span>
+		<span class="nx">cc</span><span class="p">:</span>           <span class="nx">cc</span><span class="p">,</span>
+		<span class="nx">desc</span><span class="p">:</span>         <span class="nx">desc</span><span class="p">,</span>
+		<span class="nx">codec</span><span class="p">:</span>        <span class="nx">c</span><span class="p">.</span><span class="nx">codec</span><span class="p">,</span>
+		<span class="nx">cp</span><span class="p">:</span>           <span class="nx">cp</span><span class="p">,</span>
+		<span class="nx">comp</span><span class="p">:</span>         <span class="nx">comp</span><span class="p">,</span>
+		<span class="nx">cancel</span><span class="p">:</span>       <span class="nx">cancel</span><span class="p">,</span>
+		<span class="nx">beginTime</span><span class="p">:</span>    <span class="nx">beginTime</span><span class="p">,</span>
+		<span class="nx">firstAttempt</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">disableRetry</span> <span class="p">{</span>
+		<span class="nx">cs</span><span class="p">.</span><span class="nx">retryThrottler</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">retryThrottler</span><span class="p">.</span><span class="nf">Load</span><span class="p">().(</span><span class="o">*</span><span class="nx">retryThrottler</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">cs</span><span class="p">.</span><span class="nx">binlog</span> <span class="p">=</span> <span class="nx">binarylog</span><span class="p">.</span><span class="nf">GetMethodLogger</span><span class="p">(</span><span class="nx">method</span><span class="p">)</span>
+
+    <span class="c1">// 重点关注newAttempLocked.
+</span><span class="c1"></span>	<span class="c1">// Only this initial attempt has stats/tracing.
+</span><span class="c1"></span>	<span class="c1">// TODO(dfawley): move to newAttempt when per-attempt stats are implemented.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">newAttemptLocked</span><span class="p">(</span><span class="nx">sh</span><span class="p">,</span> <span class="nx">trInfo</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cs</span><span class="p">.</span><span class="nf">finish</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="nx">op</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">csAttempt</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">a</span><span class="p">.</span><span class="nf">newStream</span><span class="p">()</span> <span class="p">}</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">withRetry</span><span class="p">(</span><span class="nx">op</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span> <span class="nx">cs</span><span class="p">.</span><span class="nf">bufferForRetryLocked</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">op</span><span class="p">)</span> <span class="p">});</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">cs</span><span class="p">.</span><span class="nf">finish</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">binlog</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">md</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">metadata</span><span class="p">.</span><span class="nf">FromOutgoingContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+		<span class="nx">logEntry</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">binarylog</span><span class="p">.</span><span class="nx">ClientHeader</span><span class="p">{</span>
+			<span class="nx">OnClientSide</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+			<span class="nx">Header</span><span class="p">:</span>       <span class="nx">md</span><span class="p">,</span>
+			<span class="nx">MethodName</span><span class="p">:</span>   <span class="nx">method</span><span class="p">,</span>
+			<span class="nx">Authority</span><span class="p">:</span>    <span class="nx">cs</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">authority</span><span class="p">,</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">deadline</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Deadline</span><span class="p">();</span> <span class="nx">ok</span> <span class="p">{</span>
+			<span class="nx">logEntry</span><span class="p">.</span><span class="nx">Timeout</span> <span class="p">=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Until</span><span class="p">(</span><span class="nx">deadline</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">logEntry</span><span class="p">.</span><span class="nx">Timeout</span> <span class="p">&lt;</span> <span class="mi">0</span> <span class="p">{</span>
+				<span class="nx">logEntry</span><span class="p">.</span><span class="nx">Timeout</span> <span class="p">=</span> <span class="mi">0</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+		<span class="nx">cs</span><span class="p">.</span><span class="nx">binlog</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="nx">logEntry</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">desc</span> <span class="o">!=</span> <span class="nx">unaryStreamDesc</span> <span class="p">{</span>
+		<span class="c1">// Listen on cc and stream contexts to cleanup when the user closes the
+</span><span class="c1"></span>		<span class="c1">// ClientConn or cancels the stream context.  In all other cases, an error
+</span><span class="c1"></span>		<span class="c1">// should already be injected into the recv buffer by the transport, which
+</span><span class="c1"></span>		<span class="c1">// the client will eventually receive, and then we will cancel the stream&#39;s
+</span><span class="c1"></span>		<span class="c1">// context in clientStream.finish.
+</span><span class="c1"></span>		<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+			<span class="k">select</span> <span class="p">{</span>
+			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">cc</span><span class="p">.</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+				<span class="nx">cs</span><span class="p">.</span><span class="nf">finish</span><span class="p">(</span><span class="nx">ErrClientConnClosing</span><span class="p">)</span>
+			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+				<span class="nx">cs</span><span class="p">.</span><span class="nf">finish</span><span class="p">(</span><span class="nf">toRPCErr</span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">()))</span>
+			<span class="p">}</span>
+		<span class="p">}()</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">cs</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// newAttemptLocked creates a new attempt with a transport.
+</span><span class="c1">// If it succeeds, then it replaces clientStream&#39;s attempt with this new attempt.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">cs</span> <span class="o">*</span><span class="nx">clientStream</span><span class="p">)</span> <span class="nf">newAttemptLocked</span><span class="p">(</span><span class="nx">sh</span> <span class="nx">stats</span><span class="p">.</span><span class="nx">Handler</span><span class="p">,</span> <span class="nx">trInfo</span> <span class="o">*</span><span class="nx">traceInfo</span><span class="p">)</span> <span class="p">(</span><span class="nx">retErr</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">newAttempt</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">csAttempt</span><span class="p">{</span>
+		<span class="nx">cs</span><span class="p">:</span>           <span class="nx">cs</span><span class="p">,</span>
+		<span class="nx">dc</span><span class="p">:</span>           <span class="nx">cs</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">dc</span><span class="p">,</span>
+		<span class="nx">statsHandler</span><span class="p">:</span> <span class="nx">sh</span><span class="p">,</span>
+		<span class="nx">trInfo</span><span class="p">:</span>       <span class="nx">trInfo</span><span class="p">,</span>
+    <span class="p">}</span>
+    
+    <span class="o">......</span>
+
+    <span class="c1">// 重点关注getTransport.
+</span><span class="c1"></span>	<span class="nx">t</span><span class="p">,</span> <span class="nx">done</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">getTransport</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">callInfo</span><span class="p">.</span><span class="nx">failFast</span><span class="p">,</span> <span class="nx">cs</span><span class="p">.</span><span class="nx">callHdr</span><span class="p">.</span><span class="nx">Method</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">trInfo</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">trInfo</span><span class="p">.</span><span class="nx">firstLine</span><span class="p">.</span><span class="nf">SetRemoteAddr</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nf">RemoteAddr</span><span class="p">())</span>
+	<span class="p">}</span>
+	<span class="nx">newAttempt</span><span class="p">.</span><span class="nx">t</span> <span class="p">=</span> <span class="nx">t</span>
+	<span class="nx">newAttempt</span><span class="p">.</span><span class="nx">done</span> <span class="p">=</span> <span class="nx">done</span>
+	<span class="nx">cs</span><span class="p">.</span><span class="nx">attempt</span> <span class="p">=</span> <span class="nx">newAttempt</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">getTransport</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">failfast</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">method</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">transport</span><span class="p">.</span><span class="nx">ClientTransport</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">DoneInfo</span><span class="p">),</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 调用pick方法来负载均衡.
+</span><span class="c1"></span>	<span class="nx">t</span><span class="p">,</span> <span class="nx">done</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">blockingpicker</span><span class="p">.</span><span class="nf">pick</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">failfast</span><span class="p">,</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">PickInfo</span><span class="p">{</span>
+		<span class="nx">Ctx</span><span class="p">:</span>            <span class="nx">ctx</span><span class="p">,</span>
+		<span class="nx">FullMethodName</span><span class="p">:</span> <span class="nx">method</span><span class="p">,</span>
+	<span class="p">})</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nf">toRPCErr</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">t</span><span class="p">,</span> <span class="nx">done</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// pick returns the transport that will be used for the RPC.
+</span><span class="c1">// It may block in the following cases:
+</span><span class="c1">// - there&#39;s no picker
+</span><span class="c1">// - the current picker returns ErrNoSubConnAvailable
+</span><span class="c1">// - the current picker returns other errors and failfast is false.
+</span><span class="c1">// - the subConn returned by the current picker is not READY
+</span><span class="c1">// When one of these situations happens, pick blocks until the picker gets updated.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">pw</span> <span class="o">*</span><span class="nx">pickerWrapper</span><span class="p">)</span> <span class="nf">pick</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">failfast</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">info</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">PickInfo</span><span class="p">)</span> <span class="p">(</span><span class="nx">transport</span><span class="p">.</span><span class="nx">ClientTransport</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">DoneInfo</span><span class="p">),</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">ch</span> <span class="kd">chan</span> <span class="kd">struct</span><span class="p">{}</span>
+
+	<span class="kd">var</span> <span class="nx">lastPickErr</span> <span class="kt">error</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="nx">pw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+		<span class="k">if</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">done</span> <span class="p">{</span>
+			<span class="nx">pw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">ErrClientConnClosing</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">picker</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="nx">ch</span> <span class="p">=</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">blockingCh</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">ch</span> <span class="o">==</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">blockingCh</span> <span class="p">{</span>
+
+            <span class="o">......</span>
+
+			<span class="k">continue</span>
+		<span class="p">}</span>
+
+		<span class="nx">ch</span> <span class="p">=</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">blockingCh</span>
+		<span class="nx">p</span> <span class="o">:=</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">picker</span>
+		<span class="nx">pw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+        <span class="c1">// 调用Pick方法负载均衡,可以是自定义负载均衡算法,gRPC默认的是轮询.
+</span><span class="c1"></span>		<span class="nx">pickResult</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">.</span><span class="nf">Pick</span><span class="p">(</span><span class="nx">info</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+            <span class="c1">// 返回错误时的处理.
+</span><span class="c1"></span>            <span class="o">......</span>
+		<span class="p">}</span>
+
+        <span class="c1">// 把conn显示的转化为acBalancerWrapper.
+</span><span class="c1"></span>		<span class="nx">acw</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">pickResult</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">.(</span><span class="o">*</span><span class="nx">acBalancerWrapper</span><span class="p">)</span>
+		<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+			<span class="nx">logger</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="s">&#34;subconn returned from pick is not *acBalancerWrapper&#34;</span><span class="p">)</span>
+			<span class="k">continue</span>
+        <span class="p">}</span>
+        
+        <span class="c1">// 调用getReadyTransport,来判断状态是否为Ready,若为Idle则发起connect.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">t</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">acw</span><span class="p">.</span><span class="nf">getAddrConn</span><span class="p">().</span><span class="nf">getReadyTransport</span><span class="p">();</span> <span class="nx">ok</span> <span class="p">{</span>
+			<span class="k">if</span> <span class="nx">channelz</span><span class="p">.</span><span class="nf">IsOn</span><span class="p">()</span> <span class="p">{</span>
+				<span class="k">return</span> <span class="nx">t</span><span class="p">,</span> <span class="nf">doneChannelzWrapper</span><span class="p">(</span><span class="nx">acw</span><span class="p">,</span> <span class="nx">pickResult</span><span class="p">.</span><span class="nx">Done</span><span class="p">),</span> <span class="kc">nil</span>
+			<span class="p">}</span>
+			<span class="k">return</span> <span class="nx">t</span><span class="p">,</span> <span class="nx">pickResult</span><span class="p">.</span><span class="nx">Done</span><span class="p">,</span> <span class="kc">nil</span>
+        <span class="p">}</span>
+        <span class="c1">// 状态不为Ready,则返回重新进行pick.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">pickResult</span><span class="p">.</span><span class="nx">Done</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="c1">// Calling done with nil error, no bytes sent and no bytes received.
+</span><span class="c1"></span>			<span class="c1">// DoneInfo with default value works.
+</span><span class="c1"></span>			<span class="nx">pickResult</span><span class="p">.</span><span class="nf">Done</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">DoneInfo</span><span class="p">{})</span>
+		<span class="p">}</span>
+		<span class="nx">logger</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;blockingPicker: the picked transport is not ready, loop back to repick&#34;</span><span class="p">)</span>
+		<span class="c1">// If ok == false, ac.state is not READY.
+</span><span class="c1"></span>		<span class="c1">// A valid picker always returns READY subConn. This means the state of ac
+</span><span class="c1"></span>		<span class="c1">// just changed, and picker will be updated shortly.
+</span><span class="c1"></span>		<span class="c1">// continue back to the beginning of the for loop to repick.
+</span><span class="c1"></span>	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><h2 id="总结">总结</h2>
+<ul>
+<li>要实现自定义Resolver,需要实现resolver.Builder接口和resolver.Resolver接口.在init函数中调用resolver.Register来注册自定义的Builder对象.在Builder接口的Build方法中要调用UpdateState来更新服务端地址信息.客户端在解析target时会根据scheme来获取对应的Resolver对象.</li>
+<li>要实现自定义负载均衡算法,需要实现base.PickerBuilder接口和balancer.Picker接口(注意这两个接口有V2版的),通过base.NewBalancerBuilder包装成balancer.Builder接口,再在init函数中调用balancer.Register来注册该Builder对象.最后grpc.WithBalancerName把Builder包装成grpc.DialOption.</li>
+<li>要实现自定义认证,需要实现credentials.PerRPCCredentials接口,然后调用grpc.WithPerRPCCredentials把对象包装成grpc.DialOption.</li>
+<li>在客户端调用<code>Dial</code>或<code>DialContext</code>过程中,会先通过Resolver来解析出所有的Endpoint,然后会与每一个Endpoint建立连接(采用异步的方式),同时也会设置好对应的负载均衡Picker对象.注意如果使用了grpc.WithBlock()会同步等待连接建立成功(有一个成功就可以了),否则就会直接返回.</li>
+<li>负载均衡算法会在调用具体的RPC函数过程中使用到,在invoke函数(call.go文件中)中会根据负载均衡算法来选定一个连接,然后发起请求.</li>
+</ul>
+]]></content>
+		</item>
 		
 		<item>
 			<title>gRPC系列之server端调用</title>
