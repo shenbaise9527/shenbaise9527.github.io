@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="MySQL基于GTID复制">
+<meta itemprop="description" content="开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制.">
+<meta itemprop="datePublished" content="2020-11-09T21:27:12+08:00" />
+<meta itemprop="dateModified" content="2020-11-09T21:27:12+08:00" />
+<meta itemprop="wordCount" content="1666">
+
+
+
+<meta itemprop="keywords" content="mysql," />
+<meta property="og:title" content="MySQL基于GTID复制" />
+<meta property="og:description" content="开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.github.io/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/" />
+<meta property="article:published_time" content="2020-11-09T21:27:12+08:00" />
+<meta property="article:modified_time" content="2020-11-09T21:27:12+08:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="MySQL基于GTID复制"/>
+<meta name="twitter:description" content="开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>MySQL基于GTID复制</title>
+	<link rel="stylesheet" href="https://shenbaise9527.github.io/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://shenbaise9527.github.io">深白色9527</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://shenbaise9527.github.io/posts/">文章</a>
+				<a href="https://shenbaise9527.github.io/tags/">标签</a>
+				<a href="https://shenbaise9527.github.io/about/">关于</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<button id="toc-btn" class="hdr-btn desktop-only-ib" title="Table of Contents"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3" y2="6"></line><line x1="3" y1="12" x2="3" y2="12"></line><line x1="3" y1="18" x2="3" y2="18"></line></svg></button><span class="hdr-social hide-in-mobile"><a href="mailto:zhouyingan@gmail.com" target="_blank" rel="noopener me" title="Email"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></a><a href="https://github.com/shenbaise9527" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://shenbaise9527.github.io/posts/">文章</a></li>
+			<li><a href="https://shenbaise9527.github.io/tags/">标签</a></li>
+			<li><a href="https://shenbaise9527.github.io/about/">关于</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Nov 9, 2020</span></div>
+				<h1>MySQL基于GTID复制</h1>
+			</header>
+			<div class="content">
+				<h2 id="开启gtid">开启GTID.<a href="#开启gtid" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="err">启用</span><span class="n">gtid模式</span><span class="p">,</span><span class="err">每个事务有个唯一的</span><span class="n">id</span><span class="p">,</span><span class="err">全局事务</span><span class="n">ID</span><span class="p">,</span><span class="err">事务提交时分配</span><span class="p">,</span><span class="err">基于</span><span class="n">gtid来复制</span><span class="p">.</span>
+<span class="n">gtid_mode</span><span class="o">=</span><span class="k">ON</span>
+
+<span class="o">#</span> <span class="err">开启</span><span class="n">gtid的一些安全限制</span><span class="p">.</span>
+<span class="n">enforce_gtid_consistency</span><span class="o">=</span><span class="k">ON</span>
+
+<span class="o">#</span> <span class="n">gtid生成方式</span><span class="p">,</span><span class="err">默认为自动</span><span class="p">.</span>
+<span class="o">#</span> <span class="n">gtid_next</span><span class="o">=</span><span class="n">AUTOMATIC</span>
+
+<span class="o">#</span> <span class="err">从库启动复制</span><span class="p">,</span><span class="n">master_auto_position</span><span class="o">=</span><span class="mi">1</span><span class="err">表示开启基于</span><span class="n">GTID的复制</span><span class="p">.</span>
+<span class="n">CHANGE</span> <span class="n">MASTER</span> <span class="k">TO</span> <span class="n">MASTER_HOST</span><span class="o">=</span><span class="s1">&#39;xxx&#39;</span><span class="p">,</span> <span class="n">MASTER_PORT</span><span class="o">=</span><span class="mi">3306</span><span class="p">,</span> <span class="n">MASTER_USER</span><span class="o">=</span><span class="s1">&#39;user_name&#39;</span><span class="p">,</span> <span class="n">MASTER_PASSWORD</span><span class="o">=</span><span class="s1">&#39;password&#39;</span><span class="p">,</span> <span class="n">MASTER_AUTO_POSITION</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+<span class="k">start</span> <span class="n">slave</span><span class="p">;</span>
+</code></pre></div><h2 id="从库相关参数">从库相关参数<a href="#从库相关参数" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="err">并行复制类型</span><span class="p">,</span><span class="err">默认值为</span><span class="k">DATABASE</span><span class="p">,</span><span class="err">即按库来并行复制</span><span class="p">,</span><span class="n">LOGICAL_CLOCK为根据同时进入prepare和commit来并行复制</span><span class="p">.</span>
+<span class="n">slave_parallel_type</span><span class="o">=</span><span class="n">LOGICAL_CLOCK</span>
+
+<span class="o">#</span> <span class="err">并行复制线程数</span><span class="p">.</span>
+<span class="n">slave_parallel_workers</span><span class="o">=</span><span class="mi">8</span>
+
+<span class="o">#</span> <span class="err">并行复制策略</span><span class="p">,</span><span class="err">默认值为</span><span class="n">COMMIT_ORDER</span><span class="p">,</span><span class="err">即按照上面的</span><span class="n">prepare和commit来并行</span><span class="p">;</span>
+<span class="o">#</span> <span class="n">WRITESET对事务中的每一行计算hash</span><span class="p">,</span><span class="err">组合成</span><span class="n">writeset</span><span class="p">,</span><span class="err">如果两个事务没有更新相同行</span><span class="p">,</span><span class="n">writeset会没有交集可并行</span><span class="p">.</span>
+<span class="o">#</span> <span class="n">WRITESET直接记录在binlog</span><span class="p">,</span><span class="err">不需要解析</span><span class="n">event</span><span class="p">,</span><span class="err">对</span><span class="n">binlog的格式没要求</span><span class="p">,</span><span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">22</span><span class="err">版本的新功能</span><span class="p">,</span><span class="n">binlog协议不向上兼容</span><span class="p">.</span>
+<span class="o">#</span> <span class="n">WRITESET_SESSION</span><span class="p">,</span><span class="err">即在</span><span class="n">WRITESET基础上多了个约束</span><span class="p">,</span><span class="err">主库上同一线程先后执行的事务</span><span class="p">,</span><span class="err">在备库也要保证相同的顺序</span><span class="p">.</span>
+<span class="n">binlog_transaction_dependency_tracking</span><span class="o">=</span><span class="n">WRITESET</span>
+<span class="n">transaction_write_set_extraction</span><span class="o">=</span><span class="n">XXHASH64</span>
+
+<span class="o">#</span> <span class="err">记录</span><span class="n">writeset的容量</span><span class="p">,</span><span class="err">不需要修改</span><span class="p">,</span><span class="err">复制时可以并发的事务数大概为该值的一半</span><span class="p">.</span>
+<span class="o">#</span><span class="n">binlog_transaction_dependency_history_size</span><span class="o">=</span><span class="mi">25000</span>
+
+<span class="o">#</span> <span class="n">slave把从master接收到的binlog记录到自己的binlog中</span><span class="p">,</span><span class="err">主要用于级联复制的场景</span><span class="p">.</span>
+<span class="n">log_slave_updates</span><span class="o">=</span><span class="k">ON</span>
+</code></pre></div><h2 id="gtid的限制">GTID的限制.<a href="#gtid的限制" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<ol>
+<li>
+<p>从复制时报错,error: 1032
+<code>select * from performance_schema.replication_applier_status_by_worker</code>可以查询从复制时的错误.
+error: 1032,主删除数据,但从没有相应的记录.遇到错误主从复制会停止.
+解决方案是在从库上跳过主库的这个事务:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 设置从库上的gtid_next为报错事务的gtid.
+</span><span class="c1"></span><span class="k">set</span> <span class="n">gtid_next</span><span class="o">=</span><span class="s2">&#34;af299bf7-dc7c-11ea-8417-0242ac170002:22805&#34;</span><span class="p">;</span>
+<span class="k">begin</span><span class="p">;</span>
+<span class="k">commit</span><span class="p">;</span>
+<span class="k">start</span> <span class="n">slave</span><span class="p">;</span>
+</code></pre></div></li>
+<li>
+<p>create function报错,error: 1418
+[Err] 1418 - This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you might want to use the less safe log_bin_trust_function_creators variable)
+解决方案:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DELIMITER</span> <span class="p">;;</span>
+<span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="o">`</span><span class="n">xxxx</span><span class="o">`</span><span class="p">(</span><span class="n">user_id</span> <span class="nb">INT</span><span class="p">)</span> <span class="k">RETURNS</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">4000</span><span class="p">)</span> <span class="n">CHARSET</span> <span class="n">utf8</span> <span class="k">COLLATE</span> <span class="n">utf8_unicode_ci</span>
+<span class="c1">-- 添加关键字DETERMINISTIC.
+</span><span class="c1"></span><span class="k">DETERMINISTIC</span>
+<span class="k">BEGIN</span>
+</code></pre></div></li>
+<li>
+<p>create table报错,error: 1786
+[Err] 1786 - Statement violates GTID consistency: CREATE TABLE &hellip; SELECT.
+解决方案,需要拆分成两部分,create语句和insert语句:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">xxxx</span> <span class="k">LIKE</span> <span class="n">t</span><span class="p">;</span>
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">xxxx</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">t</span><span class="p">;</span>
+</code></pre></div></li>
+<li>
+<p>create temporary报错,error: 1787
+[Err] 1787 - Statement violates GTID consistency: CREATE TEMPORARY TABLE and DROP TEMPORARY TABLE can only be executed outside transactional context.  These statements are also not allowed in a function or trigger because functions and triggers are also considered to be multi-statement transactions.
+解决方案:
+在<code>autocommit=1</code>的情况下可以创建临时表,主库创建临时表时不产生GTID信息,所以不会同步到从库,但在删除临时表时会产生GTID,从在处理时会报错,导致复制中断.</p>
+</li>
+</ol>
+<h2 id="查看gtid">查看GTID<a href="#查看gtid" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 主库上执行,Executed_Gtid_Set表示已执行过的GTID集合.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">master</span> <span class="n">status</span><span class="err">\</span><span class="k">G</span>
+<span class="o">***************************</span> <span class="mi">1</span><span class="p">.</span> <span class="k">row</span> <span class="o">***************************</span>
+             <span class="n">File</span><span class="p">:</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000005</span>
+         <span class="k">Position</span><span class="p">:</span> <span class="mi">194</span>
+     <span class="n">Binlog_Do_DB</span><span class="p">:</span> 
+ <span class="n">Binlog_Ignore_DB</span><span class="p">:</span> 
+<span class="n">Executed_Gtid_Set</span><span class="p">:</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">22805</span>
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 在从库上执行,Executed_Gtid_Set表示从库已经执行过的GTID集合.
+</span><span class="c1">-- Retrieved_Gtid_Set,从库会扫描最后一个relay log,显示当前扫描所得的GTID集合.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">slave</span> <span class="n">status</span><span class="err">\</span><span class="k">G</span>
+<span class="o">***************************</span> <span class="mi">1</span><span class="p">.</span> <span class="k">row</span> <span class="o">***************************</span>
+               <span class="n">Slave_IO_State</span><span class="p">:</span> <span class="n">Waiting</span> <span class="k">for</span> <span class="n">master</span> <span class="k">to</span> <span class="n">send</span> <span class="n">event</span>
+                  <span class="n">Master_Host</span><span class="p">:</span> <span class="mi">192</span><span class="p">.</span><span class="mi">168</span><span class="p">.</span><span class="mi">20</span><span class="p">.</span><span class="mi">151</span>
+                  <span class="n">Master_User</span><span class="p">:</span> <span class="n">mtp2</span>
+                  <span class="n">Master_Port</span><span class="p">:</span> <span class="mi">3406</span>
+                <span class="n">Connect_Retry</span><span class="p">:</span> <span class="mi">60</span>
+              <span class="n">Master_Log_File</span><span class="p">:</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000005</span>
+          <span class="n">Read_Master_Log_Pos</span><span class="p">:</span> <span class="mi">194</span>
+               <span class="n">Relay_Log_File</span><span class="p">:</span> <span class="n">relay_log</span><span class="p">.</span><span class="mi">000007</span>
+                <span class="n">Relay_Log_Pos</span><span class="p">:</span> <span class="mi">355</span>
+        <span class="n">Relay_Master_Log_File</span><span class="p">:</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000005</span>
+             <span class="n">Slave_IO_Running</span><span class="p">:</span> <span class="n">Yes</span>
+            <span class="n">Slave_SQL_Running</span><span class="p">:</span> <span class="n">Yes</span>
+              <span class="n">Replicate_Do_DB</span><span class="p">:</span> 
+          <span class="n">Replicate_Ignore_DB</span><span class="p">:</span> 
+           <span class="n">Replicate_Do_Table</span><span class="p">:</span> 
+       <span class="n">Replicate_Ignore_Table</span><span class="p">:</span> 
+      <span class="n">Replicate_Wild_Do_Table</span><span class="p">:</span> 
+  <span class="n">Replicate_Wild_Ignore_Table</span><span class="p">:</span> 
+                   <span class="n">Last_Errno</span><span class="p">:</span> <span class="mi">0</span>
+                   <span class="n">Last_Error</span><span class="p">:</span> 
+                 <span class="n">Skip_Counter</span><span class="p">:</span> <span class="mi">0</span>
+          <span class="n">Exec_Master_Log_Pos</span><span class="p">:</span> <span class="mi">194</span>
+              <span class="n">Relay_Log_Space</span><span class="p">:</span> <span class="mi">556</span>
+              <span class="n">Until_Condition</span><span class="p">:</span> <span class="k">None</span>
+               <span class="n">Until_Log_File</span><span class="p">:</span> 
+                <span class="n">Until_Log_Pos</span><span class="p">:</span> <span class="mi">0</span>
+           <span class="n">Master_SSL_Allowed</span><span class="p">:</span> <span class="k">No</span>
+           <span class="n">Master_SSL_CA_File</span><span class="p">:</span> 
+           <span class="n">Master_SSL_CA_Path</span><span class="p">:</span> 
+              <span class="n">Master_SSL_Cert</span><span class="p">:</span> 
+            <span class="n">Master_SSL_Cipher</span><span class="p">:</span> 
+               <span class="n">Master_SSL_Key</span><span class="p">:</span> 
+        <span class="n">Seconds_Behind_Master</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">Master_SSL_Verify_Server_Cert</span><span class="p">:</span> <span class="k">No</span>
+                <span class="n">Last_IO_Errno</span><span class="p">:</span> <span class="mi">0</span>
+                <span class="n">Last_IO_Error</span><span class="p">:</span> 
+               <span class="n">Last_SQL_Errno</span><span class="p">:</span> <span class="mi">0</span>
+               <span class="n">Last_SQL_Error</span><span class="p">:</span> 
+  <span class="n">Replicate_Ignore_Server_Ids</span><span class="p">:</span> 
+             <span class="n">Master_Server_Id</span><span class="p">:</span> <span class="mi">1</span>
+                  <span class="n">Master_UUID</span><span class="p">:</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span>
+             <span class="n">Master_Info_File</span><span class="p">:</span> <span class="n">mysql</span><span class="p">.</span><span class="n">slave_master_info</span>
+                    <span class="n">SQL_Delay</span><span class="p">:</span> <span class="mi">0</span>
+          <span class="n">SQL_Remaining_Delay</span><span class="p">:</span> <span class="k">NULL</span>
+      <span class="n">Slave_SQL_Running_State</span><span class="p">:</span> <span class="n">Slave</span> <span class="n">has</span> <span class="k">read</span> <span class="k">all</span> <span class="n">relay</span> <span class="n">log</span><span class="p">;</span> <span class="n">waiting</span> <span class="k">for</span> <span class="k">more</span> <span class="n">updates</span>
+           <span class="n">Master_Retry_Count</span><span class="p">:</span> <span class="mi">86400</span>
+                  <span class="n">Master_Bind</span><span class="p">:</span> 
+      <span class="n">Last_IO_Error_Timestamp</span><span class="p">:</span> 
+     <span class="n">Last_SQL_Error_Timestamp</span><span class="p">:</span> 
+               <span class="n">Master_SSL_Crl</span><span class="p">:</span> 
+           <span class="n">Master_SSL_Crlpath</span><span class="p">:</span> 
+           <span class="n">Retrieved_Gtid_Set</span><span class="p">:</span> 
+            <span class="n">Executed_Gtid_Set</span><span class="p">:</span> <span class="mi">60012</span><span class="n">ca6</span><span class="o">-</span><span class="n">dc7d</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8</span><span class="n">f34</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac180002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span>
+<span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">22805</span>
+                <span class="n">Auto_Position</span><span class="p">:</span> <span class="mi">1</span>
+         <span class="n">Replicate_Rewrite_DB</span><span class="p">:</span> 
+                 <span class="n">Channel_Name</span><span class="p">:</span> 
+           <span class="n">Master_TLS_Version</span><span class="p">:</span> 
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 查看binlog event.在语句前后都会设置GTID_NEXT
+</span><span class="c1">-- SHOW BINLOG EVENTS [IN &#39;log_name&#39;] [FROM pos] [LIMIT [offset,] row_count]
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">binlog</span> <span class="n">events</span> <span class="k">in</span> <span class="s1">&#39;bin.000003&#39;</span> <span class="k">limit</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">------------+-----+----------------+-----------+-------------+-------------------------------------------------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">Log_name</span>   <span class="o">|</span> <span class="n">Pos</span> <span class="o">|</span> <span class="n">Event_type</span>     <span class="o">|</span> <span class="n">Server_id</span> <span class="o">|</span> <span class="n">End_log_pos</span> <span class="o">|</span> <span class="n">Info</span>                                                              <span class="o">|</span>
+<span class="o">+</span><span class="c1">------------+-----+----------------+-----------+-------------+-------------------------------------------------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span>   <span class="mi">4</span> <span class="o">|</span> <span class="n">Format_desc</span>    <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">123</span> <span class="o">|</span> <span class="n">Server</span> <span class="n">ver</span><span class="p">:</span> <span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">31</span><span class="o">-</span><span class="n">log</span><span class="p">,</span> <span class="n">Binlog</span> <span class="n">ver</span><span class="p">:</span> <span class="mi">4</span>                             <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">123</span> <span class="o">|</span> <span class="n">Previous_gtids</span> <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">194</span> <span class="o">|</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">5</span>                          <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">194</span> <span class="o">|</span> <span class="n">Gtid</span>           <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">259</span> <span class="o">|</span> <span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;af299bf7-dc7c-11ea-8417-0242ac170002:6&#39;</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">259</span> <span class="o">|</span> <span class="n">Query</span>          <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">398</span> <span class="o">|</span> <span class="k">create</span> <span class="k">database</span> <span class="n">mtp2</span> <span class="k">default</span> <span class="n">charset</span> <span class="n">utf8</span> <span class="k">collate</span> <span class="n">utf8_unicode_ci</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">398</span> <span class="o">|</span> <span class="n">Gtid</span>           <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">463</span> <span class="o">|</span> <span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;af299bf7-dc7c-11ea-8417-0242ac170002:7&#39;</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">------------+-----+----------------+-----------+-------------+-------------------------------------------------------------------+
+</span><span class="c1"></span><span class="mi">5</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 解析binlog.
+</span><span class="c1"></span><span class="n">root</span><span class="o">@</span><span class="n">baecf53ab2f8</span><span class="p">:</span><span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">mysql</span><span class="o">#</span> <span class="n">mysqlbinlog</span> <span class="o">-</span><span class="n">vv</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="c1">--include-gtids=&#39;af299bf7-dc7c-11ea-8417-0242ac170002:6&#39;
+</span><span class="c1"></span><span class="cm">/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/</span><span class="p">;</span>
+<span class="cm">/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/</span><span class="p">;</span>
+<span class="k">DELIMITER</span> <span class="cm">/*!*/</span><span class="p">;</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">4</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">57</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">123</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">x815f99b3</span> 	<span class="k">Start</span><span class="p">:</span> <span class="n">binlog</span> <span class="n">v</span> <span class="mi">4</span><span class="p">,</span> <span class="n">server</span> <span class="n">v</span> <span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">31</span><span class="o">-</span><span class="n">log</span> <span class="n">created</span> <span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">57</span> <span class="k">at</span> <span class="n">startup</span>
+<span class="k">ROLLBACK</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="n">BINLOG</span> <span class="s1">&#39;
+</span><span class="s1">xbMzXw8BAAAAdwAAAHsAAAAAAAQANS43LjMxLWxvZwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+</span><span class="s1">AAAAAAAAAAAAAAAAAADFszNfEzgNAAgAEgAEBAQEEgAAXwAEGggAAAAICAgCAAAACgoKKioAEjQA
+</span><span class="s1">AbOZX4E=
+</span><span class="s1">&#39;</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">123</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">57</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">194</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">x5856cea2</span> 	<span class="n">Previous</span><span class="o">-</span><span class="n">GTIDs</span>
+<span class="o">#</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">5</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">194</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">17</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">259</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">xf56e199c</span> 	<span class="n">GTID</span>	<span class="n">last_committed</span><span class="o">=</span><span class="mi">0</span>	<span class="n">sequence_number</span><span class="o">=</span><span class="mi">1</span>	<span class="n">rbr_only</span><span class="o">=</span><span class="k">no</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;af299bf7-dc7c-11ea-8417-0242ac170002:6&#39;</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">259</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">17</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">398</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">x010ed0fb</span> 	<span class="n">Query</span>	<span class="n">thread_id</span><span class="o">=</span><span class="mi">2</span>	<span class="n">exec_time</span><span class="o">=</span><span class="mi">0</span>	<span class="n">error_code</span><span class="o">=</span><span class="mi">0</span>
+<span class="k">SET</span> <span class="k">TIMESTAMP</span><span class="o">=</span><span class="mi">1597223957</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">pseudo_thread_id</span><span class="o">=</span><span class="mi">2</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">foreign_key_checks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">sql_auto_is_null</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">unique_checks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">autocommit</span><span class="o">=</span><span class="mi">1</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">sql_mode</span><span class="o">=</span><span class="mi">1436549152</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">auto_increment_increment</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">auto_increment_offset</span><span class="o">=</span><span class="mi">1</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="cm">/*!\C latin1 *//*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">character_set_client</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span><span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">collation_connection</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span><span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">collation_server</span><span class="o">=</span><span class="mi">192</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">lc_time_names</span><span class="o">=</span><span class="mi">0</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">collation_database</span><span class="o">=</span><span class="k">DEFAULT</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">create</span> <span class="k">database</span> <span class="n">mtp2</span> <span class="k">default</span> <span class="n">charset</span> <span class="n">utf8</span> <span class="k">collate</span> <span class="n">utf8_unicode_ci</span>
+<span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;AUTOMATIC&#39;</span> <span class="cm">/* added by mysqlbinlog */</span> <span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">DELIMITER</span> <span class="p">;</span>
+<span class="o">#</span> <span class="k">End</span> <span class="k">of</span> <span class="n">log</span> <span class="n">file</span>
+<span class="cm">/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/</span><span class="p">;</span>
+<span class="cm">/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/</span><span class="p">;</span>
+</code></pre></div>
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://shenbaise9527.github.io/tags/mysql">mysql</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1666 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-09 21:27 &#43;0800</p>
+			</footer>
+		</article>
+		<aside id="toc">
+			<div class="toc-title">Table of Contents</div>
+			<nav id="TableOfContents">
+  <ul>
+    <li><a href="#开启gtid">开启GTID.</a></li>
+    <li><a href="#从库相关参数">从库相关参数</a></li>
+    <li><a href="#gtid的限制">GTID的限制.</a></li>
+    <li><a href="#查看gtid">查看GTID</a></li>
+  </ul>
+</nav>
+		</aside>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>gRPC系列之连接异常机制</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://shenbaise9527.github.io">shenbaise9527</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://shenbaise9527.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+
+	<script src="https://shenbaise9527.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
+	
+
+</body>
+
+</html>

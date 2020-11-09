@@ -15,11 +15,11 @@
 
 
 
-<meta itemprop="keywords" content="linux," />
+<meta itemprop="keywords" content="linux,tcp," />
 <meta property="og:title" content="tcp连接过程" />
 <meta property="og:description" content="tcp建连接三次握手 客户端发送SYN到服务器发起握手. 服务器收到SYN后回复SYN&#43;ACK给客户端. 客户端收到SYN&#43;ACK后,回复服务器一" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.github.io/linux/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/" />
+<meta property="og:url" content="https://shenbaise9527.github.io/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/" />
 <meta property="article:published_time" content="2020-11-03T21:35:24+08:00" />
 <meta property="article:modified_time" content="2020-11-03T21:35:24+08:00" />
 <meta name="twitter:card" content="summary"/>
@@ -48,8 +48,7 @@
 				</div>
 				<nav class="site-nav hide-in-mobile">
 					
-				<a href="https://shenbaise9527.github.io/posts/">Coding</a>
-				<a href="https://shenbaise9527.github.io/linux/">Linux</a>
+				<a href="https://shenbaise9527.github.io/posts/">文章</a>
 				<a href="https://shenbaise9527.github.io/tags/">标签</a>
 				<a href="https://shenbaise9527.github.io/about/">关于</a>
 
@@ -62,18 +61,21 @@
 	</header>
 	<div id="mobile-menu" class="animated fast">
 		<ul>
-			<li><a href="https://shenbaise9527.github.io/posts/">Coding</a></li>
-			<li><a href="https://shenbaise9527.github.io/linux/">Linux</a></li>
+			<li><a href="https://shenbaise9527.github.io/posts/">文章</a></li>
 			<li><a href="https://shenbaise9527.github.io/tags/">标签</a></li>
 			<li><a href="https://shenbaise9527.github.io/about/">关于</a></li>
 		</ul>
 	</div>
 
 
-	<main class="site-main section-inner thin animated fadeIn faster">
-		<h1>tcp连接过程</h1>
-		<div class="content">
-			<h2 id="tcp建连接三次握手">tcp建连接三次握手<a href="#tcp建连接三次握手" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Nov 3, 2020</span></div>
+				<h1>tcp连接过程</h1>
+			</header>
+			<div class="content">
+				<h2 id="tcp建连接三次握手">tcp建连接三次握手<a href="#tcp建连接三次握手" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <ul>
 <li>客户端发送SYN到服务器发起握手.</li>
 <li>服务器收到SYN后回复SYN+ACK给客户端.</li>
@@ -199,7 +201,40 @@ sky-HP# cat /proc/sys/net/ipv4/tcp_abort_on_overflow
 <li><a href="https://www.cnxct.com/something-about-phpfpm-s-backlog/">TCP SOCKET中backlog参数的用途是什么？</a></li>
 </ul>
 
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://shenbaise9527.github.io/tags/linux">linux</a></span><span class="tag"><a href="https://shenbaise9527.github.io/tags/tcp">tcp</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>2626 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-03 21:35 &#43;0800</p>
+			</footer>
+		</article>
+		<aside id="toc">
+			<div class="toc-title">Table of Contents</div>
+			<nav id="TableOfContents">
+  <ul>
+    <li><a href="#tcp建连接三次握手">tcp建连接三次握手</a></li>
+    <li><a href="#半连接队列">半连接队列</a></li>
+    <li><a href="#全连接队列">全连接队列</a></li>
+    <li><a href="#如何观察队列溢出">如何观察队列溢出</a></li>
+    <li><a href="#溢出行为的控制">溢出行为的控制</a></li>
+    <li><a href="#绕过三次握手">绕过三次握手</a></li>
+    <li><a href="#参考文章">参考文章</a></li>
+  </ul>
+</nav>
+		</aside>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>gRPC系列之初识</span>
+			</a>
+			<a class="prev-post" href="https://shenbaise9527.github.io/posts/cgo/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>记录cgo调用C实现的加解密静态库中遇到的问题</span>
+			</a>
 		</div>
+		<div id="comments" class="thin">
+</div>
 	</main>
 
 	<footer id="site-footer" class="section-inner thin animated fadeIn faster">

@@ -6,8 +6,213 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 07 Nov 2020 13:27:24 +0800</lastBuildDate>
+		<lastBuildDate>Mon, 09 Nov 2020 21:27:12 +0800</lastBuildDate>
 		<atom:link href="https://shenbaise9527.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>MySQL基于GTID复制</title>
+			<link>https://shenbaise9527.github.io/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</link>
+			<pubDate>Mon, 09 Nov 2020 21:27:12 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.github.io/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</guid>
+			<description>开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制.</description>
+			<content type="html"><![CDATA[<h2 id="开启gtid">开启GTID.</h2>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="err">启用</span><span class="n">gtid模式</span><span class="p">,</span><span class="err">每个事务有个唯一的</span><span class="n">id</span><span class="p">,</span><span class="err">全局事务</span><span class="n">ID</span><span class="p">,</span><span class="err">事务提交时分配</span><span class="p">,</span><span class="err">基于</span><span class="n">gtid来复制</span><span class="p">.</span>
+<span class="n">gtid_mode</span><span class="o">=</span><span class="k">ON</span>
+
+<span class="o">#</span> <span class="err">开启</span><span class="n">gtid的一些安全限制</span><span class="p">.</span>
+<span class="n">enforce_gtid_consistency</span><span class="o">=</span><span class="k">ON</span>
+
+<span class="o">#</span> <span class="n">gtid生成方式</span><span class="p">,</span><span class="err">默认为自动</span><span class="p">.</span>
+<span class="o">#</span> <span class="n">gtid_next</span><span class="o">=</span><span class="n">AUTOMATIC</span>
+
+<span class="o">#</span> <span class="err">从库启动复制</span><span class="p">,</span><span class="n">master_auto_position</span><span class="o">=</span><span class="mi">1</span><span class="err">表示开启基于</span><span class="n">GTID的复制</span><span class="p">.</span>
+<span class="n">CHANGE</span> <span class="n">MASTER</span> <span class="k">TO</span> <span class="n">MASTER_HOST</span><span class="o">=</span><span class="s1">&#39;xxx&#39;</span><span class="p">,</span> <span class="n">MASTER_PORT</span><span class="o">=</span><span class="mi">3306</span><span class="p">,</span> <span class="n">MASTER_USER</span><span class="o">=</span><span class="s1">&#39;user_name&#39;</span><span class="p">,</span> <span class="n">MASTER_PASSWORD</span><span class="o">=</span><span class="s1">&#39;password&#39;</span><span class="p">,</span> <span class="n">MASTER_AUTO_POSITION</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+<span class="k">start</span> <span class="n">slave</span><span class="p">;</span>
+</code></pre></div><h2 id="从库相关参数">从库相关参数</h2>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="err">并行复制类型</span><span class="p">,</span><span class="err">默认值为</span><span class="k">DATABASE</span><span class="p">,</span><span class="err">即按库来并行复制</span><span class="p">,</span><span class="n">LOGICAL_CLOCK为根据同时进入prepare和commit来并行复制</span><span class="p">.</span>
+<span class="n">slave_parallel_type</span><span class="o">=</span><span class="n">LOGICAL_CLOCK</span>
+
+<span class="o">#</span> <span class="err">并行复制线程数</span><span class="p">.</span>
+<span class="n">slave_parallel_workers</span><span class="o">=</span><span class="mi">8</span>
+
+<span class="o">#</span> <span class="err">并行复制策略</span><span class="p">,</span><span class="err">默认值为</span><span class="n">COMMIT_ORDER</span><span class="p">,</span><span class="err">即按照上面的</span><span class="n">prepare和commit来并行</span><span class="p">;</span>
+<span class="o">#</span> <span class="n">WRITESET对事务中的每一行计算hash</span><span class="p">,</span><span class="err">组合成</span><span class="n">writeset</span><span class="p">,</span><span class="err">如果两个事务没有更新相同行</span><span class="p">,</span><span class="n">writeset会没有交集可并行</span><span class="p">.</span>
+<span class="o">#</span> <span class="n">WRITESET直接记录在binlog</span><span class="p">,</span><span class="err">不需要解析</span><span class="n">event</span><span class="p">,</span><span class="err">对</span><span class="n">binlog的格式没要求</span><span class="p">,</span><span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">22</span><span class="err">版本的新功能</span><span class="p">,</span><span class="n">binlog协议不向上兼容</span><span class="p">.</span>
+<span class="o">#</span> <span class="n">WRITESET_SESSION</span><span class="p">,</span><span class="err">即在</span><span class="n">WRITESET基础上多了个约束</span><span class="p">,</span><span class="err">主库上同一线程先后执行的事务</span><span class="p">,</span><span class="err">在备库也要保证相同的顺序</span><span class="p">.</span>
+<span class="n">binlog_transaction_dependency_tracking</span><span class="o">=</span><span class="n">WRITESET</span>
+<span class="n">transaction_write_set_extraction</span><span class="o">=</span><span class="n">XXHASH64</span>
+
+<span class="o">#</span> <span class="err">记录</span><span class="n">writeset的容量</span><span class="p">,</span><span class="err">不需要修改</span><span class="p">,</span><span class="err">复制时可以并发的事务数大概为该值的一半</span><span class="p">.</span>
+<span class="o">#</span><span class="n">binlog_transaction_dependency_history_size</span><span class="o">=</span><span class="mi">25000</span>
+
+<span class="o">#</span> <span class="n">slave把从master接收到的binlog记录到自己的binlog中</span><span class="p">,</span><span class="err">主要用于级联复制的场景</span><span class="p">.</span>
+<span class="n">log_slave_updates</span><span class="o">=</span><span class="k">ON</span>
+</code></pre></div><h2 id="gtid的限制">GTID的限制.</h2>
+<ol>
+<li>
+<p>从复制时报错,error: 1032
+<code>select * from performance_schema.replication_applier_status_by_worker</code>可以查询从复制时的错误.
+error: 1032,主删除数据,但从没有相应的记录.遇到错误主从复制会停止.
+解决方案是在从库上跳过主库的这个事务:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 设置从库上的gtid_next为报错事务的gtid.
+</span><span class="c1"></span><span class="k">set</span> <span class="n">gtid_next</span><span class="o">=</span><span class="s2">&#34;af299bf7-dc7c-11ea-8417-0242ac170002:22805&#34;</span><span class="p">;</span>
+<span class="k">begin</span><span class="p">;</span>
+<span class="k">commit</span><span class="p">;</span>
+<span class="k">start</span> <span class="n">slave</span><span class="p">;</span>
+</code></pre></div></li>
+<li>
+<p>create function报错,error: 1418
+[Err] 1418 - This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you might want to use the less safe log_bin_trust_function_creators variable)
+解决方案:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DELIMITER</span> <span class="p">;;</span>
+<span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="o">`</span><span class="n">xxxx</span><span class="o">`</span><span class="p">(</span><span class="n">user_id</span> <span class="nb">INT</span><span class="p">)</span> <span class="k">RETURNS</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">4000</span><span class="p">)</span> <span class="n">CHARSET</span> <span class="n">utf8</span> <span class="k">COLLATE</span> <span class="n">utf8_unicode_ci</span>
+<span class="c1">-- 添加关键字DETERMINISTIC.
+</span><span class="c1"></span><span class="k">DETERMINISTIC</span>
+<span class="k">BEGIN</span>
+</code></pre></div></li>
+<li>
+<p>create table报错,error: 1786
+[Err] 1786 - Statement violates GTID consistency: CREATE TABLE &hellip; SELECT.
+解决方案,需要拆分成两部分,create语句和insert语句:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">xxxx</span> <span class="k">LIKE</span> <span class="n">t</span><span class="p">;</span>
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">xxxx</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">t</span><span class="p">;</span>
+</code></pre></div></li>
+<li>
+<p>create temporary报错,error: 1787
+[Err] 1787 - Statement violates GTID consistency: CREATE TEMPORARY TABLE and DROP TEMPORARY TABLE can only be executed outside transactional context.  These statements are also not allowed in a function or trigger because functions and triggers are also considered to be multi-statement transactions.
+解决方案:
+在<code>autocommit=1</code>的情况下可以创建临时表,主库创建临时表时不产生GTID信息,所以不会同步到从库,但在删除临时表时会产生GTID,从在处理时会报错,导致复制中断.</p>
+</li>
+</ol>
+<h2 id="查看gtid">查看GTID</h2>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 主库上执行,Executed_Gtid_Set表示已执行过的GTID集合.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">master</span> <span class="n">status</span><span class="err">\</span><span class="k">G</span>
+<span class="o">***************************</span> <span class="mi">1</span><span class="p">.</span> <span class="k">row</span> <span class="o">***************************</span>
+             <span class="n">File</span><span class="p">:</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000005</span>
+         <span class="k">Position</span><span class="p">:</span> <span class="mi">194</span>
+     <span class="n">Binlog_Do_DB</span><span class="p">:</span> 
+ <span class="n">Binlog_Ignore_DB</span><span class="p">:</span> 
+<span class="n">Executed_Gtid_Set</span><span class="p">:</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">22805</span>
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 在从库上执行,Executed_Gtid_Set表示从库已经执行过的GTID集合.
+</span><span class="c1">-- Retrieved_Gtid_Set,从库会扫描最后一个relay log,显示当前扫描所得的GTID集合.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">slave</span> <span class="n">status</span><span class="err">\</span><span class="k">G</span>
+<span class="o">***************************</span> <span class="mi">1</span><span class="p">.</span> <span class="k">row</span> <span class="o">***************************</span>
+               <span class="n">Slave_IO_State</span><span class="p">:</span> <span class="n">Waiting</span> <span class="k">for</span> <span class="n">master</span> <span class="k">to</span> <span class="n">send</span> <span class="n">event</span>
+                  <span class="n">Master_Host</span><span class="p">:</span> <span class="mi">192</span><span class="p">.</span><span class="mi">168</span><span class="p">.</span><span class="mi">20</span><span class="p">.</span><span class="mi">151</span>
+                  <span class="n">Master_User</span><span class="p">:</span> <span class="n">mtp2</span>
+                  <span class="n">Master_Port</span><span class="p">:</span> <span class="mi">3406</span>
+                <span class="n">Connect_Retry</span><span class="p">:</span> <span class="mi">60</span>
+              <span class="n">Master_Log_File</span><span class="p">:</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000005</span>
+          <span class="n">Read_Master_Log_Pos</span><span class="p">:</span> <span class="mi">194</span>
+               <span class="n">Relay_Log_File</span><span class="p">:</span> <span class="n">relay_log</span><span class="p">.</span><span class="mi">000007</span>
+                <span class="n">Relay_Log_Pos</span><span class="p">:</span> <span class="mi">355</span>
+        <span class="n">Relay_Master_Log_File</span><span class="p">:</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000005</span>
+             <span class="n">Slave_IO_Running</span><span class="p">:</span> <span class="n">Yes</span>
+            <span class="n">Slave_SQL_Running</span><span class="p">:</span> <span class="n">Yes</span>
+              <span class="n">Replicate_Do_DB</span><span class="p">:</span> 
+          <span class="n">Replicate_Ignore_DB</span><span class="p">:</span> 
+           <span class="n">Replicate_Do_Table</span><span class="p">:</span> 
+       <span class="n">Replicate_Ignore_Table</span><span class="p">:</span> 
+      <span class="n">Replicate_Wild_Do_Table</span><span class="p">:</span> 
+  <span class="n">Replicate_Wild_Ignore_Table</span><span class="p">:</span> 
+                   <span class="n">Last_Errno</span><span class="p">:</span> <span class="mi">0</span>
+                   <span class="n">Last_Error</span><span class="p">:</span> 
+                 <span class="n">Skip_Counter</span><span class="p">:</span> <span class="mi">0</span>
+          <span class="n">Exec_Master_Log_Pos</span><span class="p">:</span> <span class="mi">194</span>
+              <span class="n">Relay_Log_Space</span><span class="p">:</span> <span class="mi">556</span>
+              <span class="n">Until_Condition</span><span class="p">:</span> <span class="k">None</span>
+               <span class="n">Until_Log_File</span><span class="p">:</span> 
+                <span class="n">Until_Log_Pos</span><span class="p">:</span> <span class="mi">0</span>
+           <span class="n">Master_SSL_Allowed</span><span class="p">:</span> <span class="k">No</span>
+           <span class="n">Master_SSL_CA_File</span><span class="p">:</span> 
+           <span class="n">Master_SSL_CA_Path</span><span class="p">:</span> 
+              <span class="n">Master_SSL_Cert</span><span class="p">:</span> 
+            <span class="n">Master_SSL_Cipher</span><span class="p">:</span> 
+               <span class="n">Master_SSL_Key</span><span class="p">:</span> 
+        <span class="n">Seconds_Behind_Master</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">Master_SSL_Verify_Server_Cert</span><span class="p">:</span> <span class="k">No</span>
+                <span class="n">Last_IO_Errno</span><span class="p">:</span> <span class="mi">0</span>
+                <span class="n">Last_IO_Error</span><span class="p">:</span> 
+               <span class="n">Last_SQL_Errno</span><span class="p">:</span> <span class="mi">0</span>
+               <span class="n">Last_SQL_Error</span><span class="p">:</span> 
+  <span class="n">Replicate_Ignore_Server_Ids</span><span class="p">:</span> 
+             <span class="n">Master_Server_Id</span><span class="p">:</span> <span class="mi">1</span>
+                  <span class="n">Master_UUID</span><span class="p">:</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span>
+             <span class="n">Master_Info_File</span><span class="p">:</span> <span class="n">mysql</span><span class="p">.</span><span class="n">slave_master_info</span>
+                    <span class="n">SQL_Delay</span><span class="p">:</span> <span class="mi">0</span>
+          <span class="n">SQL_Remaining_Delay</span><span class="p">:</span> <span class="k">NULL</span>
+      <span class="n">Slave_SQL_Running_State</span><span class="p">:</span> <span class="n">Slave</span> <span class="n">has</span> <span class="k">read</span> <span class="k">all</span> <span class="n">relay</span> <span class="n">log</span><span class="p">;</span> <span class="n">waiting</span> <span class="k">for</span> <span class="k">more</span> <span class="n">updates</span>
+           <span class="n">Master_Retry_Count</span><span class="p">:</span> <span class="mi">86400</span>
+                  <span class="n">Master_Bind</span><span class="p">:</span> 
+      <span class="n">Last_IO_Error_Timestamp</span><span class="p">:</span> 
+     <span class="n">Last_SQL_Error_Timestamp</span><span class="p">:</span> 
+               <span class="n">Master_SSL_Crl</span><span class="p">:</span> 
+           <span class="n">Master_SSL_Crlpath</span><span class="p">:</span> 
+           <span class="n">Retrieved_Gtid_Set</span><span class="p">:</span> 
+            <span class="n">Executed_Gtid_Set</span><span class="p">:</span> <span class="mi">60012</span><span class="n">ca6</span><span class="o">-</span><span class="n">dc7d</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8</span><span class="n">f34</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac180002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span>
+<span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">22805</span>
+                <span class="n">Auto_Position</span><span class="p">:</span> <span class="mi">1</span>
+         <span class="n">Replicate_Rewrite_DB</span><span class="p">:</span> 
+                 <span class="n">Channel_Name</span><span class="p">:</span> 
+           <span class="n">Master_TLS_Version</span><span class="p">:</span> 
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 查看binlog event.在语句前后都会设置GTID_NEXT
+</span><span class="c1">-- SHOW BINLOG EVENTS [IN &#39;log_name&#39;] [FROM pos] [LIMIT [offset,] row_count]
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">binlog</span> <span class="n">events</span> <span class="k">in</span> <span class="s1">&#39;bin.000003&#39;</span> <span class="k">limit</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">------------+-----+----------------+-----------+-------------+-------------------------------------------------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">Log_name</span>   <span class="o">|</span> <span class="n">Pos</span> <span class="o">|</span> <span class="n">Event_type</span>     <span class="o">|</span> <span class="n">Server_id</span> <span class="o">|</span> <span class="n">End_log_pos</span> <span class="o">|</span> <span class="n">Info</span>                                                              <span class="o">|</span>
+<span class="o">+</span><span class="c1">------------+-----+----------------+-----------+-------------+-------------------------------------------------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span>   <span class="mi">4</span> <span class="o">|</span> <span class="n">Format_desc</span>    <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">123</span> <span class="o">|</span> <span class="n">Server</span> <span class="n">ver</span><span class="p">:</span> <span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">31</span><span class="o">-</span><span class="n">log</span><span class="p">,</span> <span class="n">Binlog</span> <span class="n">ver</span><span class="p">:</span> <span class="mi">4</span>                             <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">123</span> <span class="o">|</span> <span class="n">Previous_gtids</span> <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">194</span> <span class="o">|</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">5</span>                          <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">194</span> <span class="o">|</span> <span class="n">Gtid</span>           <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">259</span> <span class="o">|</span> <span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;af299bf7-dc7c-11ea-8417-0242ac170002:6&#39;</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">259</span> <span class="o">|</span> <span class="n">Query</span>          <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">398</span> <span class="o">|</span> <span class="k">create</span> <span class="k">database</span> <span class="n">mtp2</span> <span class="k">default</span> <span class="n">charset</span> <span class="n">utf8</span> <span class="k">collate</span> <span class="n">utf8_unicode_ci</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="o">|</span> <span class="mi">398</span> <span class="o">|</span> <span class="n">Gtid</span>           <span class="o">|</span>         <span class="mi">1</span> <span class="o">|</span>         <span class="mi">463</span> <span class="o">|</span> <span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;af299bf7-dc7c-11ea-8417-0242ac170002:7&#39;</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">------------+-----+----------------+-----------+-------------+-------------------------------------------------------------------+
+</span><span class="c1"></span><span class="mi">5</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 解析binlog.
+</span><span class="c1"></span><span class="n">root</span><span class="o">@</span><span class="n">baecf53ab2f8</span><span class="p">:</span><span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="o">/</span><span class="n">mysql</span><span class="o">#</span> <span class="n">mysqlbinlog</span> <span class="o">-</span><span class="n">vv</span> <span class="n">bin</span><span class="p">.</span><span class="mi">000003</span> <span class="c1">--include-gtids=&#39;af299bf7-dc7c-11ea-8417-0242ac170002:6&#39;
+</span><span class="c1"></span><span class="cm">/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=1*/</span><span class="p">;</span>
+<span class="cm">/*!50003 SET @OLD_COMPLETION_TYPE=@@COMPLETION_TYPE,COMPLETION_TYPE=0*/</span><span class="p">;</span>
+<span class="k">DELIMITER</span> <span class="cm">/*!*/</span><span class="p">;</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">4</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">57</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">123</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">x815f99b3</span> 	<span class="k">Start</span><span class="p">:</span> <span class="n">binlog</span> <span class="n">v</span> <span class="mi">4</span><span class="p">,</span> <span class="n">server</span> <span class="n">v</span> <span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">31</span><span class="o">-</span><span class="n">log</span> <span class="n">created</span> <span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">57</span> <span class="k">at</span> <span class="n">startup</span>
+<span class="k">ROLLBACK</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="n">BINLOG</span> <span class="s1">&#39;
+</span><span class="s1">xbMzXw8BAAAAdwAAAHsAAAAAAAQANS43LjMxLWxvZwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+</span><span class="s1">AAAAAAAAAAAAAAAAAADFszNfEzgNAAgAEgAEBAQEEgAAXwAEGggAAAAICAgCAAAACgoKKioAEjQA
+</span><span class="s1">AbOZX4E=
+</span><span class="s1">&#39;</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">123</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">57</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">194</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">x5856cea2</span> 	<span class="n">Previous</span><span class="o">-</span><span class="n">GTIDs</span>
+<span class="o">#</span> <span class="n">af299bf7</span><span class="o">-</span><span class="n">dc7c</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="mi">8417</span><span class="o">-</span><span class="mi">0242</span><span class="n">ac170002</span><span class="p">:</span><span class="mi">1</span><span class="o">-</span><span class="mi">5</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">194</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">17</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">259</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">xf56e199c</span> 	<span class="n">GTID</span>	<span class="n">last_committed</span><span class="o">=</span><span class="mi">0</span>	<span class="n">sequence_number</span><span class="o">=</span><span class="mi">1</span>	<span class="n">rbr_only</span><span class="o">=</span><span class="k">no</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;af299bf7-dc7c-11ea-8417-0242ac170002:6&#39;</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="o">#</span> <span class="k">at</span> <span class="mi">259</span>
+<span class="o">#</span><span class="mi">200812</span> <span class="mi">17</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">17</span> <span class="n">server</span> <span class="n">id</span> <span class="mi">1</span>  <span class="n">end_log_pos</span> <span class="mi">398</span> <span class="n">CRC32</span> <span class="mi">0</span><span class="n">x010ed0fb</span> 	<span class="n">Query</span>	<span class="n">thread_id</span><span class="o">=</span><span class="mi">2</span>	<span class="n">exec_time</span><span class="o">=</span><span class="mi">0</span>	<span class="n">error_code</span><span class="o">=</span><span class="mi">0</span>
+<span class="k">SET</span> <span class="k">TIMESTAMP</span><span class="o">=</span><span class="mi">1597223957</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">pseudo_thread_id</span><span class="o">=</span><span class="mi">2</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">foreign_key_checks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">sql_auto_is_null</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">unique_checks</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">autocommit</span><span class="o">=</span><span class="mi">1</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">sql_mode</span><span class="o">=</span><span class="mi">1436549152</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">auto_increment_increment</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">auto_increment_offset</span><span class="o">=</span><span class="mi">1</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="cm">/*!\C latin1 *//*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">character_set_client</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span><span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">collation_connection</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span><span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">collation_server</span><span class="o">=</span><span class="mi">192</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">lc_time_names</span><span class="o">=</span><span class="mi">0</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">session</span><span class="p">.</span><span class="n">collation_database</span><span class="o">=</span><span class="k">DEFAULT</span><span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">create</span> <span class="k">database</span> <span class="n">mtp2</span> <span class="k">default</span> <span class="n">charset</span> <span class="n">utf8</span> <span class="k">collate</span> <span class="n">utf8_unicode_ci</span>
+<span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">SET</span> <span class="o">@@</span><span class="k">SESSION</span><span class="p">.</span><span class="n">GTID_NEXT</span><span class="o">=</span> <span class="s1">&#39;AUTOMATIC&#39;</span> <span class="cm">/* added by mysqlbinlog */</span> <span class="cm">/*!*/</span><span class="p">;</span>
+<span class="k">DELIMITER</span> <span class="p">;</span>
+<span class="o">#</span> <span class="k">End</span> <span class="k">of</span> <span class="n">log</span> <span class="n">file</span>
+<span class="cm">/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/</span><span class="p">;</span>
+<span class="cm">/*!50530 SET @@SESSION.PSEUDO_SLAVE_MODE=0*/</span><span class="p">;</span>
+</code></pre></div>]]></content>
+		</item>
 		
 		<item>
 			<title>gRPC系列之连接异常机制</title>
@@ -2170,6 +2375,141 @@ DATA是数据帧,可以看到请求的protobuf结构只有1个字段,该字段�
 <li><a href="https://jingwei.link/2018/10/02/grpc-wireshark-analysis.html">抓包gRPC的细节与分析</a></li>
 <li><a href="https://httpwg.org/specs/rfc7540.html">Hypertext Transfer Protocol Version 2</a></li>
 <li><a href="https://eddycjy.com/posts/go/talk/2019-06-29-talking-grpc/">从实践到原理，带你参透 gRPC</a></li>
+</ul>
+]]></content>
+		</item>
+		
+		<item>
+			<title>tcp连接过程</title>
+			<link>https://shenbaise9527.github.io/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</link>
+			<pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.github.io/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</guid>
+			<description>tcp建连接三次握手 客户端发送SYN到服务器发起握手. 服务器收到SYN后回复SYN+ACK给客户端. 客户端收到SYN+ACK后,回复服务器一</description>
+			<content type="html"><![CDATA[<h2 id="tcp建连接三次握手">tcp建连接三次握手</h2>
+<ul>
+<li>客户端发送SYN到服务器发起握手.</li>
+<li>服务器收到SYN后回复SYN+ACK给客户端.</li>
+<li>客户端收到SYN+ACK后,回复服务器一个ACK表示收到了,此时客户端的端口状态已经是established.</li>
+<li>tcp握手的详细过程,<a href="http://www.cnxct.com/something-about-phpfpm-s-backlog/">图片来源</a>
+<img src="/images/tcp_accept_queue.png" alt="tcp建立连接的流程和队列" title="tcp连接的流程"></li>
+</ul>
+<p>客户端作为主动发起连接方,首先要发送SYN(Synchronize Sequence Nubers,同步序列号)包,若客户端长时间收不到服务端的ACK报文,客户端就会重发SYN包,重传次数是受内核参数<code>/proc/sys/net/ipv4/tcp_syn_retries</code>控制.</p>
+<pre><code># 系统为centos7.2.1511,默认为6次.
+$ cat /proc/sys/net/ipv4/tcp_syn_retries 
+6
+</code></pre><p>通常第一次超时重传为1秒,第二次超时重传为2秒,第三次超时重传为4秒,第四次为8秒,第五次为16秒,第五次超时重传之后还会再等待32秒,如果服务端仍然没有回应ACK,客户端就会终止三次握手.总耗时为63秒.</p>
+<h2 id="半连接队列">半连接队列</h2>
+<p>syns queue就是半连接队列,server收到client的syn后会把连接信息放入该队列.</p>
+<p>半连接队列的大小为max(64, /proc/sys/net/ipv4/tcp_max_syn_backlog).</p>
+<pre><code># 在ubuntu18.04机器上为128.
+$ cat /proc/sys/net/ipv4/tcp_max_syn_backlog 
+128
+</code></pre><p>syn floods攻击就是针对半连接队列的,攻击方不停的建立连接,收到server的syn+ack就丢弃什么也不做,导致server的半连接队列满而其它正常连接无法进来.</p>
+<h2 id="全连接队列">全连接队列</h2>
+<ul>
+<li>accept queue就是全连接队列,server再收到client的ack后会把连接信息放入该队列.</li>
+<li>全连接队列的大小为min(backlog, /proc/sys/net/core/somaxconn).</li>
+<li>backlog是指<code>listen(int sockfd, int backlog)</code>函数中的backlog大小.</li>
+</ul>
+<pre><code># 在ubuntu18.04机器上为128.
+$ cat /proc/sys/net/core/somaxconn
+128
+</code></pre><h2 id="如何观察队列溢出">如何观察队列溢出</h2>
+<p><strong>netstat -s</strong></p>
+<pre><code># 查看半连接队列溢出.
+sky-HP# netstat -s | egrep &quot;SYNs to LISTEN&quot;
+667399 SYNs to LISTEN sockets ignored
+# 上面看到的667399就是半连接队列溢出次数,隔几秒执行下,如果这个数字一直在变大肯定就是半连接队列溢出了.
+
+# 查看全连接队列溢出.
+sky-HP# netstat -s | grep &quot;overflowed&quot;
+667399 times the listen queue of a socket overflowed
+</code></pre><p><strong>ss -lntp</strong></p>
+<pre><code># l表示处于LISTEN状态 n表示不反向解析 t表示tcp协议 p表示进程信息.
+sky-HP# ss -lntp
+State       Recv-Q       Send-Q              Local Address:Port              Peer Address:Port                                                        
+LISTEN      0            128                       0.0.0.0:8388                   0.0.0.0:*           users:((&quot;haproxy&quot;,pid=1465,fd=6))               
+LISTEN      0            128                 127.0.0.53%lo:53                     0.0.0.0:*           users:((&quot;systemd-resolve&quot;,pid=841,fd=13))       
+LISTEN      0            128                       0.0.0.0:22                     0.0.0.0:*           users:((&quot;sshd&quot;,pid=1476,fd=3))                  
+LISTEN      0            5                       127.0.0.1:631                    0.0.0.0:*           users:((&quot;cupsd&quot;,pid=5112,fd=7))                 
+LISTEN      0            128                     127.0.0.1:1080                   0.0.0.0:*           users:((&quot;trojan&quot;,pid=1940,fd=6))                
+LISTEN      0            128                     127.0.0.1:8123                   0.0.0.0:*           users:((&quot;polipo&quot;,pid=1461,fd=4))                
+</code></pre><p>Send-Q就是表示全连接队列的允许最大长度,Recv-Q表示当前全连接队列的长度.这是套接字处于LISTEN状态时.
+需要注意,当套接字处于Established状态时Recv-Q表示套接字缓冲区还没有被应用取走的字节数(接收队列长度),Send-Q表示还没有被远端主机确认的字节数(发送队列长度).</p>
+<h2 id="溢出行为的控制">溢出行为的控制</h2>
+<p><strong>半连接队列控制</strong>
+当半连接队列满时,只能丢弃连接?</p>
+<p>并不是这样的,Linux提供了syncookies功能,可以在不适用半连接队列的情况下成功建立连接.
+syncookies原理:服务器会根据当前的状态计算出一个值,放入己方的SYN+ACK报文中发送给客户端,当客户端返回ACK报文时,取出该值验证,如果合法,就认为连接建立成功.</p>
+<p>syncookies功能由内核参数<code>/proc/sys/net/ipv4/tcp_syncookies</code>来控制.</p>
+<ul>
+<li>值为0时,表示关闭该功能.</li>
+<li>值为1时,表示仅当半连接队列满时,再启用该功能.1为默认值,默认开启.</li>
+<li>值为2时,表示无条件开启该功能.</li>
+</ul>
+<p><strong>全连接队列控制</strong>
+内核参数<code>/proc/sys/net/ipv4/tcp_abort_on_overflow</code>决定当溢出后系统如何处理.</p>
+<ul>
+<li>为0时表示server扔掉client发过来的ack.server会认为连接还未建立.server过段时间会继续向client发送syn+ack.重传会经历1、2、4、8、16、32秒(若重传为5次),如果服务端仍没有收到ack,才会关闭连接,总共需63秒.
+<ul>
+<li>内核参数<code>/proc/sys/net/ipv4/tcp_synack_retries</code>控制重试次数.如果client超时时间比较短,client就容易异常.</li>
+</ul>
+</li>
+<li>为1时表示server发送一个reset包给client,表示废掉这个握手过程和连接.client会看到connection reset by peer的错误.</li>
+</ul>
+<pre><code># 在ubuntu18.04机器上的默认值.
+sky-HP# cat /proc/sys/net/ipv4/tcp_abort_on_overflow 
+0
+sky-HP# cat /proc/sys/net/ipv4/tcp_synack_retries 
+5
+</code></pre><p>可以通过<code>sysctl -w</code>来修改这些内核参数,重启之后修改无效.</p>
+<pre><code>sky-HP# sysctl -w net.ipv4.tcp_synack_retries=2
+net.ipv4.tcp_synack_retries = 2
+sky-HP# cat /proc/sys/net/ipv4/tcp_synack_retries 
+2
+
+sky-HP# sysctl -w net.ipv4.tcp_abort_on_overflow=1
+net.ipv4.tcp_abort_on_overflow = 1
+sky-HP# cat /proc/sys/net/ipv4/tcp_abort_on_overflow 
+1
+</code></pre><p>修改配置文件<code>/etc/sysctl.conf</code>,然后再<code>sysctl -p</code>来触发,重启之后仍生效.</p>
+<h2 id="绕过三次握手">绕过三次握手</h2>
+<p>三次握手建立连接的后果就是,数据请求必须在一个RTT(从客户端到服务器一个往返时间)后才能发送.</p>
+<p>在Linux3.7内核版本之后,提供了TCP Fast Open功能,可以减少TCP连接建立的时延.
+<img src="/images/fast.jpg" alt="Fast Open" title="Linux TCP Fast Open"></p>
+<p>客户端首次建立连接时仍然需要三次握手.</p>
+<ol>
+<li>客户端发送SYN报文,报文包含Fast Open选项,且该选项的Cookie为空,表名客户端请求Fast Open Cookie.</li>
+<li>支持TCP Fast Open的服务器生成Cookie,并置于SYN-ACK数据包中的Fast Open选项发回给客户端.</li>
+<li>客户端收到SYN-ACK后,本地缓存Fast Open选项中的Cookie.</li>
+</ol>
+<p>当客户端再次与服务器建立连接时就可以利用Cookie来绕过三次握手过程.</p>
+<ol>
+<li>客户端发送SYN报文,该报文包含之前缓存的Cookie及业务数据报文.</li>
+<li>支持TCP Fast Open的服务器会对收到的Cookie进行校验.
+<ul>
+<li>如果合法,服务器将在SYN-ACK报文中对SYN和业务数据进行确认,服务器随后把业务数据传递给应用程序;</li>
+<li>如果不合法,服务器将丢弃SYN报文中包含的业务数据,且在SYN-ACK报文中只确认SYN的序列号.</li>
+</ul>
+</li>
+<li>若服务器接受了SYN报文中的业务数据,即在握手完成之前发送了数据,这就减少了握手带来的一个RTT的时间消耗.</li>
+<li>客户端将发送ACK确认服务器发回的SYN及数据.若客户端在初始的SYN报文中的数据未被确认,则客户端会重新发送这些数据.</li>
+<li>此后的TCP连接的数据传输过程和非TCP Fast Open的正常情况是一致的.</li>
+</ol>
+<p>TCP Fast Open功能受内核参数<code>/proc/sys/net/ipv4/tcp_fastopen</code>控制.</p>
+<ul>
+<li>值为0时,表示关闭该功能.</li>
+<li>值为1时,作为客户端使用Fast Open功能.</li>
+<li>值为2时,作为服务端使用Fast Open功能.</li>
+<li>值为3时,作为客户端和服务端都可以使用Fast Open功能.</li>
+</ul>
+<h2 id="参考文章">参考文章</h2>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/yH3PzGEFopbpA-jw4MythQ">TCP 三次握手原理，你真的理解吗？</a></li>
+<li><a href="https://time.geekbang.org/column/article/81057">关于 Linux 网络，你必须知道这些</a></li>
+<li><a href="https://www.cnblogs.com/otis/p/13070877.html">看完这篇，再不懂TCP我也没办法了</a></li>
+<li><a href="https://www.cnxct.com/something-about-phpfpm-s-backlog/">TCP SOCKET中backlog参数的用途是什么？</a></li>
 </ul>
 ]]></content>
 		</item>
