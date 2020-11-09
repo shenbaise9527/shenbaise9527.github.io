@@ -17,74 +17,72 @@
 			<guid>https://shenbaise9527.github.io/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</guid>
 			<description>开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制.</description>
 			<content type="html"><![CDATA[<h2 id="开启gtid">开启GTID.</h2>
-<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="err">启用</span><span class="n">gtid模式</span><span class="p">,</span><span class="err">每个事务有个唯一的</span><span class="n">id</span><span class="p">,</span><span class="err">全局事务</span><span class="n">ID</span><span class="p">,</span><span class="err">事务提交时分配</span><span class="p">,</span><span class="err">基于</span><span class="n">gtid来复制</span><span class="p">.</span>
-<span class="n">gtid_mode</span><span class="o">=</span><span class="k">ON</span>
+<pre><code># 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制.
+gtid_mode=ON
 
-<span class="o">#</span> <span class="err">开启</span><span class="n">gtid的一些安全限制</span><span class="p">.</span>
-<span class="n">enforce_gtid_consistency</span><span class="o">=</span><span class="k">ON</span>
+# 开启gtid的一些安全限制.
+enforce_gtid_consistency=ON
 
-<span class="o">#</span> <span class="n">gtid生成方式</span><span class="p">,</span><span class="err">默认为自动</span><span class="p">.</span>
-<span class="o">#</span> <span class="n">gtid_next</span><span class="o">=</span><span class="n">AUTOMATIC</span>
+# gtid生成方式,默认为自动.
+# gtid_next=AUTOMATIC
 
-<span class="o">#</span> <span class="err">从库启动复制</span><span class="p">,</span><span class="n">master_auto_position</span><span class="o">=</span><span class="mi">1</span><span class="err">表示开启基于</span><span class="n">GTID的复制</span><span class="p">.</span>
-<span class="n">CHANGE</span> <span class="n">MASTER</span> <span class="k">TO</span> <span class="n">MASTER_HOST</span><span class="o">=</span><span class="s1">&#39;xxx&#39;</span><span class="p">,</span> <span class="n">MASTER_PORT</span><span class="o">=</span><span class="mi">3306</span><span class="p">,</span> <span class="n">MASTER_USER</span><span class="o">=</span><span class="s1">&#39;user_name&#39;</span><span class="p">,</span> <span class="n">MASTER_PASSWORD</span><span class="o">=</span><span class="s1">&#39;password&#39;</span><span class="p">,</span> <span class="n">MASTER_AUTO_POSITION</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
-<span class="k">start</span> <span class="n">slave</span><span class="p">;</span>
-</code></pre></div><h2 id="从库相关参数">从库相关参数</h2>
-<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="err">并行复制类型</span><span class="p">,</span><span class="err">默认值为</span><span class="k">DATABASE</span><span class="p">,</span><span class="err">即按库来并行复制</span><span class="p">,</span><span class="n">LOGICAL_CLOCK为根据同时进入prepare和commit来并行复制</span><span class="p">.</span>
-<span class="n">slave_parallel_type</span><span class="o">=</span><span class="n">LOGICAL_CLOCK</span>
+# 从库启动复制,master_auto_position=1表示开启基于GTID的复制.
+CHANGE MASTER TO MASTER_HOST='xxx', MASTER_PORT=3306, MASTER_USER='user_name', MASTER_PASSWORD='password', MASTER_AUTO_POSITION=1;
+start slave;
+</code></pre><h2 id="从库相关参数">从库相关参数</h2>
+<pre><code># 并行复制类型,默认值为DATABASE,即按库来并行复制,LOGICAL_CLOCK为根据同时进入prepare和commit来并行复制.
+slave_parallel_type=LOGICAL_CLOCK
 
-<span class="o">#</span> <span class="err">并行复制线程数</span><span class="p">.</span>
-<span class="n">slave_parallel_workers</span><span class="o">=</span><span class="mi">8</span>
+# 并行复制线程数.
+slave_parallel_workers=8
 
-<span class="o">#</span> <span class="err">并行复制策略</span><span class="p">,</span><span class="err">默认值为</span><span class="n">COMMIT_ORDER</span><span class="p">,</span><span class="err">即按照上面的</span><span class="n">prepare和commit来并行</span><span class="p">;</span>
-<span class="o">#</span> <span class="n">WRITESET对事务中的每一行计算hash</span><span class="p">,</span><span class="err">组合成</span><span class="n">writeset</span><span class="p">,</span><span class="err">如果两个事务没有更新相同行</span><span class="p">,</span><span class="n">writeset会没有交集可并行</span><span class="p">.</span>
-<span class="o">#</span> <span class="n">WRITESET直接记录在binlog</span><span class="p">,</span><span class="err">不需要解析</span><span class="n">event</span><span class="p">,</span><span class="err">对</span><span class="n">binlog的格式没要求</span><span class="p">,</span><span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">22</span><span class="err">版本的新功能</span><span class="p">,</span><span class="n">binlog协议不向上兼容</span><span class="p">.</span>
-<span class="o">#</span> <span class="n">WRITESET_SESSION</span><span class="p">,</span><span class="err">即在</span><span class="n">WRITESET基础上多了个约束</span><span class="p">,</span><span class="err">主库上同一线程先后执行的事务</span><span class="p">,</span><span class="err">在备库也要保证相同的顺序</span><span class="p">.</span>
-<span class="n">binlog_transaction_dependency_tracking</span><span class="o">=</span><span class="n">WRITESET</span>
-<span class="n">transaction_write_set_extraction</span><span class="o">=</span><span class="n">XXHASH64</span>
+# 并行复制策略,默认值为COMMIT_ORDER,即按照上面的prepare和commit来并行;
+# WRITESET对事务中的每一行计算hash,组合成writeset,如果两个事务没有更新相同行,writeset会没有交集可并行.
+# WRITESET直接记录在binlog,不需要解析event,对binlog的格式没要求,5.7.22版本的新功能,binlog协议不向上兼容.
+# WRITESET_SESSION,即在WRITESET基础上多了个约束,主库上同一线程先后执行的事务,在备库也要保证相同的顺序.
+binlog_transaction_dependency_tracking=WRITESET
+transaction_write_set_extraction=XXHASH64
 
-<span class="o">#</span> <span class="err">记录</span><span class="n">writeset的容量</span><span class="p">,</span><span class="err">不需要修改</span><span class="p">,</span><span class="err">复制时可以并发的事务数大概为该值的一半</span><span class="p">.</span>
-<span class="o">#</span><span class="n">binlog_transaction_dependency_history_size</span><span class="o">=</span><span class="mi">25000</span>
+# 记录writeset的容量,不需要修改,复制时可以并发的事务数大概为该值的一半.
+#binlog_transaction_dependency_history_size=25000
 
-<span class="o">#</span> <span class="n">slave把从master接收到的binlog记录到自己的binlog中</span><span class="p">,</span><span class="err">主要用于级联复制的场景</span><span class="p">.</span>
-<span class="n">log_slave_updates</span><span class="o">=</span><span class="k">ON</span>
-</code></pre></div><h2 id="gtid的限制">GTID的限制.</h2>
+# slave把从master接收到的binlog记录到自己的binlog中,主要用于级联复制的场景.
+log_slave_updates=ON
+</code></pre><h2 id="gtid的限制">GTID的限制.</h2>
 <ol>
-<li>
-<p>从复制时报错,error: 1032
+<li>从复制时报错,error: 1032
 <code>select * from performance_schema.replication_applier_status_by_worker</code>可以查询从复制时的错误.
-error: 1032,主删除数据,但从没有相应的记录.遇到错误主从复制会停止.
-解决方案是在从库上跳过主库的这个事务:</p>
-<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 设置从库上的gtid_next为报错事务的gtid.
-</span><span class="c1"></span><span class="k">set</span> <span class="n">gtid_next</span><span class="o">=</span><span class="s2">&#34;af299bf7-dc7c-11ea-8417-0242ac170002:22805&#34;</span><span class="p">;</span>
-<span class="k">begin</span><span class="p">;</span>
-<span class="k">commit</span><span class="p">;</span>
-<span class="k">start</span> <span class="n">slave</span><span class="p">;</span>
-</code></pre></div></li>
-<li>
-<p>create function报错,error: 1418
-[Err] 1418 - This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you might want to use the less safe log_bin_trust_function_creators variable)
-解决方案:</p>
-<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">DELIMITER</span> <span class="p">;;</span>
-<span class="k">CREATE</span> <span class="k">FUNCTION</span> <span class="o">`</span><span class="n">xxxx</span><span class="o">`</span><span class="p">(</span><span class="n">user_id</span> <span class="nb">INT</span><span class="p">)</span> <span class="k">RETURNS</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">4000</span><span class="p">)</span> <span class="n">CHARSET</span> <span class="n">utf8</span> <span class="k">COLLATE</span> <span class="n">utf8_unicode_ci</span>
-<span class="c1">-- 添加关键字DETERMINISTIC.
-</span><span class="c1"></span><span class="k">DETERMINISTIC</span>
-<span class="k">BEGIN</span>
-</code></pre></div></li>
-<li>
-<p>create table报错,error: 1786
-[Err] 1786 - Statement violates GTID consistency: CREATE TABLE &hellip; SELECT.
-解决方案,需要拆分成两部分,create语句和insert语句:</p>
-<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">xxxx</span> <span class="k">LIKE</span> <span class="n">t</span><span class="p">;</span>
-<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">xxxx</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">t</span><span class="p">;</span>
-</code></pre></div></li>
-<li>
-<p>create temporary报错,error: 1787
-[Err] 1787 - Statement violates GTID consistency: CREATE TEMPORARY TABLE and DROP TEMPORARY TABLE can only be executed outside transactional context.  These statements are also not allowed in a function or trigger because functions and triggers are also considered to be multi-statement transactions.
-解决方案:
-在<code>autocommit=1</code>的情况下可以创建临时表,主库创建临时表时不产生GTID信息,所以不会同步到从库,但在删除临时表时会产生GTID,从在处理时会报错,导致复制中断.</p>
-</li>
+error: 1032,主删除数据,但从没有相应的记录.遇到错误主从复制会停止.</li>
 </ol>
+<p>解决方案是在从库上跳过主库的这个事务:</p>
+<pre><code>-- 设置从库上的gtid_next为报错事务的gtid.
+set gtid_next=&quot;af299bf7-dc7c-11ea-8417-0242ac170002:22805&quot;;
+begin;
+commit;
+start slave;
+</code></pre><ol start="2">
+<li>create function报错,error: 1418
+[Err] 1418 - This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you might want to use the less safe log_bin_trust_function_creators variable)</li>
+</ol>
+<p>解决方案:</p>
+<pre><code>DELIMITER ;;
+CREATE FUNCTION `xxxx`(user_id INT) RETURNS varchar(4000) CHARSET utf8 COLLATE utf8_unicode_ci
+-- 添加关键字DETERMINISTIC.
+DETERMINISTIC
+BEGIN
+</code></pre><ol start="3">
+<li>create table报错,error: 1786
+[Err] 1786 - Statement violates GTID consistency: CREATE TABLE &hellip; SELECT.</li>
+</ol>
+<p>解决方案,需要拆分成两部分,create语句和insert语句:</p>
+<pre><code>CREATE TABLE xxxx LIKE t;
+INSERT INTO xxxx SELECT * FROM t;
+</code></pre><ol start="4">
+<li>create temporary报错,error: 1787
+[Err] 1787 - Statement violates GTID consistency: CREATE TEMPORARY TABLE and DROP TEMPORARY TABLE can only be executed outside transactional context.  These statements are also not allowed in a function or trigger because functions and triggers are also considered to be multi-statement transactions.</li>
+</ol>
+<p>解决方案:
+在<code>autocommit=1</code>的情况下可以创建临时表,主库创建临时表时不产生GTID信息,所以不会同步到从库,但在删除临时表时会产生GTID,从在处理时会报错,导致复制中断.</p>
 <h2 id="查看gtid">查看GTID</h2>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 主库上执行,Executed_Gtid_Set表示已执行过的GTID集合.
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">master</span> <span class="n">status</span><span class="err">\</span><span class="k">G</span>
