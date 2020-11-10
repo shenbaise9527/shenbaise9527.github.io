@@ -2378,6 +2378,181 @@ DATA是数据帧,可以看到请求的protobuf结构只有1个字段,该字段�
 		</item>
 		
 		<item>
+			<title>go性能分析</title>
+			<link>https://shenbaise9527.github.io/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</link>
+			<pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.github.io/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</guid>
+			<description>性能分析 Go语言项目中的性能分析主要有以下几个方面: CPU profile: CPU使用情况,按照一定频率去采集应用程序在CPU和寄存器上面的数据. Memory profile(Heap profile): 报告程序</description>
+			<content type="html"><![CDATA[<h2 id="性能分析">性能分析</h2>
+<p>Go语言项目中的性能分析主要有以下几个方面:</p>
+<ul>
+<li>CPU profile: CPU使用情况,按照一定频率去采集应用程序在CPU和寄存器上面的数据.</li>
+<li>Memory profile(Heap profile): 报告程序的内存使用情况.</li>
+<li>Block Profiling: 报告goroutines不在运行状态的情况,可用来分析和查找死锁等性能瓶颈.</li>
+<li>Goroutine Profiling: 报告goroutines的使用情况,有哪些goroutines,调用关系是怎么样的?</li>
+</ul>
+<h2 id="数据采集">数据采集</h2>
+<p>Go语言内置了获取程序运行数据的工具,包括两个标准库:</p>
+<ol>
+<li><code>runtime/pprof</code>: 采集工具型应用的运行数据进行分析</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kn">import</span> <span class="s">&#34;runtime/pprof&#34;</span>
+
+<span class="c1">// 开启CPU性能分析.
+</span><span class="c1"></span><span class="nx">pprof</span><span class="p">.</span><span class="nf">StartCPUProfile</span><span class="p">(</span><span class="nx">w</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span>
+
+<span class="c1">// 关闭CPU性能分析.
+</span><span class="c1"></span><span class="nx">pprof</span><span class="p">.</span><span class="nf">StopCPUProfile</span><span class="p">()</span>
+
+<span class="c1">// 记录程序堆栈信息.
+</span><span class="c1"></span><span class="nx">pprof</span><span class="p">.</span><span class="nf">WriteHeapProfile</span><span class="p">(</span><span class="nx">w</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span>
+</code></pre></div><p>pprof开启后,每隔一段时间(10ms)就会收集下当前的堆栈信息,获取各个函数占用的CPU以及内存资源,最后通过采样数据分析,形成性能分析报告.</p>
+<ol start="2">
+<li><code>net/http/pprof</code>: 采集服务型应用的运行数据进行分析</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 在web server端导入pprof库.
+</span><span class="c1"></span><span class="kn">import</span> <span class="nx">_</span> <span class="s">&#34;net/http/pprof&#34;</span>
+
+<span class="c1">// 如果使用自定义Mux,需要手动注册路由规则.
+</span><span class="c1"></span><span class="nx">r</span><span class="p">.</span><span class="nf">HandleFunc</span><span class="p">(</span><span class="s">&#34;/debug/pprof&#34;</span><span class="p">,</span> <span class="nx">pprof</span><span class="p">.</span><span class="nx">Index</span><span class="p">)</span>
+<span class="nx">r</span><span class="p">.</span><span class="nf">HandleFunc</span><span class="p">(</span><span class="s">&#34;/debug/pprof/cmdline&#34;</span><span class="p">,</span> <span class="nx">pprof</span><span class="p">.</span><span class="nx">Cmdline</span><span class="p">)</span>
+<span class="nx">r</span><span class="p">.</span><span class="nf">HandleFunc</span><span class="p">(</span><span class="s">&#34;/debug/pprof/profile&#34;</span><span class="p">,</span> <span class="nx">pprof</span><span class="p">.</span><span class="nx">Profile</span><span class="p">)</span>
+<span class="nx">r</span><span class="p">.</span><span class="nf">HandleFunc</span><span class="p">(</span><span class="s">&#34;/debug/pprof/symbol&#34;</span><span class="p">,</span> <span class="nx">pprof</span><span class="p">.</span><span class="nx">Symbol</span><span class="p">)</span>
+<span class="nx">r</span><span class="p">.</span><span class="nf">HandleFunc</span><span class="p">(</span><span class="s">&#34;/debug/pprof/trace&#34;</span><span class="p">,</span> <span class="nx">pprof</span><span class="p">.</span><span class="nx">Trace</span><span class="p">)</span>
+
+<span class="c1">// 如果使用gin框架,推荐使用&#39;github.com/DeanThompson/ginpprof&#39;
+</span></code></pre></div><p>http服务会多出<code>/debug/pprof</code>的endpoint:</p>
+<ul>
+<li>/debug/pprof/profile: 访问这个链接会自动进行CPU Profiling,持续30s,并生成文件供下载.</li>
+<li>/debug/pprof/heap: Memory Profiling.</li>
+<li>/debug/pprof/block: Block Profiling.</li>
+<li>/debug/pprof/goroutines: 运行的goroutines列表以及调用关系.</li>
+</ul>
+<ol start="3">
+<li>profiling数据是动态的,要想获得有效的数据,请保证应用处于较大的负载,否则如果处于空闲状态,得到的结果可能没有任何意义</li>
+</ol>
+<h2 id="数据分析">数据分析</h2>
+<h3 id="go-tool-pprof命令">go tool pprof命令</h3>
+<p>可以通过命令<code>go tool pprof --help</code>查看命令的具体使用方法.</p>
+<pre><code>$ go tool pprof --help
+usage:
+
+Produce output in the specified format.
+
+   pprof &lt;format&gt; [options] [binary] &lt;source&gt; ...
+
+Omit the format to get an interactive shell whose commands can be used
+to generate various views of a profile
+
+   pprof [options] [binary] &lt;source&gt; ...
+
+Omit the format and provide the &quot;-http&quot; flag to get an interactive web
+interface at the specified host:port that can be used to navigate through
+various views of a profile.
+
+   pprof -http [host]:[port] [options] [binary] &lt;source&gt; ...
+
+Details:
+  Output formats (select at most one):
+</code></pre><h3 id="图形化">图形化</h3>
+<ol>
+<li>
+<p>安装<a href="https://graphviz.gitlab.io/">graphviz</a>,windows是还需要把安装目录下的<code>bin</code>文件夹添加到<code>PATH</code>环境变量中.</p>
+</li>
+<li>
+<p>使用<code>dot -version</code>命令查看graphviz安装是否成功.</p>
+</li>
+<li>
+<p>安装go-torch,使用<code>go get -v github.com/uber/go-torch</code>命令安装.
+当<code>go-torch</code>不带任何参数时,会默认从<code>http://localhost:8080/debug/pprof/profile</code>获取profiling数据.</p>
+<pre><code>$ go-torch --help
+Usage:
+go-torch [options] [binary] &lt;profile source&gt;
+
+pprof Options:
+-u, --url=         Base URL of your Go program (default: http://localhost:8080)
+    --suffix=      URL path of pprof profile (default: /debug/pprof/profile)
+-b, --binaryinput= File path of previously saved binary profile. (binary profile is anything accepted by https://golang.org/cmd/pprof)
+    --binaryname=  File path of the binary that the binaryinput is for, used for pprof inputs
+-t, --seconds=     Number of seconds to profile for (default: 30)
+    --pprofArgs=   Extra arguments for pprof
+</code></pre></li>
+<li>
+<p>安装<a href="https://www.perl.org/get.html">perl</a>,FlameGraph需要perl支持.</p>
+</li>
+<li>
+<p>安装FlameGraph,使用<code>git clone https://github.com/brendangregg/FlameGraph.git</code>命令安装.
+windows平台下,需要把<code>go-torch/render/flamegraph.go</code>文件中的<code>GenerateFlameGraph</code>按如下方式修改,然后在<code>go-torch</code>目录下执行<code>go install</code>命令.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// GenerateFlameGraph runs the flamegraph script to generate a flame graph SVG. func GenerateFlameGraph(graphInput []byte, args ...string) ([]byte, error) {
+</span><span class="c1"></span><span class="nx">flameGraph</span> <span class="o">:=</span> <span class="nf">findInPath</span><span class="p">(</span><span class="nx">flameGraphScripts</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">flameGraph</span> <span class="o">==</span> <span class="s">&#34;&#34;</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">errNoPerlScript</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="nx">runtime</span><span class="p">.</span><span class="nx">GOOS</span> <span class="o">==</span> <span class="s">&#34;windows&#34;</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nf">runScript</span><span class="p">(</span><span class="s">&#34;perl&#34;</span><span class="p">,</span> <span class="nb">append</span><span class="p">([]</span><span class="kt">string</span><span class="p">{</span><span class="nx">flameGraph</span><span class="p">},</span> <span class="nx">args</span><span class="o">...</span><span class="p">),</span> <span class="nx">graphInput</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="k">return</span> <span class="nf">runScript</span><span class="p">(</span><span class="nx">flameGraph</span><span class="p">,</span> <span class="nx">args</span><span class="p">,</span> <span class="nx">graphInput</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>
+<p>安装go-wrk,使用<code>go get -v https://github.com/adjust/go-wrk</code>命令安装.</p>
+<pre><code>$ go-wrk --help
+Usage of go-wrk:
+-CA string
+        A PEM eoncoded CA's certificate file. (default &quot;someCertCAFile&quot;)
+-H string
+        the http headers sent separated by '\n' (default &quot;User-Agent: go-wrk 0.1 benchmark\nContent-Type: text/html;&quot;)
+-b string
+        the http request body
+-c int
+        the max numbers of connections used (default 100)
+-cert string
+        A PEM eoncoded certificate file. (default &quot;someCertFile&quot;)
+-d string
+        dist mode
+-f string
+        json config file
+-i	TLS checks are disabled
+-k	if keep-alives are disabled (default true)
+-key string
+        A PEM encoded private key file. (default &quot;someKeyFile&quot;)
+-m string
+        the http request method (default &quot;GET&quot;)
+-n int
+        the total number of calls processed (default 1000)
+-p string
+        the http request body data file
+-r	in the case of having stream or file in the response,
+        it reads all response body to calculate the response size
+-s string
+        if specified, it counts how often the searched string s is contained in the responses
+-t int
+        the numbers of threads used (default 1)
+</code></pre></li>
+<li>
+<p>使用方式</p>
+<ul>
+<li>使用go-wrk压测,使用命令<code>go-wrk -n 50000 http://127.0.0.1:8080/*/*</code>在某个接口进行压测</li>
+<li>使用go-torch收集数据,使用命令<code>go-torch -u http://127.0.0.1:8080 -t 30</code>,30秒之后终端会出现如下提示: <code>Writing svg to torch.svg</code>,然后使用浏览器打开<code>torch.svg</code>,就能看到火焰图.</li>
+</ul>
+</li>
+<li>
+<p>perf</p>
+<ul>
+<li>Linux下使用命令<code>perf record -a -g -p pid -- sleep 30</code>,对指定进程采样30秒.</li>
+<li>使用命令<code>perf script -i ../perf.data | ./stackcollapse-perf.pl --all | ./flamegraph.pl &gt; app.svg</code>,其中<code>../perf.data</code>为<code>perf record</code>生成的采样数据,然后切换到FlameGraph的目录来执行上述命令,就能得到火焰图了(<code>stackcollapse-perf.pl</code>脚本是合并调用栈信息,<code>flamegraph.pl</code>脚本是生成火焰图).</li>
+</ul>
+</li>
+</ol>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://www.cnblogs.com/Dr-wei/p/11742414.html">Go pprof性能调优</a>.</li>
+</ul>
+]]></content>
+		</item>
+		
+		<item>
 			<title>tcp连接过程</title>
 			<link>https://shenbaise9527.github.io/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</link>
 			<pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
