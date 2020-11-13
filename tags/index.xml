@@ -2,63 +2,63 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on 深白色9527</title>
-    <link>http://www.shenbaise9527.com/tags/</link>
+    <link>https://shenbaise9527.github.io/tags/</link>
     <description>Recent content in Tags on 深白色9527</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Mon, 09 Nov 2020 21:27:12 +0800</lastBuildDate><atom:link href="http://www.shenbaise9527.com/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 09 Nov 2020 21:27:12 +0800</lastBuildDate><atom:link href="https://shenbaise9527.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>mysql</title>
-      <link>http://www.shenbaise9527.com/tags/mysql/</link>
+      <link>https://shenbaise9527.github.io/tags/mysql/</link>
       <pubDate>Mon, 09 Nov 2020 21:27:12 +0800</pubDate>
       
-      <guid>http://www.shenbaise9527.com/tags/mysql/</guid>
+      <guid>https://shenbaise9527.github.io/tags/mysql/</guid>
       <description></description>
     </item>
     
     <item>
       <title>go</title>
-      <link>http://www.shenbaise9527.com/tags/go/</link>
+      <link>https://shenbaise9527.github.io/tags/go/</link>
       <pubDate>Sat, 07 Nov 2020 13:27:24 +0800</pubDate>
       
-      <guid>http://www.shenbaise9527.com/tags/go/</guid>
+      <guid>https://shenbaise9527.github.io/tags/go/</guid>
       <description></description>
     </item>
     
     <item>
       <title>grpc</title>
-      <link>http://www.shenbaise9527.com/tags/grpc/</link>
+      <link>https://shenbaise9527.github.io/tags/grpc/</link>
       <pubDate>Sat, 07 Nov 2020 13:27:24 +0800</pubDate>
       
-      <guid>http://www.shenbaise9527.com/tags/grpc/</guid>
+      <guid>https://shenbaise9527.github.io/tags/grpc/</guid>
       <description></description>
     </item>
     
     <item>
       <title>cgo</title>
-      <link>http://www.shenbaise9527.com/tags/cgo/</link>
+      <link>https://shenbaise9527.github.io/tags/cgo/</link>
       <pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
       
-      <guid>http://www.shenbaise9527.com/tags/cgo/</guid>
+      <guid>https://shenbaise9527.github.io/tags/cgo/</guid>
       <description></description>
     </item>
     
     <item>
       <title>linux</title>
-      <link>http://www.shenbaise9527.com/tags/linux/</link>
+      <link>https://shenbaise9527.github.io/tags/linux/</link>
       <pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
       
-      <guid>http://www.shenbaise9527.com/tags/linux/</guid>
+      <guid>https://shenbaise9527.github.io/tags/linux/</guid>
       <description></description>
     </item>
     
     <item>
       <title>tcp</title>
-      <link>http://www.shenbaise9527.com/tags/tcp/</link>
+      <link>https://shenbaise9527.github.io/tags/tcp/</link>
       <pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
       
-      <guid>http://www.shenbaise9527.com/tags/tcp/</guid>
+      <guid>https://shenbaise9527.github.io/tags/tcp/</guid>
       <description></description>
     </item>
     
