@@ -1,20 +1,20 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 	<channel>
 		<title>Posts on 深白色9527</title>
-		<link>https://shenbaise9527.github.io/posts/</link>
+		<link>https://www.shenbaise9527.com/posts/</link>
 		<description>Recent content in Posts on 深白色9527</description>
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
 		<lastBuildDate>Mon, 09 Nov 2020 21:27:12 +0800</lastBuildDate>
-		<atom:link href="https://shenbaise9527.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		<atom:link href="https://www.shenbaise9527.com/posts/index.xml" rel="self" type="application/rss+xml" />
 		
 		<item>
 			<title>MySQL基于GTID复制</title>
-			<link>https://shenbaise9527.github.io/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</link>
+			<link>https://www.shenbaise9527.com/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</link>
 			<pubDate>Mon, 09 Nov 2020 21:27:12 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</guid>
+			<guid>https://www.shenbaise9527.com/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</guid>
 			<description>开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制.</description>
 			<content type="html"><![CDATA[<h2 id="开启gtid">开启GTID.</h2>
 <pre><code># 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制.
@@ -214,10 +214,10 @@ INSERT INTO xxxx SELECT * FROM t;
 		
 		<item>
 			<title>gRPC系列之连接异常机制</title>
-			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</link>
+			<link>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</link>
 			<pubDate>Sat, 07 Nov 2020 13:27:24 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</guid>
+			<guid>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</guid>
 			<description>连接server端失败的处理 重试机制 // 重点关注addrConn.resetTransport方法. func (ac *addrConn) resetTransport() { // 代码逻辑放在一个死循环里的. for</description>
 			<content type="html"><![CDATA[<h2 id="连接server端失败的处理">连接server端失败的处理</h2>
 <h3 id="重试机制">重试机制</h3>
@@ -396,10 +396,10 @@ INSERT INTO xxxx SELECT * FROM t;
 		
 		<item>
 			<title>gRPC系列之client和server的timetou机制</title>
-			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</link>
+			<link>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</link>
 			<pubDate>Sat, 07 Nov 2020 13:22:04 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</guid>
+			<guid>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</guid>
 			<description>客户端超时的处理 客户端在调用rpc接口时带timeout的context是如何传递给服务端的. // 在调用对应的rpc方法时设置了超时时间为3秒</description>
 			<content type="html"><![CDATA[<h2 id="客户端超时的处理">客户端超时的处理</h2>
 <p>客户端在调用rpc接口时带timeout的context是如何传递给服务端的.</p>
@@ -694,10 +694,10 @@ INSERT INTO xxxx SELECT * FROM t;
 		
 		<item>
 			<title>gRPC系列之client端调用</title>
-			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+			<link>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
 			<pubDate>Sat, 07 Nov 2020 13:16:47 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+			<guid>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
 			<description>Dail/DailContext与服务端建立连接 // 直接调用的DialContext. // Dial creates a client connection to the given target. func Dial(target string, opts ...DialOption) (*ClientConn, error) { return DialContext(context.Background(), target, opts...) } // Dial</description>
 			<content type="html"><![CDATA[<h2 id="daildailcontext与服务端建立连接">Dail/DailContext与服务端建立连接</h2>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 直接调用的DialContext.
@@ -1645,10 +1645,10 @@ INSERT INTO xxxx SELECT * FROM t;
 		
 		<item>
 			<title>gRPC系列之server端调用</title>
-			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+			<link>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
 			<pubDate>Sat, 07 Nov 2020 11:47:48 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+			<guid>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
 			<description>NewServer创建gRPC服务对象 主要是基于grpc-go的1.33.1版本Unary RPC来分析. // NewServer creates a gRPC server which has no service registered and has not // started to accept</description>
 			<content type="html"><![CDATA[<h2 id="newserver创建grpc服务对象">NewServer创建gRPC服务对象</h2>
 <p>主要是基于grpc-go的1.33.1版本Unary RPC来分析.</p>
@@ -2118,10 +2118,10 @@ INSERT INTO xxxx SELECT * FROM t;
 		
 		<item>
 			<title>gRPC系列之初识</title>
-			<link>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</link>
+			<link>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</link>
 			<pubDate>Fri, 06 Nov 2020 22:05:51 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</guid>
+			<guid>https://www.shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</guid>
 			<description>RPC RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需</description>
 			<content type="html"><![CDATA[<h2 id="rpc">RPC</h2>
 <p>RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需要关心底层通信细节和调用过程,RPC框架负责底层的传输方式、序列化方式和通信细节.</p>
@@ -2379,10 +2379,10 @@ DATA是数据帧,可以看到请求的protobuf结构只有1个字段,该字段�
 		
 		<item>
 			<title>go性能分析</title>
-			<link>https://shenbaise9527.github.io/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</link>
+			<link>https://www.shenbaise9527.com/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</link>
 			<pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</guid>
+			<guid>https://www.shenbaise9527.com/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</guid>
 			<description>性能分析 Go语言项目中的性能分析主要有以下几个方面: CPU profile: CPU使用情况,按照一定频率去采集应用程序在CPU和寄存器上面的数据. Memory profile(Heap profile): 报告程序</description>
 			<content type="html"><![CDATA[<h2 id="性能分析">性能分析</h2>
 <p>Go语言项目中的性能分析主要有以下几个方面:</p>
@@ -2554,10 +2554,10 @@ Usage of go-wrk:
 		
 		<item>
 			<title>tcp连接过程</title>
-			<link>https://shenbaise9527.github.io/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</link>
+			<link>https://www.shenbaise9527.com/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</link>
 			<pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</guid>
+			<guid>https://www.shenbaise9527.com/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</guid>
 			<description>tcp建连接三次握手 客户端发送SYN到服务器发起握手. 服务器收到SYN后回复SYN+ACK给客户端. 客户端收到SYN+ACK后,回复服务器一</description>
 			<content type="html"><![CDATA[<h2 id="tcp建连接三次握手">tcp建连接三次握手</h2>
 <ul>
@@ -2689,10 +2689,10 @@ sky-HP# cat /proc/sys/net/ipv4/tcp_abort_on_overflow
 		
 		<item>
 			<title>记录cgo调用C实现的加解密静态库中遇到的问题</title>
-			<link>https://shenbaise9527.github.io/posts/cgo/</link>
+			<link>https://www.shenbaise9527.com/posts/cgo/</link>
 			<pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
 			
-			<guid>https://shenbaise9527.github.io/posts/cgo/</guid>
+			<guid>https://www.shenbaise9527.com/posts/cgo/</guid>
 			<description>起因 公司有个公共的加解密库,供所有后端C++服务调用的,但最近要使用Go来实现个服务需要用到加解密,而Go并没有提供AES-256-ECB的</description>
 			<content type="html"><![CDATA[<h2 id="起因">起因</h2>
 <p>公司有个公共的加解密库,供所有后端C++服务调用的,但最近要使用Go来实现个服务需要用到加解密,而Go并没有提供AES-256-ECB的加解密库,所以决定用cgo来调用这个公共的加解密库.</p>
