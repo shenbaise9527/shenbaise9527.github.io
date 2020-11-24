@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="MySQL锁机制分析">
+<meta itemprop="description" content="全局锁 全局锁就是对整个数据库实例加锁.MySQL提供了命令Flush tables with read lock(FTWRL),可使整库处于只读状态,其它线程的数据更新语">
+<meta itemprop="datePublished" content="2020-11-24T20:50:10+08:00" />
+<meta itemprop="dateModified" content="2020-11-24T20:50:10+08:00" />
+<meta itemprop="wordCount" content="7357">
+
+
+
+<meta itemprop="keywords" content="mysql," />
+<meta property="og:title" content="MySQL锁机制分析" />
+<meta property="og:description" content="全局锁 全局锁就是对整个数据库实例加锁.MySQL提供了命令Flush tables with read lock(FTWRL),可使整库处于只读状态,其它线程的数据更新语" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/posts/mysql%E9%94%81%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/" />
+<meta property="article:published_time" content="2020-11-24T20:50:10+08:00" />
+<meta property="article:modified_time" content="2020-11-24T20:50:10+08:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="MySQL锁机制分析"/>
+<meta name="twitter:description" content="全局锁 全局锁就是对整个数据库实例加锁.MySQL提供了命令Flush tables with read lock(FTWRL),可使整库处于只读状态,其它线程的数据更新语"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>MySQL锁机制分析</title>
+	<link rel="stylesheet" href="https://shenbaise9527.com/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://shenbaise9527.com">深白色9527</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://shenbaise9527.com/posts/">文章</a>
+				<a href="https://shenbaise9527.com/tags/">标签</a>
+				<a href="https://shenbaise9527.com/about/">关于</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<button id="toc-btn" class="hdr-btn desktop-only-ib" title="Table of Contents"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3" y2="6"></line><line x1="3" y1="12" x2="3" y2="12"></line><line x1="3" y1="18" x2="3" y2="18"></line></svg></button><span class="hdr-social hide-in-mobile"><a href="mailto:zhouyingan@gmail.com" target="_blank" rel="noopener me" title="Email"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></a><a href="https://github.com/shenbaise9527" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+        
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-R1HW7DNZ94');
+</script>
+
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://shenbaise9527.com/posts/">文章</a></li>
+			<li><a href="https://shenbaise9527.com/tags/">标签</a></li>
+			<li><a href="https://shenbaise9527.com/about/">关于</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Nov 24, 2020</span></div>
+				<h1>MySQL锁机制分析</h1>
+			</header>
+			<div class="content">
+				<h2 id="全局锁">全局锁<a href="#全局锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>全局锁就是对整个数据库实例加锁.MySQL提供了命令<code>Flush tables with read lock</code>(FTWRL),可使整库处于只读状态,其它线程的数据更新语句(数据的增删改)、数据定义语句(DDL)和更新类事务的提交语句都会被阻塞.</p>
+<p>全局锁的典型使用场景是做全库的逻辑备份.使用FTWRL可确保不会有其它线程对数据库做更新,然后再对整个库做备份,这样可以保证数据库的数据逻辑一致性.
+但让整库只读,是危险操作:</p>
+<ol>
+<li>如果在主库上备份,那么在备份期间都不能执行更新,业务基本上停摆.</li>
+<li>如果在从库上备份,那么在备份期间不能执行主库同步过来的binlog,会主从延迟.</li>
+</ol>
+<p>在针对InnoDB引擎的表做全库备份时,可以采用可重复读隔离级别下来进行备份,不会对其它线程的操作造成堵塞,还可以保证数据的逻辑一致性.是基于一致性视图+MVCC来实现的.
+可以使用官方工具mysqldump,使用参数<code>-single-transaction</code>时,会在可重复读隔离级别下启动一个事务,确保拿到一致性视图.但该方法只适用于所有的表都使用事务引擎的库.</p>
+<p>使用命令<code>set global readonly=true</code>也可使整库处于只读状态,但这个操作更加的危险.</p>
+<ol>
+<li>在有些系统中,readonly的值会被用来做其它逻辑,比如判断一个库是主库还是备库.修改该值影响面更广.</li>
+<li>在异常处理机制上有差异.执行FTWRL后客户端异常断开,MySQL会自动释放这个全局锁,使数据库恢复到正常状态.而readonly修改后会一直有效,使库一直处于只读状态,风险更高.</li>
+</ol>
+<p>ps: 在从库上如果用户有超级权限,readonly是失效的.</p>
+<h2 id="表级锁">表级锁<a href="#表级锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>MySQL里表级别的锁有两种,表锁和元数据锁(meta data lock,简称MDL锁)</p>
+<h3 id="表锁">表锁<a href="#表锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>加锁语法为<code>lock tables ... read/write</code>,解锁语句为<code>unlock tables</code></p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session1
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">lock</span> <span class="n">tables</span> <span class="n">t</span> <span class="k">read</span><span class="p">,</span> <span class="n">t1</span> <span class="k">write</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+--------+------+-----+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">city</span>   <span class="o">|</span> <span class="n">name</span> <span class="o">|</span> <span class="n">age</span> <span class="o">|</span> <span class="n">addr</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+------+-----+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="n">gongan</span> <span class="o">|</span> <span class="o">??</span>   <span class="o">|</span>  <span class="mi">80</span> <span class="o">|</span> <span class="n">test</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+------+-----+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="n">b</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span> <span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="s1">&#39;gongan&#39;</span><span class="p">,</span> <span class="s1">&#39;guanguan&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">);</span>
+<span class="n">ERROR</span> <span class="mi">1099</span> <span class="p">(</span><span class="n">HY000</span><span class="p">):</span> <span class="k">Table</span> <span class="s1">&#39;t&#39;</span> <span class="n">was</span> <span class="n">locked</span> <span class="k">with</span> <span class="n">a</span> <span class="k">READ</span> <span class="k">lock</span> <span class="k">and</span> <span class="n">can</span><span class="s1">&#39;t be updated
+</span><span class="s1">mysql&gt; insert into t1 values(101, 101, 101);
+</span><span class="s1">Query OK, 1 row affected (0.00 sec)
+</span><span class="s1">
+</span><span class="s1">mysql&gt; select * from t2 limit 1;
+</span><span class="s1">ERROR 1100 (HY000): Table &#39;</span><span class="n">t2</span><span class="s1">&#39; was not locked with LOCK TABLES
+</span><span class="s1">mysql&gt; insert into t2 values(1001, 1001, 1001);
+</span><span class="s1">ERROR 1100 (HY000): Table &#39;</span><span class="n">t2</span><span class="s1">&#39; was not locked with LOCK TABLES
+</span></code></pre></div><p>针对表<code>t</code>读锁,表<code>t1</code>为写锁.本线程两个表的查询操作都正常,表<code>t1</code>插入正常,但针对表<code>t</code>的插入操作报错.
+本线程只能操作表<code>t</code>和表<code>t1</code>,操作其它表都会报错.
+本线程只能读表<code>t</code>,写会报错.
+本线程能读写表<code>t1</code>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session2
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+--------+------+-----+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">city</span>   <span class="o">|</span> <span class="n">name</span> <span class="o">|</span> <span class="n">age</span> <span class="o">|</span> <span class="n">addr</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+------+-----+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="n">gongan</span> <span class="o">|</span> <span class="o">??</span>   <span class="o">|</span>  <span class="mi">80</span> <span class="o">|</span> <span class="n">test</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+------+-----+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t2</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="n">b</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t2</span> <span class="k">values</span><span class="p">(</span><span class="mi">1001</span><span class="p">,</span> <span class="mi">1001</span><span class="p">,</span> <span class="mi">1001</span><span class="p">);</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">03</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- block
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span> <span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="s1">&#39;gongan&#39;</span><span class="p">,</span> <span class="s1">&#39;guanguan&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">);</span>
+</code></pre></div><p>其它线程能正常读表<code>t</code>,但写表<code>t</code>时被阻塞
+其它线程能正常读写其它表.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session3(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div><p>其它线程读表<code>t1</code>时被阻塞.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session4(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t1</span> <span class="k">values</span><span class="p">(</span><span class="mi">102</span><span class="p">,</span> <span class="mi">102</span><span class="p">,</span> <span class="mi">102</span><span class="p">);</span>
+</code></pre></div><p>其它线程写表<code>t1</code>时被阻塞.</p>
+<h3 id="元数据锁">元数据锁<a href="#元数据锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>MySQL5.5版本之后的功能,会自动加锁、解锁.主要是为了解决DDL和DML并发的问题.
+DML时会加MDL读锁,DDL时会加MDL写锁,读读之间不互斥,读写、写写之间互斥.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session1
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="n">b</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- session2
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t1</span> <span class="k">add</span> <span class="n">f</span> <span class="nb">int</span><span class="p">;</span>
+
+<span class="c1">-- session3
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div><p>在session1提交事务之前,session2和session3都被阻塞了.
+session1是获取了表<code>t1</code>的MDL读锁,但由于事务未提交,导致该MDL读锁未被释放.
+session2是给表<code>t1</code>增加列,需要MDL写锁,由于读写互斥,导致该操作被堵塞.
+session3是读表<code>t1</code>,需要MDL读锁,但之前已经有MDL写锁在等待了,也导致获取不到MDL读锁,从而被堵塞.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session1
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">commit</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- session2
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t1</span> <span class="k">add</span> <span class="n">f</span> <span class="nb">int</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">4</span> <span class="k">min</span> <span class="mi">23</span><span class="p">.</span><span class="mi">27</span> <span class="n">sec</span><span class="p">)</span>
+<span class="n">Records</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Duplicates</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="c1">-- session3
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="n">b</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">4</span> <span class="k">min</span> <span class="mi">20</span><span class="p">.</span><span class="mi">25</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>session1提交之后,session2和session3才执行完,但注意session3在session2之前执行,也就是session3先获取到了MDL读锁.
+<strong>当有多个线程在等待MDL锁时,获取锁的规则是什么?会由哪个线程得到锁?读锁优先还是写锁优先?</strong></p>
+<p><em><strong>MDL锁是在需要的时候由MySQL自动加的,但要等待事务被提交后才会被释放.</strong></em></p>
+<h2 id="行锁">行锁<a href="#行锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>全局锁和表级锁是在server层实现的,而行锁是由引擎层实现的,这里主要关注InnoDB的行锁.行锁是自动加的.</p>
+<h3 id="两阶段协议锁">两阶段协议锁<a href="#两阶段协议锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t2</span> <span class="k">set</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t2</span> <span class="k">set</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="c1">-- session B(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t2</span> <span class="k">set</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div><p>可以看到session A未提交,会导致session B阻塞.当session A在<code>commit</code>提交之后,session B才能开始执行.
+行锁是在需要的时候由InnoDB自动加上,但直到事务结束时锁才会被释放.这就是两阶段协议锁.</p>
+<h3 id="死锁和死锁检测">死锁和死锁检测<a href="#死锁和死锁检测" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>在并发系统中当不同的线程出现循环资源依赖,就会导致这些线程都进入无限等待的状态,称为死锁.
+如下session A和session B就出现了循环资源依赖,导致死锁.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">session A</th>
+<th style="text-align:left">session B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">begin;update t2 set a = 2 where id = 1;</td>
+<td style="text-align:left">begin;</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">update t2 set a = 3 where id = 2;</td>
+</tr>
+<tr>
+<td style="text-align:left">update t2 set a = 4 where id = 2;</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">update t2 set a = 5 where id = 1;</td>
+</tr>
+</tbody>
+</table>
+<p>在InnoDB中,当处于锁等待状态时,就有可能会触发死锁检测,是参数<code>innodb_deadlock_detect</code>控制的.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 默认值为on,表示开启死锁检测.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">variables</span> <span class="k">like</span> <span class="s1">&#39;innodb_deadlock%&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">------------------------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">Variable_name</span>          <span class="o">|</span> <span class="n">Value</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">------------------------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">innodb_deadlock_detect</span> <span class="o">|</span> <span class="k">ON</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">------------------------+-------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>每个新来的被堵住的线程,都要判断会不会由于自己的加入导致了死锁,这是一个时间复杂度为O(n)的操作.
+假设有1000个线程要同时更新同一行,那么死锁检测操作就是100万量级的,这期间会消耗大量的CPU资源.注意死锁检测只会检测相关联的线程.
+比如当前session A在等待session B,而session B在等待session C;session D在等待session E.当session F加入需要等待session A时,只会检测F-&gt;A-&gt;B-&gt;C,D和E是不会检测的.</p>
+<p><em><strong>怎么解决由热点行更新导致的性能问题?</strong></em></p>
+<p><em><strong>若在事务中需要锁多个行,把最可能造成锁冲突、最可能影响并发度的锁的申请时机尽量往后放.</strong></em></p>
+<p>另外需要注意的是,当等待锁一定时间后,会出现超时现象,是参数<code>innodb_lock_wait_timeout</code>控制的.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 等待锁超时.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t2</span> <span class="k">set</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">ERROR</span> <span class="mi">1205</span> <span class="p">(</span><span class="n">HY000</span><span class="p">):</span> <span class="k">Lock</span> <span class="n">wait</span> <span class="n">timeout</span> <span class="n">exceeded</span><span class="p">;</span> <span class="n">try</span> <span class="n">restarting</span> <span class="k">transaction</span>
+
+<span class="c1">-- 锁等待超时时间,默认为50s.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">variables</span> <span class="k">like</span> <span class="s1">&#39;innodb_lock_wait_timeout&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">--------------------------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">Variable_name</span>            <span class="o">|</span> <span class="n">Value</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">--------------------------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">innodb_lock_wait_timeout</span> <span class="o">|</span> <span class="mi">50</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">--------------------------+-------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>死锁时可以通过<code>show engine innodb status</code>命令查看</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">engine</span> <span class="n">innodb</span> <span class="n">status</span><span class="err">\</span><span class="k">G</span>
+<span class="o">***************************</span> <span class="mi">1</span><span class="p">.</span> <span class="k">row</span> <span class="o">***************************</span>
+  <span class="k">Type</span><span class="p">:</span> <span class="n">InnoDB</span>
+  <span class="n">Name</span><span class="p">:</span> 
+<span class="n">Status</span><span class="p">:</span> 
+<span class="o">=====================================</span>
+<span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">14</span> <span class="mi">14</span><span class="p">:</span><span class="mi">49</span><span class="p">:</span><span class="mi">16</span> <span class="mi">0</span><span class="n">x7fa8507f8700</span> <span class="n">INNODB</span> <span class="n">MONITOR</span> <span class="k">OUTPUT</span>
+<span class="o">=====================================</span>
+<span class="n">Per</span> <span class="k">second</span> <span class="n">averages</span> <span class="n">calculated</span> <span class="k">from</span> <span class="n">the</span> <span class="k">last</span> <span class="mi">26</span> <span class="n">seconds</span>
+<span class="c1">-----------------
+</span><span class="c1"></span><span class="n">BACKGROUND</span> <span class="n">THREAD</span>
+<span class="c1">-----------------
+</span><span class="c1"></span><span class="n">srv_master_thread</span> <span class="n">loops</span><span class="p">:</span> <span class="mi">521</span> <span class="n">srv_active</span><span class="p">,</span> <span class="mi">0</span> <span class="n">srv_shutdown</span><span class="p">,</span> <span class="mi">3098384</span> <span class="n">srv_idle</span>
+<span class="n">srv_master_thread</span> <span class="n">log</span> <span class="n">flush</span> <span class="k">and</span> <span class="n">writes</span><span class="p">:</span> <span class="mi">3098905</span>
+<span class="c1">----------
+</span><span class="c1"></span><span class="n">SEMAPHORES</span>
+<span class="c1">----------
+</span><span class="c1"></span><span class="n">OS</span> <span class="n">WAIT</span> <span class="nb">ARRAY</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">reservation</span> <span class="k">count</span> <span class="mi">6262</span>
+<span class="n">OS</span> <span class="n">WAIT</span> <span class="nb">ARRAY</span> <span class="n">INFO</span><span class="p">:</span> <span class="n">signal</span> <span class="k">count</span> <span class="mi">28687</span>
+<span class="n">RW</span><span class="o">-</span><span class="n">shared</span> <span class="n">spins</span> <span class="mi">0</span><span class="p">,</span> <span class="n">rounds</span> <span class="mi">27977</span><span class="p">,</span> <span class="n">OS</span> <span class="n">waits</span> <span class="mi">2270</span>
+<span class="n">RW</span><span class="o">-</span><span class="n">excl</span> <span class="n">spins</span> <span class="mi">0</span><span class="p">,</span> <span class="n">rounds</span> <span class="mi">159415</span><span class="p">,</span> <span class="n">OS</span> <span class="n">waits</span> <span class="mi">2170</span>
+<span class="n">RW</span><span class="o">-</span><span class="n">sx</span> <span class="n">spins</span> <span class="mi">4327</span><span class="p">,</span> <span class="n">rounds</span> <span class="mi">34223</span><span class="p">,</span> <span class="n">OS</span> <span class="n">waits</span> <span class="mi">205</span>
+<span class="n">Spin</span> <span class="n">rounds</span> <span class="n">per</span> <span class="n">wait</span><span class="p">:</span> <span class="mi">27977</span><span class="p">.</span><span class="mi">00</span> <span class="n">RW</span><span class="o">-</span><span class="n">shared</span><span class="p">,</span> <span class="mi">159415</span><span class="p">.</span><span class="mi">00</span> <span class="n">RW</span><span class="o">-</span><span class="n">excl</span><span class="p">,</span> <span class="mi">7</span><span class="p">.</span><span class="mi">91</span> <span class="n">RW</span><span class="o">-</span><span class="n">sx</span>
+<span class="c1">-- 死锁信息
+</span><span class="c1">------------------------
+</span><span class="c1"></span><span class="n">LATEST</span> <span class="n">DETECTED</span> <span class="n">DEADLOCK</span>
+<span class="c1">------------------------
+</span><span class="c1"></span><span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">14</span> <span class="mi">12</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">34</span> <span class="mi">0</span><span class="n">x7fa8507f8700</span>
+<span class="o">***</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">TRANSACTION</span><span class="p">:</span>
+<span class="k">TRANSACTION</span> <span class="mi">3667</span><span class="p">,</span> <span class="n">ACTIVE</span> <span class="mi">7</span> <span class="n">sec</span> <span class="n">starting</span> <span class="k">index</span> <span class="k">read</span>
+<span class="n">mysql</span> <span class="n">tables</span> <span class="k">in</span> <span class="n">use</span> <span class="mi">1</span><span class="p">,</span> <span class="n">locked</span> <span class="mi">1</span>
+<span class="k">LOCK</span> <span class="n">WAIT</span> <span class="mi">2</span> <span class="k">lock</span> <span class="n">struct</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">heap</span> <span class="k">size</span> <span class="mi">1136</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="k">lock</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="n">MySQL</span> <span class="n">thread</span> <span class="n">id</span> <span class="mi">73</span><span class="p">,</span> <span class="n">OS</span> <span class="n">thread</span> <span class="n">handle</span> <span class="mi">140361007904512</span><span class="p">,</span> <span class="n">query</span> <span class="n">id</span> <span class="mi">1776328</span> <span class="n">localhost</span> <span class="n">web</span> <span class="n">updating</span>
+<span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">10</span>
+<span class="o">***</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">WAITING</span> <span class="k">FOR</span> <span class="n">THIS</span> <span class="k">LOCK</span> <span class="k">TO</span> <span class="n">BE</span> <span class="k">GRANTED</span><span class="p">:</span>
+<span class="n">RECORD</span> <span class="n">LOCKS</span> <span class="k">space</span> <span class="n">id</span> <span class="mi">43</span> <span class="n">page</span> <span class="k">no</span> <span class="mi">4</span> <span class="n">n</span> <span class="n">bits</span> <span class="mi">80</span> <span class="k">index</span> <span class="k">c</span> <span class="k">of</span> <span class="k">table</span> <span class="o">`</span><span class="n">web</span><span class="o">`</span><span class="p">.</span><span class="o">`</span><span class="n">t</span><span class="o">`</span> <span class="n">trx</span> <span class="n">id</span> <span class="mi">3667</span> <span class="n">lock_mode</span> <span class="n">X</span> <span class="n">waiting</span>
+<span class="n">Record</span> <span class="k">lock</span><span class="p">,</span> <span class="n">heap</span> <span class="k">no</span> <span class="mi">4</span> <span class="n">PHYSICAL</span> <span class="n">RECORD</span><span class="p">:</span> <span class="n">n_fields</span> <span class="mi">2</span><span class="p">;</span> <span class="n">compact</span> <span class="n">format</span><span class="p">;</span> <span class="n">info</span> <span class="n">bits</span> <span class="mi">0</span>
+ <span class="mi">0</span><span class="p">:</span> <span class="n">len</span> <span class="mi">4</span><span class="p">;</span> <span class="n">hex</span> <span class="mi">8000000</span><span class="n">a</span><span class="p">;</span> <span class="k">asc</span>     <span class="p">;;</span>
+ <span class="mi">1</span><span class="p">:</span> <span class="n">len</span> <span class="mi">4</span><span class="p">;</span> <span class="n">hex</span> <span class="mi">8000000</span><span class="n">a</span><span class="p">;</span> <span class="k">asc</span>     <span class="p">;;</span>
+
+<span class="o">***</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">TRANSACTION</span><span class="p">:</span>
+<span class="k">TRANSACTION</span> <span class="mi">3668</span><span class="p">,</span> <span class="n">ACTIVE</span> <span class="mi">12</span> <span class="n">sec</span> <span class="n">inserting</span>
+<span class="n">mysql</span> <span class="n">tables</span> <span class="k">in</span> <span class="n">use</span> <span class="mi">1</span><span class="p">,</span> <span class="n">locked</span> <span class="mi">1</span>
+<span class="mi">5</span> <span class="k">lock</span> <span class="n">struct</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">heap</span> <span class="k">size</span> <span class="mi">1136</span><span class="p">,</span> <span class="mi">3</span> <span class="k">row</span> <span class="k">lock</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">undo</span> <span class="n">log</span> <span class="n">entries</span> <span class="mi">1</span>
+<span class="n">MySQL</span> <span class="n">thread</span> <span class="n">id</span> <span class="mi">72</span><span class="p">,</span> <span class="n">OS</span> <span class="n">thread</span> <span class="n">handle</span> <span class="mi">140360881768192</span><span class="p">,</span> <span class="n">query</span> <span class="n">id</span> <span class="mi">1776329</span> <span class="n">localhost</span> <span class="n">web</span> <span class="k">update</span>
+<span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="o">***</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">HOLDS</span> <span class="n">THE</span> <span class="k">LOCK</span><span class="p">(</span><span class="n">S</span><span class="p">):</span>
+<span class="n">RECORD</span> <span class="n">LOCKS</span> <span class="k">space</span> <span class="n">id</span> <span class="mi">43</span> <span class="n">page</span> <span class="k">no</span> <span class="mi">4</span> <span class="n">n</span> <span class="n">bits</span> <span class="mi">80</span> <span class="k">index</span> <span class="k">c</span> <span class="k">of</span> <span class="k">table</span> <span class="o">`</span><span class="n">web</span><span class="o">`</span><span class="p">.</span><span class="o">`</span><span class="n">t</span><span class="o">`</span> <span class="n">trx</span> <span class="n">id</span> <span class="mi">3668</span> <span class="k">lock</span> <span class="k">mode</span> <span class="n">S</span>
+<span class="n">Record</span> <span class="k">lock</span><span class="p">,</span> <span class="n">heap</span> <span class="k">no</span> <span class="mi">4</span> <span class="n">PHYSICAL</span> <span class="n">RECORD</span><span class="p">:</span> <span class="n">n_fields</span> <span class="mi">2</span><span class="p">;</span> <span class="n">compact</span> <span class="n">format</span><span class="p">;</span> <span class="n">info</span> <span class="n">bits</span> <span class="mi">0</span>
+ <span class="mi">0</span><span class="p">:</span> <span class="n">len</span> <span class="mi">4</span><span class="p">;</span> <span class="n">hex</span> <span class="mi">8000000</span><span class="n">a</span><span class="p">;</span> <span class="k">asc</span>     <span class="p">;;</span>
+ <span class="mi">1</span><span class="p">:</span> <span class="n">len</span> <span class="mi">4</span><span class="p">;</span> <span class="n">hex</span> <span class="mi">8000000</span><span class="n">a</span><span class="p">;</span> <span class="k">asc</span>     <span class="p">;;</span>
+
+<span class="o">***</span> <span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="n">WAITING</span> <span class="k">FOR</span> <span class="n">THIS</span> <span class="k">LOCK</span> <span class="k">TO</span> <span class="n">BE</span> <span class="k">GRANTED</span><span class="p">:</span>
+<span class="n">RECORD</span> <span class="n">LOCKS</span> <span class="k">space</span> <span class="n">id</span> <span class="mi">43</span> <span class="n">page</span> <span class="k">no</span> <span class="mi">4</span> <span class="n">n</span> <span class="n">bits</span> <span class="mi">80</span> <span class="k">index</span> <span class="k">c</span> <span class="k">of</span> <span class="k">table</span> <span class="o">`</span><span class="n">web</span><span class="o">`</span><span class="p">.</span><span class="o">`</span><span class="n">t</span><span class="o">`</span> <span class="n">trx</span> <span class="n">id</span> <span class="mi">3668</span> <span class="n">lock_mode</span> <span class="n">X</span> <span class="n">locks</span> <span class="n">gap</span> <span class="k">before</span> <span class="n">rec</span> <span class="k">insert</span> <span class="n">intention</span> <span class="n">waiting</span>
+<span class="n">Record</span> <span class="k">lock</span><span class="p">,</span> <span class="n">heap</span> <span class="k">no</span> <span class="mi">4</span> <span class="n">PHYSICAL</span> <span class="n">RECORD</span><span class="p">:</span> <span class="n">n_fields</span> <span class="mi">2</span><span class="p">;</span> <span class="n">compact</span> <span class="n">format</span><span class="p">;</span> <span class="n">info</span> <span class="n">bits</span> <span class="mi">0</span>
+ <span class="mi">0</span><span class="p">:</span> <span class="n">len</span> <span class="mi">4</span><span class="p">;</span> <span class="n">hex</span> <span class="mi">8000000</span><span class="n">a</span><span class="p">;</span> <span class="k">asc</span>     <span class="p">;;</span>
+ <span class="mi">1</span><span class="p">:</span> <span class="n">len</span> <span class="mi">4</span><span class="p">;</span> <span class="n">hex</span> <span class="mi">8000000</span><span class="n">a</span><span class="p">;</span> <span class="k">asc</span>     <span class="p">;;</span>
+
+<span class="o">***</span> <span class="n">WE</span> <span class="n">ROLL</span> <span class="n">BACK</span> <span class="k">TRANSACTION</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div><h3 id="锁等待分析">锁等待分析<a href="#锁等待分析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A,开启事务,在di=1加行锁.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t2</span> <span class="k">set</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="c1">-- session B(block),等待session A的锁.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t2</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">lock</span> <span class="k">in</span> <span class="k">share</span> <span class="k">mode</span><span class="p">;</span>
+
+<span class="c1">-- session C,查看阻塞情况.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">processlist</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+-----------+------+---------+------+------------+--------------------------------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">Id</span> <span class="o">|</span> <span class="k">User</span> <span class="o">|</span> <span class="k">Host</span>      <span class="o">|</span> <span class="n">db</span>   <span class="o">|</span> <span class="n">Command</span> <span class="o">|</span> <span class="n">Time</span> <span class="o">|</span> <span class="k">State</span>      <span class="o">|</span> <span class="n">Info</span>                                             <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+-----------+------+---------+------+------------+--------------------------------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">68</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">localhost</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">Sleep</span>   <span class="o">|</span>  <span class="mi">104</span> <span class="o">|</span>            <span class="o">|</span> <span class="k">NULL</span>                                             <span class="o">|</span>
+<span class="o">|</span> <span class="mi">69</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">localhost</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">Query</span>   <span class="o">|</span>   <span class="mi">20</span> <span class="o">|</span> <span class="k">statistics</span> <span class="o">|</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t2</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">lock</span> <span class="k">in</span> <span class="k">share</span> <span class="k">mode</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">70</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">localhost</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">Query</span>   <span class="o">|</span>    <span class="mi">0</span> <span class="o">|</span> <span class="n">starting</span>   <span class="o">|</span> <span class="k">show</span> <span class="n">processlist</span>                                 <span class="o">|</span>
+<span class="o">|</span> <span class="mi">71</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">localhost</span> <span class="o">|</span> <span class="n">web</span>  <span class="o">|</span> <span class="n">Sleep</span>   <span class="o">|</span> <span class="mi">3724</span> <span class="o">|</span>            <span class="o">|</span> <span class="k">NULL</span>                                             <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+-----------+------+---------+------+------------+--------------------------------------------------+
+</span><span class="c1"></span><span class="mi">4</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 从下面可以看出69在等待68的锁.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">sys</span><span class="p">.</span><span class="n">innodb_lock_waits</span> <span class="k">where</span> <span class="n">locked_table</span><span class="o">=</span><span class="s1">&#39;`web`.`t2`&#39;</span><span class="err">\</span><span class="k">G</span>
+<span class="o">***************************</span> <span class="mi">1</span><span class="p">.</span> <span class="k">row</span> <span class="o">***************************</span>
+                <span class="n">wait_started</span><span class="p">:</span> <span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">13</span> <span class="mi">16</span><span class="p">:</span><span class="mi">37</span><span class="p">:</span><span class="mi">31</span>
+                    <span class="n">wait_age</span><span class="p">:</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">02</span>
+               <span class="n">wait_age_secs</span><span class="p">:</span> <span class="mi">2</span>
+                <span class="n">locked_table</span><span class="p">:</span> <span class="o">`</span><span class="n">web</span><span class="o">`</span><span class="p">.</span><span class="o">`</span><span class="n">t2</span><span class="o">`</span>
+                <span class="n">locked_index</span><span class="p">:</span> <span class="k">PRIMARY</span>
+                 <span class="n">locked_type</span><span class="p">:</span> <span class="n">RECORD</span>
+              <span class="n">waiting_trx_id</span><span class="p">:</span> <span class="mi">421836271774456</span>
+         <span class="n">waiting_trx_started</span><span class="p">:</span> <span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">13</span> <span class="mi">16</span><span class="p">:</span><span class="mi">37</span><span class="p">:</span><span class="mi">31</span>
+             <span class="n">waiting_trx_age</span><span class="p">:</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">02</span>
+     <span class="n">waiting_trx_rows_locked</span><span class="p">:</span> <span class="mi">1</span>
+   <span class="n">waiting_trx_rows_modified</span><span class="p">:</span> <span class="mi">0</span>
+                 <span class="n">waiting_pid</span><span class="p">:</span> <span class="mi">69</span>
+               <span class="n">waiting_query</span><span class="p">:</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t2</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">lock</span> <span class="k">in</span> <span class="k">share</span> <span class="k">mode</span>
+             <span class="n">waiting_lock_id</span><span class="p">:</span> <span class="mi">421836271774456</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">5</span><span class="p">:</span><span class="mi">2</span>
+           <span class="n">waiting_lock_mode</span><span class="p">:</span> <span class="n">S</span>
+             <span class="n">blocking_trx_id</span><span class="p">:</span> <span class="mi">3553</span>
+                <span class="n">blocking_pid</span><span class="p">:</span> <span class="mi">68</span>
+              <span class="n">blocking_query</span><span class="p">:</span> <span class="k">NULL</span>
+            <span class="n">blocking_lock_id</span><span class="p">:</span> <span class="mi">3553</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">5</span><span class="p">:</span><span class="mi">2</span>
+          <span class="n">blocking_lock_mode</span><span class="p">:</span> <span class="n">X</span>
+        <span class="n">blocking_trx_started</span><span class="p">:</span> <span class="mi">2020</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">13</span> <span class="mi">16</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span><span class="mi">07</span>
+            <span class="n">blocking_trx_age</span><span class="p">:</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">26</span>
+    <span class="n">blocking_trx_rows_locked</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="n">blocking_trx_rows_modified</span><span class="p">:</span> <span class="mi">1</span>
+     <span class="n">sql_kill_blocking_query</span><span class="p">:</span> <span class="n">KILL</span> <span class="n">QUERY</span> <span class="mi">68</span>
+<span class="n">sql_kill_blocking_connection</span><span class="p">:</span> <span class="n">KILL</span> <span class="mi">68</span>
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">3</span> <span class="n">warnings</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">06</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>在MySQL5.7及之后版本可以通过<code>sys.innodb_lock_waits</code>表获取锁占用情况.</p>
+<h3 id="幻读">幻读<a href="#幻读" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<h4 id="什么是幻读">什么是幻读?<a href="#什么是幻读" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<ol>
+<li>在一个事务内,前后看到的数据不一致,不一致特指后面看到的数据行数多了,这就是幻读(幻读特指新插入的行).</li>
+<li>在读已提交隔离级别下,是允许存在幻读现象的.</li>
+<li>在可重复读隔离级别下,MySQL是不存在幻读现象的.</li>
+<li>在可重复读隔离级别下,普通的查询都是快照读,是不能看到别的事务插入的数据,因此必须是针对当前读的语句.</li>
+</ol>
+<h4 id="幻读有什么问题">幻读有什么问题?<a href="#幻读有什么问题" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<p>在可重复隔离级别下,如果允许幻读会出现什么现象?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 隔离级别为可重复读.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">@@</span><span class="n">transaction_isolation</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">-------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="o">@@</span><span class="n">transaction_isolation</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="k">REPEATABLE</span><span class="o">-</span><span class="k">READ</span>         <span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t2</span> <span class="k">set</span> <span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">where</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="c1">-- session B,假定此处不会block
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t2</span> <span class="k">values</span><span class="p">(</span><span class="mi">1002</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1002</span><span class="p">);</span>
+
+<span class="c1">-- session A,提交事务
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">commit</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>如上所示的流程,假如session A只是对a=4这行加了行锁.</p>
+<p>session B的事务是先提交,session A的事务是后提交.此时数据库的数据为(4, 4, 5)和(1002, 4, 1002).
+在binlog中先是session B的操作,然后是session A的操作,该binlog同步到从库上开始执行,会得到什么结果?
+session B先执行,插入一行数据(1002, 4, 1002),然后更新a=4的行,从库的数据为(4, 4, 5)和(1002, 4, 5),此时主库和从库的数据不一致了.</p>
+<p>session A本来是想更新所有a=4的行的,但在这之后session B插入了一行a=4的数据,导致session A的语义被破坏了.</p>
+<p><em><strong>主从数据不一致和语义被破坏,这就是幻读的问题.</strong></em></p>
+<p>实际上InnoDB在可重复读级别下是不会出现幻读的现象的,上面的sql语句,session B的<code>insert</code>操作会被阻塞,直到session A的事务提交后才能执行.</p>
+<h4 id="如何解决幻读">如何解决幻读?<a href="#如何解决幻读" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<p>通过上例,只是加行锁,无法阻止幻读的出现.InnoDB是通过加间隙锁(Gap Lock),来锁住a=4的间隙,这样可以阻塞别的线程的插入操作.
+间隙锁,锁的就是两个值之间的间隙,以上例session A来说,会锁住(3, 4)和(4, 5)的间隙.这样再插入session B的数据,会落入到(4, 5)间隙,导致被阻塞.</p>
+<p>间隙锁一般是针对可重复隔离级别的.读已提交一般情况下只有行锁(说明该隔离级别会出现幻读的现象).</p>
+<p>间隙锁的引入会导致锁的范围变大,这样其实会影响并发度的.</p>
+<p><em><strong>需要注意,间隙锁之间是不互斥的,不同的session之间可以锁住同样的间隙</strong></em></p>
+<h4 id="next-key-lock">Next-key lock<a href="#next-key-lock" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<p>行锁+间隙锁合称为next-key lock,每个next-key lock都是前开后闭区间.</p>
+<h3 id="innodb加锁规则可重复读隔离级别">InnoDB加锁规则(可重复读隔离级别)<a href="#innodb加锁规则可重复读隔离级别" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<ol>
+<li>原则一: 加锁的基本单位是next-key lock,是前开后闭区间.</li>
+<li>原则二: 查找过程中访问到的对象才会加锁.</li>
+<li>优化一: 索引上的等值查询,给唯一索引加锁的时候,next-key lock会退化为行锁.</li>
+<li>优化二: 索引上的等值查询,向右遍历时且最后一个值不满足等值条件的时候,next-key lock会退化为间隙锁.</li>
+<li>bug一: 唯一索引上的范围查询会访问到不满足条件的第一个值为止.</li>
+</ol>
+<p>数据准备.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 创建表t.
+</span><span class="c1"></span><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">t</span><span class="o">`</span> <span class="p">(</span>
+  <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="k">c</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">d</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="o">`</span><span class="n">id</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="k">c</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="k">c</span><span class="o">`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span>
+
+<span class="c1">-- 插入数据.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span>  <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">),(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">),(</span><span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">);</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">6</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+<span class="n">Records</span><span class="p">:</span> <span class="mi">6</span>  <span class="n">Duplicates</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+</code></pre></div><h4 id="等值查询间隙锁">等值查询间隙锁<a href="#等值查询间隙锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="n">id</span><span class="o">=</span><span class="mi">7</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="c1">-- session B(block).
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">8</span><span class="p">);</span>
+
+<span class="c1">-- session C.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="n">id</span><span class="o">=</span><span class="mi">10</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+</code></pre></div><p>session A在主键索引上加锁,根据规则一加锁为(5, 10],根据优化二退化为间隙锁(5, 10)
+session B要插入id=8,落在间隙锁(5, 10)之间,被阻塞.
+session C更新id=10的行,根据规则一加锁为(5, 10],根据优化一退化为行锁(10),锁不冲突,可以更新成功.</p>
+<h4 id="非唯一索引等值锁">非唯一索引等值锁<a href="#非唯一索引等值锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="n">id</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="k">c</span> <span class="o">=</span> <span class="mi">5</span> <span class="k">lock</span> <span class="k">in</span> <span class="k">share</span> <span class="k">mode</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">5</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- session B
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">02</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="c1">-- session C(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">);</span>
+</code></pre></div><p>session A在索引c上加锁,根据规则一为(0, 5]和(5, 10],根据优化二退化为(0, 5]和(5, 10).注意该语句是使用了覆盖索引,所以并没有在主键索引上加锁.
+session B是在主键索引上加锁,根据优化一退化为行锁(5),和session A并不冲突,可以更新成功.
+session C要再索引c上插入c=7的行,落在了(5, 10)之间,被session A阻塞.</p>
+<p><strong>注意:语句中使用的是<code>lock in share mode</code>,是读锁且使用了覆盖索引,并不需要访问主键索引.但如果使用的是<code>for update</code>,又是什么效果列?</strong></p>
+<h4 id="主键索引范围锁">主键索引范围锁<a href="#主键索引范围锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">--session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">id</span> <span class="o">&gt;=</span> <span class="mi">10</span> <span class="k">and</span> <span class="n">id</span> <span class="o">&lt;</span> <span class="mi">11</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="k">c</span>    <span class="o">|</span> <span class="n">d</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">--session B
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- block
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">13</span><span class="p">);</span>
+
+<span class="c1">--session C (block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="n">id</span><span class="o">=</span><span class="mi">15</span><span class="p">;</span>
+</code></pre></div><p>session A在主键索引上加锁,满足条件的第一行是id=10,则加锁(5, 10],但根据优化一退化为行锁(10);范围查询要继续查找,则加锁(10, 15],由于是范围查询没有适用的优化规则.故加锁范围为[10, 15]
+session B第一条插入id=8,不在锁的范围,可以插入成功.第二条插入id=13,在锁的范围,被阻塞.
+session C更新id=15的行,在锁的范围,被阻塞.</p>
+<h4 id="非唯一索引范围锁">非唯一索引范围锁<a href="#非唯一索引范围锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="k">c</span><span class="o">&gt;=</span><span class="mi">10</span> <span class="k">and</span> <span class="k">c</span><span class="o">&lt;</span><span class="mi">11</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="k">c</span>    <span class="o">|</span> <span class="n">d</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- session B(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+
+<span class="c1">-- session C(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">15</span><span class="p">;</span>
+</code></pre></div><p>session A在索引c上加锁,满足条件的第一行是c=10,则加锁(5, 10],注意c是非唯一索引没有优化规则;范围查询要继续查找,则加锁(10, 15],由于是范围查询没有适用的优化规则.故加锁范围为(5, 15].
+session B要插入c=8的行,在锁的范围内,被阻塞.
+session C要更新c=15的行,在锁的范围内,被阻塞.</p>
+<h4 id="唯一索引范围bug">唯一索引范围bug<a href="#唯一索引范围bug" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">--session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">id</span><span class="o">&gt;</span><span class="mi">10</span> <span class="k">and</span> <span class="n">id</span><span class="o">&lt;=</span><span class="mi">15</span> <span class="k">for</span> <span class="k">update</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="k">c</span>    <span class="o">|</span> <span class="n">d</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">--session B(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="n">id</span><span class="o">=</span><span class="mi">20</span><span class="p">;</span>
+
+<span class="c1">--session C(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">);</span>
+</code></pre></div><p>session A在主键索引上加锁,按照原则一,加锁(10, 15],但InnoDB会扫描到第一个不满足条件的行为止,这里也就是id=20，由于是范围扫描,所以还会加锁(15, 20].但(15, 20]是完全没必要的,可以认为是bug.
+session B要更新id=20的行,在锁的范围内,被阻塞.
+session C要插入id=16的行,在锁的范围内,被阻塞.</p>
+<h4 id="非唯一索引上存在相同键">非唯一索引上存在相同键<a href="#非唯一索引上存在相同键" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 插入新行,c=10的有两行数据.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">);</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 可以看到索引c的顺序.
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">order</span> <span class="k">by</span> <span class="k">c</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="k">c</span>    <span class="o">|</span> <span class="n">d</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">0</span> <span class="o">|</span>    <span class="mi">0</span> <span class="o">|</span>    <span class="mi">0</span> <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">5</span> <span class="o">|</span>    <span class="mi">5</span> <span class="o">|</span>    <span class="mi">5</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">30</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>   <span class="mi">30</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">20</span> <span class="o">|</span>   <span class="mi">20</span> <span class="o">|</span>   <span class="mi">20</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">25</span> <span class="o">|</span>   <span class="mi">25</span> <span class="o">|</span>   <span class="mi">25</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">7</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">--session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">delete</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">10</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">2</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">--session B(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">);</span>
+
+<span class="c1">--session C
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">15</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+<span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+</code></pre></div><p>session A是在索引c上加锁,满足条件的第一行为(id=10,c=10),则加锁((id=5,c=5),(id=10,c=10)],非唯一索引没有优化规则.第一行为(id=30,c=10),则加锁((id=10,c=10),(id=30,c=10)],继续查找到(id=15,c=15)结束,根据优化规则二,退化为间隙锁((id=30,c=10),(id=15,c=15))
+session B插入c=12的行,在锁的范围内,被阻塞.
+session C更新c=15的行,不再锁的范围内,可正常更新.</p>
+<h4 id="limit语句加锁">limit语句加锁<a href="#limit语句加锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">--session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">delete</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">10</span> <span class="k">limit</span> <span class="mi">2</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">2</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">--session B(正常)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">);</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">02</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>session A是在索引c上加锁,由于有<code>limit 2</code>在读取到满足条件的两行数据后就不会再继续查找,所以加锁范围相比上节的例子会变小,加锁范围为((id=5,c=5),(id=10,c=10)]和((id=10,c=10),(id=30,c=10)]
+session B要插入c=12的行,不在加锁范围内,可正常插入.</p>
+<p><strong>在不改变语义的前提下,删除数据的时候尽量加limit,可有效降低加锁范围</strong></p>
+<h4 id="死锁">死锁<a href="#死锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">--session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="k">c</span>    <span class="o">|</span> <span class="n">d</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">0</span> <span class="o">|</span>    <span class="mi">0</span> <span class="o">|</span>    <span class="mi">0</span> <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">5</span> <span class="o">|</span>    <span class="mi">5</span> <span class="o">|</span>    <span class="mi">5</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>   <span class="mi">10</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">20</span> <span class="o">|</span>   <span class="mi">20</span> <span class="o">|</span>   <span class="mi">20</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">25</span> <span class="o">|</span>   <span class="mi">25</span> <span class="o">|</span>   <span class="mi">25</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">6</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="n">id</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">10</span> <span class="k">lock</span> <span class="k">in</span> <span class="k">share</span> <span class="k">mode</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">10</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+
+</span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">--session B(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">10</span><span class="p">;</span>
+
+<span class="c1">--session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">12</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">--session B(死锁,回滚)
+</span><span class="c1"></span><span class="n">ERROR</span> <span class="mi">1213</span> <span class="p">(</span><span class="mi">40001</span><span class="p">):</span> <span class="n">Deadlock</span> <span class="k">found</span> <span class="k">when</span> <span class="n">trying</span> <span class="k">to</span> <span class="k">get</span> <span class="k">lock</span><span class="p">;</span> <span class="n">try</span> <span class="n">restarting</span> <span class="k">transaction</span>
+</code></pre></div><p>首先session A的加锁范围为next-key lock(5, 10]和间隙锁(10, 15)
+session B的update语句被阻塞,其加锁逻辑为:先加间隙锁(5, 10),然后是行锁(10).由于间隙锁之间是不冲突的,有冲突的是行锁(10),导致sesssion B的阻塞.
+此时session A拥有(5, 10]和(10, 15)的锁,session B拥有(5, 10)的锁且在等待行锁(10).
+最后session A插入c=8的新行,落在间隙(5, 10)中,该间隙锁session B也拥有导致阻塞.
+此时会进行死锁检测,发现session B在等待session A的行锁,而session A又在等待session B的间隙锁,导致死锁.</p>
+<h4 id="order-by加锁">order by加锁<a href="#order-by加锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="k">c</span><span class="o">&gt;=</span><span class="mi">15</span> <span class="k">and</span> <span class="k">c</span><span class="o">&lt;=</span><span class="mi">20</span> <span class="k">order</span> <span class="k">by</span> <span class="k">c</span> <span class="k">desc</span> <span class="k">lock</span> <span class="k">in</span> <span class="k">share</span> <span class="k">mode</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="k">c</span>    <span class="o">|</span> <span class="n">d</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">20</span> <span class="o">|</span>   <span class="mi">20</span> <span class="o">|</span>   <span class="mi">20</span> <span class="o">|</span>
+<span class="o">|</span> <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>   <span class="mi">15</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+------+
+</span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- session B(block)
+</span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span>
+</code></pre></div><p>session A由于是倒序,第一个访问的是索引c上最右边的c=20的行,会加间隙锁(20, 25)和next-key lock(15, 20],继续遍历到c=10才会停下来,则next-key lock(5, 10].故整个锁的范围是索引c上的(5, 25),主键索引上id=15和id=20的两个行锁.
+session B要插入c=6的行,落在了间隙锁(5, 25)中,所以被阻塞.</p>
+<h3 id="innodb加锁规则读已提交隔离级别">InnoDB加锁规则(读已提交隔离级别)<a href="#innodb加锁规则读已提交隔离级别" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<ol>
+<li>主要是行锁(只有在外键场景下会有间隙锁)</li>
+<li>在语句执行过程中加的行锁,在语句执行完成后,就会把不满足条件的行的行锁释放掉,不需要等待事务提交.</li>
+</ol>
+<p>在读已提交下锁的范围更小,锁的时间更短.</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://shenbaise9527.com/tags/mysql">mysql</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>7357 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-24 20:50 &#43;0800</p>
+			</footer>
+		</article>
+		<aside id="toc">
+			<div class="toc-title">Table of Contents</div>
+			<nav id="TableOfContents">
+  <ul>
+    <li><a href="#全局锁">全局锁</a></li>
+    <li><a href="#表级锁">表级锁</a>
+      <ul>
+        <li><a href="#表锁">表锁</a></li>
+        <li><a href="#元数据锁">元数据锁</a></li>
+      </ul>
+    </li>
+    <li><a href="#行锁">行锁</a>
+      <ul>
+        <li><a href="#两阶段协议锁">两阶段协议锁</a></li>
+        <li><a href="#死锁和死锁检测">死锁和死锁检测</a></li>
+        <li><a href="#锁等待分析">锁等待分析</a></li>
+        <li><a href="#幻读">幻读</a></li>
+        <li><a href="#innodb加锁规则可重复读隔离级别">InnoDB加锁规则(可重复读隔离级别)</a></li>
+        <li><a href="#innodb加锁规则读已提交隔离级别">InnoDB加锁规则(读已提交隔离级别)</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+		</aside>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://shenbaise9527.com/posts/mysql%E7%9A%84orderby%E5%88%86%E6%9E%90/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>MySQL的orderby分析</span>
+			</a>
+			<a class="prev-post" href="https://shenbaise9527.com/posts/mysql%E4%B9%8Bjoin/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>MySQL的join分析</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://shenbaise9527.com">shenbaise9527</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://shenbaise9527.com/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+
+	<script src="https://shenbaise9527.com/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
+	
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'G-R1HW7DNZ94', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+</body>
+
+</html>

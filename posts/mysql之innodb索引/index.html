@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="MySQL索引(InnoDB引擎)">
+<meta itemprop="description" content="B&#43;树 基于N叉树(每个父节点有N个子节点,子节点的值从左到右按照从小到大的顺序排列),非叶子节点只存储索引值,叶子节点储存索引值和数据,所有">
+<meta itemprop="datePublished" content="2020-11-24T20:43:33+08:00" />
+<meta itemprop="dateModified" content="2020-11-24T20:43:33+08:00" />
+<meta itemprop="wordCount" content="11064">
+
+
+
+<meta itemprop="keywords" content="mysql," />
+<meta property="og:title" content="MySQL索引(InnoDB引擎)" />
+<meta property="og:description" content="B&#43;树 基于N叉树(每个父节点有N个子节点,子节点的值从左到右按照从小到大的顺序排列),非叶子节点只存储索引值,叶子节点储存索引值和数据,所有" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/posts/mysql%E4%B9%8Binnodb%E7%B4%A2%E5%BC%95/" />
+<meta property="article:published_time" content="2020-11-24T20:43:33+08:00" />
+<meta property="article:modified_time" content="2020-11-24T20:43:33+08:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="MySQL索引(InnoDB引擎)"/>
+<meta name="twitter:description" content="B&#43;树 基于N叉树(每个父节点有N个子节点,子节点的值从左到右按照从小到大的顺序排列),非叶子节点只存储索引值,叶子节点储存索引值和数据,所有"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>MySQL索引(InnoDB引擎)</title>
+	<link rel="stylesheet" href="https://shenbaise9527.com/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://shenbaise9527.com">深白色9527</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://shenbaise9527.com/posts/">文章</a>
+				<a href="https://shenbaise9527.com/tags/">标签</a>
+				<a href="https://shenbaise9527.com/about/">关于</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<button id="toc-btn" class="hdr-btn desktop-only-ib" title="Table of Contents"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3" y2="6"></line><line x1="3" y1="12" x2="3" y2="12"></line><line x1="3" y1="18" x2="3" y2="18"></line></svg></button><span class="hdr-social hide-in-mobile"><a href="mailto:zhouyingan@gmail.com" target="_blank" rel="noopener me" title="Email"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></a><a href="https://github.com/shenbaise9527" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+        
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-R1HW7DNZ94');
+</script>
+
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://shenbaise9527.com/posts/">文章</a></li>
+			<li><a href="https://shenbaise9527.com/tags/">标签</a></li>
+			<li><a href="https://shenbaise9527.com/about/">关于</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Nov 24, 2020</span></div>
+				<h1>MySQL索引(InnoDB引擎)</h1>
+			</header>
+			<div class="content">
+				<h2 id="b树">B+树<a href="#b树" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>基于N叉树(每个父节点有N个子节点,子节点的值从左到右按照从小到大的顺序排列),非叶子节点只存储索引值,叶子节点储存索引值和数据,所有叶子节点采用链表串起来.</p>
+<p>InnoDB采用的就是B+树,表的数据都是以索引的形式存放的,称为索引组织表.针对每个InnoDB引擎的表,都必须存在索引,当建表时没有显示声明索引,InnoDB会默认创建,如下<code>表t1</code>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*mysql版本*/</span>
+<span class="n">Server</span> <span class="k">version</span><span class="p">:</span> <span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">27</span><span class="o">-</span><span class="n">log</span> <span class="n">MySQL</span> <span class="n">Community</span> <span class="n">Server</span> <span class="p">(</span><span class="n">GPL</span><span class="p">)</span>
+
+<span class="cm">/*创建表t,没有显示声明索引*/</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">t</span><span class="o">`</span> <span class="p">(</span>
+  <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">city</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">name</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">age</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">addr</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span><span class="p">;</span>
+</code></pre></div><p>由于数据全部存储在叶子节点上,则每次查询都必须到叶子节点,其查找时间复杂度稳定,只和树高有关.
+假如树高为4,N为1200,则这棵B+树能存储17亿多的数据量,整棵树的高度能维持在非常小的范围内,同时在内存里缓存前面若干层的节点,则极大的降低访问磁盘的次数,提高查询效率.</p>
+<p>B+树的树高是由数据页大小和索引列的大小来决定的,而数据页大小是由参数<code>innodb_page_size</code>(默认为16k)的值决定;比如以一个<code>bigint</code>类型的字段为主键,则索引的大小为8字节(<code>bigint</code>大小)+6字节(指针大小,mysql里指针占6字节).则N的大小为16k/14字节,大约为1170.
+索引字段越小一个数据页能存放的数据就越多,N就会越大.</p>
+<h2 id="索引分类">索引分类<a href="#索引分类" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<h3 id="主键索引">主键索引<a href="#主键索引" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>也被称为聚簇索引(clustered index),每个表都必须有且仅有一个主键索引(当没有显示声明主键索引时,InnoDB会默认创建一个以rowid为主键的索引),索引对应的字段的值唯一且不允许有空值.
+主键索引的B+树的叶子节点的数据页里存放的是整行数据,且只有在主键索引的B+树中才有完整的数据.</p>
+<h3 id="非主键索引">非主键索引<a href="#非主键索引" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>又叫二级索引(secondary index),可以有多个,可分为唯一索引(索引对应的字段的值必须是唯一的,但允许为空值)和普通索引(对字段没什么限制,可重复可为空)
+对应的B+树的叶子节点的数据页里存放的是对应的主键值.
+需要注意:当使用二级索引查询时只能获取到主键值和索引所对应列的值,要获取其它字段的值就只能根据主键值再去主键索引中查找,这个操作称为回表.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*mysql版本*/</span>
+<span class="n">Server</span> <span class="k">version</span><span class="p">:</span> <span class="mi">5</span><span class="p">.</span><span class="mi">7</span><span class="p">.</span><span class="mi">27</span><span class="o">-</span><span class="n">log</span> <span class="n">MySQL</span> <span class="n">Community</span> <span class="n">Server</span> <span class="p">(</span><span class="n">GPL</span><span class="p">)</span>
+
+<span class="cm">/*创建表t*/</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">t</span><span class="o">`</span> <span class="p">(</span>
+  <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">city</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">name</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">age</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">addr</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">128</span><span class="p">),</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="o">`</span><span class="n">id</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">city</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="n">city</span><span class="o">`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span>
+
+<span class="cm">/*根据普通索引city来查询,此时需要进行回表操作,来获取其它字段的值*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">city</span><span class="o">=</span><span class="s1">&#39;hangzhou&#39;</span><span class="p">;</span>
+
+<span class="cm">/*根据主键索引来查询,直接在主键索引B+树上查找*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">id</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+</code></pre></div><h2 id="索引维护">索引维护<a href="#索引维护" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>索引必然是有序的.当做增删改操作时,必须要进行必要的维护操作,来保持索引的有序性.
+在InnoDB中,读写都是以数据页为单位的(默认为16k),数据都是存放在数据页里的,当插入新值时为了保持索引的有序性,可能要把新值插入到数据页的中间位置,但如果此时数据页已满时会怎么样?
+页分裂:当数据页已满时,引擎会申请一个新的数据页,然后挪动原数据页的一部分数据到新的数据页中.在这种情况下,插入性能是会受到影响的.另外数据页的空间利用率也会降低大约50%.
+同理在删除数据时,有可能引发页合并(有分裂就有合并,是分裂的逆过程).</p>
+<p>注意:</p>
+<ul>
+<li>当新数据要插入到某个数据页的首位置,而此时该数据页已满,为了避免页分裂,会优先去找前一个数据页是否还有空余,若有就把新数据插入到前一个数据页的末尾位置.</li>
+<li>当新数据要插入到某个数据页的尾位置,而此时该数据页已满,为了避免页分裂,会优先去找后一个数据页是否还有空余,若有就把新数据插入到后一个数据页的首位置.</li>
+</ul>
+<p>为什么一般建议采用自增ID为主键?</p>
+<ul>
+<li>自增ID自带有序性,每次插入都是追加操作,不涉及到挪动其它记录,也不会触发叶子节点的分裂.</li>
+<li>每个二级索引的叶子节点上都是主键的值,而自增ID若是整型(int)为4字节,若是长整型(bigint)为8字节,主键长度越小,二级索引的叶子节点就越小,占用的空间也就越小.</li>
+</ul>
+<h2 id="索引优化">索引优化<a href="#索引优化" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<h3 id="覆盖索引">覆盖索引<a href="#覆盖索引" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>为什么需要回表,是因为要去主键索引树中获取相应字段的值.但如果想要查询的字段是索引列的一部分列?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*仍以表t为例,先新加个索引,包含city和name字段*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t</span> <span class="k">add</span> <span class="k">index</span> <span class="n">city_name</span><span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+
+<span class="cm">/*通过city来查询name*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="n">name</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="o">=</span> <span class="s1">&#39;hangzhou&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+----------------+-----------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span>  <span class="o">|</span> <span class="k">key</span>       <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+----------------+-----------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="n">city</span><span class="p">,</span><span class="n">city_name</span> <span class="o">|</span> <span class="n">city_name</span> <span class="o">|</span> <span class="mi">50</span>      <span class="o">|</span> <span class="n">const</span> <span class="o">|</span> <span class="mi">5505</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+----------------+-----------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="cm">/*通过city来查询name和age*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="o">=</span> <span class="s1">&#39;hangzhou&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+----------------+------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span>  <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+----------------+------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="n">city</span><span class="p">,</span><span class="n">city_name</span> <span class="o">|</span> <span class="n">city</span> <span class="o">|</span> <span class="mi">50</span>      <span class="o">|</span> <span class="n">const</span> <span class="o">|</span> <span class="mi">5505</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+----------------+------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>第一个查询采用的是索引city_name,Extra为<code>Using index</code>,表示是覆盖索引,需要查询的字段已包含在索引列中,不需要回表.
+第二个查询采用的是索引city,Extra为<code>NULL</code>,则需要进行回表,去主键索引中获取相应字段的值.</p>
+<p>覆盖索引能减少回表次数,即减少树的搜索次数,可显著提升性能.</p>
+<h3 id="前缀索引">前缀索引<a href="#前缀索引" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<ul>
+<li>联合索引的最左N个字段.</li>
+<li>字符串索引的最左M个字符.</li>
+</ul>
+<p>联合索引的值是按照索引定义里出现的字段顺序来排列的,比如表<code>t</code>的索引<code>city_name</code>是按照字段<code>city</code>和<code>name</code>的顺序排列的.
+还是以表<code>t</code>为例,创建由字段<code>city</code>、<code>name</code>和<code>age</code>组成的联合索引.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*创建索引*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t</span> <span class="k">add</span> <span class="k">index</span> <span class="n">city_name_age</span><span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">);</span>
+
+<span class="cm">/*根据字段city和name来查询,使用了索引city_name_age*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="o">=</span> <span class="s1">&#39;hangzhou&#39;</span> <span class="k">and</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;zhou&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+---------------+---------+-------------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>           <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>         <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+---------------+---------+-------------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="n">city_name_age</span> <span class="o">|</span> <span class="n">city_name_age</span> <span class="o">|</span> <span class="mi">100</span>     <span class="o">|</span> <span class="n">const</span><span class="p">,</span><span class="n">const</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+---------------+---------+-------------+------+----------+-------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>联合索引的字段顺序如何安排?</p>
+<ul>
+<li>如果通过调整顺序,可以少维护一个索引,则这个顺序是需要优先考虑的.</li>
+<li>索引空间的大小.比如表t对<code>name</code>和<code>age</code>字段添加索引,基于空间考虑,应该增加一个(name,age)的联合索引和一个(age)的单索引,这时因为字段name比字段age大.</li>
+</ul>
+<p>字符串索引,适用于模糊查询.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*在字符串字段city上新建索引*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t</span> <span class="k">add</span> <span class="k">index</span> <span class="n">city</span><span class="p">(</span><span class="n">city</span><span class="p">);</span>
+
+<span class="cm">/*模糊查询*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="k">like</span> <span class="s1">&#39;h%&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">city</span>          <span class="o">|</span> <span class="n">city</span> <span class="o">|</span> <span class="mi">50</span>      <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">5505</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>可以看出<code>like 'h%'</code>模糊查询使用了索引<code>city</code>来快速查找.但如果是针对<code>like '%h%'</code>之类的模糊查询列?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*使用前后都模糊匹配模式,查询所有字段*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="k">like</span> <span class="s1">&#39;%h%&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>  <span class="o">|</span> <span class="k">NULL</span>          <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">43868</span> <span class="o">|</span>    <span class="mi">11</span><span class="p">.</span><span class="mi">11</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="cm">/*使用前后都模糊匹配模式,查询id字段*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="n">id</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="k">like</span> <span class="s1">&#39;%h%&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+--------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+--------------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">index</span> <span class="o">|</span> <span class="k">NULL</span>          <span class="o">|</span> <span class="n">city</span> <span class="o">|</span> <span class="mi">50</span>      <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">43868</span> <span class="o">|</span>    <span class="mi">11</span><span class="p">.</span><span class="mi">11</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span><span class="p">;</span> <span class="k">Using</span> <span class="k">index</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+--------------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>针对查询<code>select * from t where city like '%h%'</code>,使用的是全表扫描
+针对查询<code>select id from t where city like '%h%'</code>,使用的索引<code>city</code>,看rows字段也是全索引扫描,由于只需要获取字段<code>id</code>,故优化器认为顺序扫描索引<code>city</code>比主键索引的代价小.
+针对索引,一种是通过索引来快速查找,而另一种是通过索引来顺序遍历.</p>
+<p><strong>注意:</strong>
+针对字段<code>city</code>和<code>age</code>的联合索引,也是适用于<code>city like 'h%'</code>的模糊查询.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*在字段city和age上新建联合索引*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t</span> <span class="k">add</span> <span class="k">index</span> <span class="n">city_age</span><span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">age</span><span class="p">);</span>
+
+<span class="cm">/*利用联合索引的最左字段city的最左M个字符*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="k">like</span> <span class="s1">&#39;hang%&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>      <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">city_age</span>      <span class="o">|</span> <span class="n">city_age</span> <span class="o">|</span> <span class="mi">50</span>      <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">5505</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>联合索引(非主键索引)中的字段和主键索引所包含的字段有重复时,在非主键索引树中该字段不会出现多次.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*新建表geek*/</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">geek</span><span class="o">`</span> <span class="p">(</span>
+  <span class="o">`</span><span class="n">a</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">b</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="k">c</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">d</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="o">`</span><span class="n">a</span><span class="o">`</span><span class="p">,</span><span class="o">`</span><span class="n">b</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">ca</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="k">c</span><span class="o">`</span><span class="p">,</span><span class="o">`</span><span class="n">a</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">cb</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="k">c</span><span class="o">`</span><span class="p">,</span><span class="o">`</span><span class="n">b</span><span class="o">`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span>
+</code></pre></div><p>如上<code>geek</code>表中有3个索引,由字段<code>a</code>和<code>b</code>组成的主键索引,由字段<code>c</code>和<code>a</code>组成的普通索引,还有由字段<code>c</code>和<code>b</code>组成的普通索引.
+在<code>ca</code>索引树中,叶子节点包含的字段顺序为<code>c</code>、<code>a</code>和<code>b</code>.并不是<code>c</code>、<code>a</code>、<code>a</code>和<code>b</code>.
+在<code>cb</code>索引树中,叶子节点包含的字段顺序为<code>c</code>、<code>b</code>和<code>a</code>.并不是<code>c</code>、<code>b</code>、<code>a</code>和<code>b</code>.</p>
+<h3 id="索引下推">索引下推<a href="#索引下推" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>针对前缀索引中的联合索引(<code>city</code>和<code>age</code>),适用于<code>city</code>的模糊查询,那如果查询条件再加上<code>age</code>会如何?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*在city字段上模糊匹配,在age上精确匹配*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">city</span> <span class="k">like</span> <span class="s1">&#39;hang%&#39;</span> <span class="k">and</span> <span class="n">age</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>      <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">city_age</span>      <span class="o">|</span> <span class="n">city_age</span> <span class="o">|</span> <span class="mi">54</span>      <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">5505</span> <span class="o">|</span>    <span class="mi">10</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>可以看到仍然会使用索引<code>city_age</code>,Extra字段里的<code>Using index condition</code>表示使用了索引下推.通过字段<code>city</code>快速定位记录后,再直接利用索引中age字段的值来进行过滤.
+这是MySQL5.6版本引入的索引下推优化(index condition pushdown),可以在索引查找过程中,对索引包含的字段先做判断,直接过滤不满足条件的记录,减少回表次数,提高性能.</p>
+<h2 id="索引选择">索引选择<a href="#索引选择" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>主要是针对普通索引和唯一索引的选择.
+在选择的前提是要能满足业务的需求,比如业务上需要保证唯一性,但应用层并不一定能保证,需要数据库层面来保证,就必须选择唯一索引.
+又比如身份证号,在业务应用层面已经保证了唯一性,并不需要数据库层面来保证,就可以选择普通索引,当然也可以选择唯一索引.</p>
+<p>在普通索引和唯一索引都能保证业务正确的前提下,如何评估该选择普通索引还是唯一索引列?下面主要从查询和更新两方面来进行评估.</p>
+<h3 id="查询">查询<a href="#查询" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>仍然以表<code>t</code>为例,针对字段<code>name</code>,分别创建唯一索引和普通索引时,其查找过程是如何的?
+查询语句:<code>select * from t where name='guanguan';</code>.</p>
+<ul>
+<li>对于普通索引而言,查找到第一条满足条件的记录后,需要继续查找下一条记录,直到碰到第一个不满足条件的记录.</li>
+<li>对于唯一索引而言,由于索引定义了唯一性,查找到第一个满足条件的记录后,就会停止继续检索.</li>
+</ul>
+<p>上述两个查找过程的性能差异,几乎微乎其微.InnoDB读写都是基于数据页的,当要去磁盘查找某一记录时,是会把该记录所在的数据页整体读入内存的.
+对于普通索引的继续查找只是一次指针寻找和一次判断,对于现代CPU来说,影响微乎其微.</p>
+<p>可见对于查询来说,普通索引和唯一索引之间的差异几乎微乎其微.</p>
+<h3 id="更新">更新<a href="#更新" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>在比较更新的差异之前，先引入概念<code>change buffer</code>,这也是InnoDB对更新操作所作出的优化.</p>
+<p>当需要更新一个数据页时,如果该数据页在内存中,就直接更新内存的数据.但如果该数据页不在内存中,在不影响数据一致性的前提下,引擎会把这些更新操作缓存到<code>change buffer</code>中,这样就暂时不需要把磁盘数据读入到内存中,减少了磁盘随机读取,提升了更新性能.</p>
+<p>在必要时,会把<code>change buffer</code>中的数据应用到原始数据页中,得到新的数据页,这个过程称为<code>merge</code>.
+那<code>change buffer</code>中的数据什么时候应用到原始数据页中列?</p>
+<ul>
+<li>当原始数据页被加载到Buffer pool时,会执行<code>merge</code>.</li>
+<li>后台有线程定期会执行<code>merge</code>.</li>
+<li>当MySQL正常关闭时,也会执行<code>merge</code>.</li>
+</ul>
+<p><code>change buffer</code>优化的前提是要不影响数据一致性,而对于唯一索引,由于需要判断是否唯一,就必须先把磁盘数据加载到内存中来进行判断,由于数据页已经在内存中了,直接更新内存就行了,所以该优化对唯一索引是不起作用的.因此<code>change buffer</code>优化只是对普通索引有效.</p>
+<p><code>change buffer</code>优化实际上是延迟了更新操作,当一个数据页上对应的更新操作在<code>change buffer</code>中越多,其收益是越大的.
+但如果针对先更新然后马上就查询的场景,这个优化可能会起到反作用.该场景下随机IO的次数不会少,反而增加了<code>change buffer</code>的维护代价.</p>
+<p><code>change buffer</code>用的是buffer pool里的内存,其大小可以通过参数<code>innodb_change_buffer_max_size</code>来动态设置,表示<code>change buffer</code>的大小最多只能占用buffer pool的比例.
+另外是否启用<code>change buffer</code>或对哪些操作启用,是通过参数<code>innodb_change_buffering</code>来控制的,该参数默认是<code>all</code>,有以下几种选择:</p>
+<ul>
+<li>all: 默认值.开启buffer inserts、delete-marking operations、purges</li>
+<li>nono: 不开启</li>
+<li>inserts: 只对buffer insert操作(对insert和update有效)开启</li>
+<li>deletes: 只对delete-marking操作开启</li>
+<li>changes: 只对buffer insert和delete-marking操作开启</li>
+<li>purges: 只对在后台执行的物理删除操作开启.</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">variables</span> <span class="k">like</span> <span class="s1">&#39;%innodb_change_buffer%&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">-------------------------------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">Variable_name</span>                 <span class="o">|</span> <span class="n">Value</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------------------------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">innodb_change_buffer_max_size</span> <span class="o">|</span> <span class="mi">25</span>    <span class="o">|</span>
+<span class="o">|</span> <span class="n">innodb_change_buffering</span>       <span class="o">|</span> <span class="k">all</span>   <span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------------------------+-------+
+</span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p><code>change buffer</code>是会持久化的,保存在系统表空间(<code>ibdata1</code>)</p>
+<ul>
+<li>数据库空闲时,后台有线程定时持久化</li>
+<li>当数据库缓冲池空间不够时</li>
+<li>当数据库正常关闭时</li>
+<li>redo log写满时</li>
+</ul>
+<p>注意:</p>
+<ul>
+<li><code>change buffer</code>也是通过B+树来存储的,键是表空间ID.</li>
+<li><code>change buffer</code>的变更也是会记录redo日志的(<strong>既然记录到redo中了,为什么还要持久化到系统表空间?</strong>).</li>
+<li><code>change buffer</code>节省的主要是随机读磁盘的IO消耗.</li>
+</ul>
+<p>再来谈谈更新时,普通索引和唯一索引的差异:</p>
+<ul>
+<li>当数据页在内存中时,唯一索引会校验下唯一性,通过后再更新内存;而普通索引直接更新内存即可.</li>
+<li>当数据页不在内存中时,唯一索引会先通过磁盘随机读把数据加载到内存中,然后再校验唯一性,通过后再更新内存;而普通索引是直接把更新操作记录到<code>change buffer</code>中.</li>
+</ul>
+<p>从更新来说,普通索引更具有优势.</p>
+<h2 id="为什么会选错索引">为什么会选错索引?<a href="#为什么会选错索引" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<h3 id="现象分析">现象分析<a href="#现象分析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>当一个表有多个索引,查询究竟走哪个索引?优化器是通过什么因素来决定使用哪个索引的?
+先看个例子.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*创建表t1*/</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">t1</span><span class="o">`</span> <span class="p">(</span>
+  <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">a</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">b</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="o">`</span><span class="n">id</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">a</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="n">a</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">b</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="n">b</span><span class="o">`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span><span class="p">;</span>
+
+<span class="cm">/*创建存储过程插入数据*/</span>
+<span class="k">delimiter</span> <span class="p">;;</span>
+<span class="k">create</span> <span class="k">procedure</span> <span class="n">idata</span><span class="p">()</span> 
+<span class="k">begin</span>
+  <span class="k">declare</span> <span class="n">i</span> <span class="nb">int</span><span class="p">;</span>
+  <span class="k">declare</span> <span class="n">j</span> <span class="nb">int</span><span class="p">;</span>
+  <span class="k">set</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">while</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">)</span> <span class="k">do</span> 
+    <span class="k">set</span> <span class="n">j</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+    <span class="k">start</span> <span class="k">transaction</span><span class="p">;</span>
+    <span class="n">while</span><span class="p">(</span><span class="n">j</span><span class="o">&lt;=</span><span class="mi">10000</span><span class="p">)</span> <span class="k">do</span> 
+      <span class="k">insert</span> <span class="k">into</span> <span class="n">t1</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="k">values</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">10000</span><span class="p">,</span> <span class="n">j</span><span class="o">+</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">10000</span><span class="p">);</span> 
+      <span class="k">set</span> <span class="n">j</span><span class="o">=</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> 
+    <span class="k">end</span> <span class="n">while</span><span class="p">;</span>
+    <span class="k">commit</span><span class="p">;</span>
+    <span class="k">set</span> <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+  <span class="k">end</span> <span class="n">while</span><span class="p">;</span>
+  <span class="k">end</span><span class="p">;;</span>
+<span class="k">delimiter</span> <span class="p">;</span>
+
+<span class="cm">/*调用存储过程,插入数据到表中*/</span>
+<span class="k">call</span> <span class="n">idata</span><span class="p">();</span>
+
+<span class="cm">/*查询使用索引a,符合预期*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">a</span>             <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="mi">5</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">10001</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>上面例子中,查询使用索引<code>a</code>,符合预期,说明优化器选择了正确的索引.</p>
+<p>再来看看另一种场景,事务隔离级别为<code>REPEATABLE-READ</code>.</p>
+<table>
+<thead>
+<tr>
+<th>session A</th>
+<th>session B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>start transaction with consistent snapshot;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>delete from t1; call idata();</td>
+</tr>
+<tr>
+<td></td>
+<td>explain select * from t1 where a between 10000 and 20000;</td>
+</tr>
+<tr>
+<td>commit;</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>session A:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">a</span>             <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="mi">5</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">10001</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">start</span> <span class="k">transaction</span> <span class="k">with</span> <span class="n">consistent</span> <span class="n">snapshot</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>session B:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">delete</span> <span class="k">from</span> <span class="n">t1</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">100000</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">72</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">call</span> <span class="n">idata</span><span class="p">();</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">2</span><span class="p">.</span><span class="mi">93</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>   <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>  <span class="o">|</span> <span class="n">a</span>             <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">100015</span> <span class="o">|</span>    <span class="mi">37</span><span class="p">.</span><span class="mi">11</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>session B此时选择的是全表扫描,开启慢查询日志,再来看看查询的具体信息.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">set</span> <span class="n">long_query_time</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">force</span> <span class="k">index</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+
+<span class="cm">/*慢查询日志,设置慢查询时间为0秒,即打印所有语句*/</span>
+<span class="k">set</span> <span class="n">long_query_time</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="o">#</span> <span class="n">Time</span><span class="p">:</span> <span class="mi">2020</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span><span class="n">T06</span><span class="p">:</span><span class="mi">28</span><span class="p">:</span><span class="mi">51</span><span class="p">.</span><span class="mi">528132</span><span class="n">Z</span>
+<span class="o">#</span> <span class="k">User</span><span class="o">@</span><span class="k">Host</span><span class="p">:</span> <span class="n">web</span><span class="p">[</span><span class="n">web</span><span class="p">]</span> <span class="o">@</span> <span class="n">localhost</span> <span class="p">[]</span>  <span class="n">Id</span><span class="p">:</span>    <span class="mi">57</span>
+<span class="o">#</span> <span class="n">Query_time</span><span class="p">:</span> <span class="mi">0</span><span class="p">.</span><span class="mi">038091</span>  <span class="n">Lock_time</span><span class="p">:</span> <span class="mi">0</span><span class="p">.</span><span class="mi">000289</span> <span class="n">Rows_sent</span><span class="p">:</span> <span class="mi">10001</span>  <span class="n">Rows_examined</span><span class="p">:</span> <span class="mi">100000</span>
+<span class="k">SET</span> <span class="k">timestamp</span><span class="o">=</span><span class="mi">1592288931</span><span class="p">;</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">#</span> <span class="n">Time</span><span class="p">:</span> <span class="mi">2020</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span><span class="n">T06</span><span class="p">:</span><span class="mi">29</span><span class="p">:</span><span class="mi">01</span><span class="p">.</span><span class="mi">998170</span><span class="n">Z</span>
+<span class="o">#</span> <span class="k">User</span><span class="o">@</span><span class="k">Host</span><span class="p">:</span> <span class="n">web</span><span class="p">[</span><span class="n">web</span><span class="p">]</span> <span class="o">@</span> <span class="n">localhost</span> <span class="p">[]</span>  <span class="n">Id</span><span class="p">:</span>    <span class="mi">57</span>
+<span class="o">#</span> <span class="n">Query_time</span><span class="p">:</span> <span class="mi">0</span><span class="p">.</span><span class="mi">015590</span>  <span class="n">Lock_time</span><span class="p">:</span> <span class="mi">0</span><span class="p">.</span><span class="mi">000345</span> <span class="n">Rows_sent</span><span class="p">:</span> <span class="mi">10001</span>  <span class="n">Rows_examined</span><span class="p">:</span> <span class="mi">10001</span>
+<span class="k">SET</span> <span class="k">timestamp</span><span class="o">=</span><span class="mi">1592288941</span><span class="p">;</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">force</span> <span class="k">index</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+</code></pre></div><p>第一个查询语句的Rows_examined为100000行,走的是全表扫描,耗时38毫秒.
+第二个查询语句的Rows_examined为10001行,走的是索引a,耗时15毫秒.
+很显然,针对第一个查询语句,优化器选错了索引.</p>
+<p>那么到底优化器选择索引的逻辑是什么列?
+优化器选择索引的目的,是找到一个最优执行方案,用最小的代价去执行语句.
+在数据库里面,扫描行数是影响执行代价的因素之一.扫描行数越少,意味这访问磁盘数据的次数越少,消耗CPU资源越少.
+但扫描行数并不是唯一的判断标准,优化器还会结合是否使用临时表、是否排序等因素进行综合判断.</p>
+<p><strong>那扫描行数是怎么判断的?</strong>
+在执行语句之前,数据库并不能直到满足条件的记录到底有多少条?只能根据统计信息来估算.
+这个统计信息就是索引的区分度.一个索引上不同的值越多,这个索引的区分度就越好.
+一个索引上不同的值得个数,称之为基数(cardinality),基数越大,说明索引的区分度越好.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*查看索引基数*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="k">index</span> <span class="k">from</span> <span class="n">t1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">-------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="k">Table</span> <span class="o">|</span> <span class="n">Non_unique</span> <span class="o">|</span> <span class="n">Key_name</span> <span class="o">|</span> <span class="n">Seq_in_index</span> <span class="o">|</span> <span class="k">Column_name</span> <span class="o">|</span> <span class="k">Collation</span> <span class="o">|</span> <span class="k">Cardinality</span> <span class="o">|</span> <span class="n">Sub_part</span> <span class="o">|</span> <span class="n">Packed</span> <span class="o">|</span> <span class="k">Null</span> <span class="o">|</span> <span class="n">Index_type</span> <span class="o">|</span> <span class="k">Comment</span> <span class="o">|</span> <span class="n">Index_comment</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">-------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span>          <span class="mi">0</span> <span class="o">|</span> <span class="k">PRIMARY</span>  <span class="o">|</span>            <span class="mi">1</span> <span class="o">|</span> <span class="n">id</span>          <span class="o">|</span> <span class="n">A</span>         <span class="o">|</span>      <span class="mi">100015</span> <span class="o">|</span>     <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>   <span class="o">|</span>      <span class="o">|</span> <span class="n">BTREE</span>      <span class="o">|</span>         <span class="o">|</span>               <span class="o">|</span>
+<span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span>          <span class="mi">1</span> <span class="o">|</span> <span class="n">a</span>        <span class="o">|</span>            <span class="mi">1</span> <span class="o">|</span> <span class="n">a</span>           <span class="o">|</span> <span class="n">A</span>         <span class="o">|</span>      <span class="mi">100015</span> <span class="o">|</span>     <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>   <span class="o">|</span> <span class="n">YES</span>  <span class="o">|</span> <span class="n">BTREE</span>      <span class="o">|</span>         <span class="o">|</span>               <span class="o">|</span>
+<span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span>          <span class="mi">1</span> <span class="o">|</span> <span class="n">b</span>        <span class="o">|</span>            <span class="mi">1</span> <span class="o">|</span> <span class="n">b</span>           <span class="o">|</span> <span class="n">A</span>         <span class="o">|</span>      <span class="mi">100015</span> <span class="o">|</span>     <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>   <span class="o">|</span> <span class="n">YES</span>  <span class="o">|</span> <span class="n">BTREE</span>      <span class="o">|</span>         <span class="o">|</span>               <span class="o">|</span>
+<span class="o">+</span><span class="c1">-------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+
+</span><span class="c1"></span><span class="mi">3</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>索引的基数都是通过采样统计得来的,针对表做精确统计代价太大,只能是采样统计了.默认选择N个数据页,统计这些页面上的不同值,得到一个平均值,然后乘以这个索引的页面数,就得到了索引的基数.而数据表是会持续更新的,当变更的行数超过1/M时,会自动触发重新做一次索引统计.</p>
+<p>InnoDB有两种存储索引统计的方式,通过参数<code>innodb_stats_persistent</code>的值来选择:</p>
+<ul>
+<li>设置为on的时候,统计信息会持久化存储,默认的N是20,M是10</li>
+<li>设置为off的时候,统计信息存储在内存中,默认的N是8,M是16</li>
+</ul>
+<p>从<code>show index</code>结果可以看到,索引基数都是一样的,优化器还要判断这个语句本身要扫描多少行?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>   <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>  <span class="o">|</span> <span class="n">a</span>             <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">100015</span> <span class="o">|</span>    <span class="mi">37</span><span class="p">.</span><span class="mi">11</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">force</span> <span class="k">index</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">a</span>             <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="mi">5</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">37116</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>可以看到两个查询语句预计的扫描行数(rows字段),第一个语句的预估是正确的,rows的值是100015;但第二个语句的rows值是37116,偏差就大了(实际上rows应该是10001行).是这个偏差误导了优化器的判断.
+第一个语句走的是主键索引,不需要回表;而第二个语句走的是普通索引,是需要回表查询的,回表的代价也是优化器需要考虑的.优化器认为直接扫描主键索引更快.</p>
+<p>既然是统计信息不准确,那就需要修正,使用命令<code>analyze table t1</code>.可以看到修正之后,索引就选择正确了.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">analyze</span> <span class="k">table</span> <span class="n">t1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">--------+---------+----------+----------+
+</span><span class="c1"></span><span class="o">|</span> <span class="k">Table</span>  <span class="o">|</span> <span class="n">Op</span>      <span class="o">|</span> <span class="n">Msg_type</span> <span class="o">|</span> <span class="n">Msg_text</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+----------+----------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">web</span><span class="p">.</span><span class="n">t1</span> <span class="o">|</span> <span class="k">analyze</span> <span class="o">|</span> <span class="n">status</span>   <span class="o">|</span> <span class="n">OK</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+----------+----------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">a</span>             <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="mi">5</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">10001</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>再来看看另外一个语句:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="p">(</span><span class="n">a</span> <span class="k">between</span> <span class="mi">1</span> <span class="k">and</span> <span class="mi">1000</span><span class="p">)</span> <span class="k">and</span> <span class="p">(</span><span class="n">b</span> <span class="k">between</span> <span class="mi">50000</span> <span class="k">and</span> <span class="mi">100000</span><span class="p">)</span> <span class="k">order</span> <span class="k">by</span> <span class="n">b</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+------------------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                              <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+------------------------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span>           <span class="o">|</span> <span class="n">b</span>    <span class="o">|</span> <span class="mi">5</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">50007</span> <span class="o">|</span>     <span class="mi">1</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span><span class="p">;</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+------------------------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>优化器选择了索引b,rows为50007行,扫描行数的估计值不准确,有选错了索引.</p>
+<h3 id="选择异常的处理">选择异常的处理<a href="#选择异常的处理" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<ol>
+<li>在语句中使用<code>force index</code>强制选择一个索引.</li>
+<li>考虑修改语句,引导MySQL使用我们期望的索引,把上面例子中的<code>order by b limit 1</code>换成<code>order by b, a limit 1</code>试试,看执行计划是怎样的.</li>
+<li>在某些场景下,可以新建一个更适合的索引来供优化器选择,或者删掉误用的索引.</li>
+</ol>
+<h3 id="思考">思考<a href="#思考" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>第一个例子中是通过session A和session B的配合,来复现选错了索引的情况,如果单独执行session B的语句,会出现什么情况?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">delete</span> <span class="k">from</span> <span class="n">t1</span><span class="p">;</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">100000</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">55</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">call</span> <span class="n">idata</span><span class="p">();</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">2</span><span class="p">.</span><span class="mi">41</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">where</span> <span class="n">a</span> <span class="k">between</span> <span class="mi">10000</span> <span class="k">and</span> <span class="mi">20000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>  <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">a</span>             <span class="o">|</span> <span class="n">a</span>    <span class="o">|</span> <span class="mi">5</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">10001</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+-------+----------+-----------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>索引选择正确,为什么会出现这种差异?session A是马上开启一个一致性读视图,并没有其它操作,是因为什么造成了统计信息的错误?</p>
+<p>当session A开启了一致性视图之后,session B的删除是不能直接把数据删除的.这样每一行数据会存在两个版本(<code>MVCC机制</code>),索引a上的数据其实是有两份的.
+但对于使用主键索引时,rows是直接按照表的行数来估计的,而表的行数,优化器是直接用<code>show table status</code>中的Rows值.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="k">table</span> <span class="n">status</span> <span class="k">like</span> <span class="s1">&#39;t1&#39;</span><span class="err">\</span><span class="k">G</span>
+<span class="o">***************************</span> <span class="mi">1</span><span class="p">.</span> <span class="k">row</span> <span class="o">***************************</span>
+           <span class="n">Name</span><span class="p">:</span> <span class="n">t1</span>
+         <span class="n">Engine</span><span class="p">:</span> <span class="n">InnoDB</span>
+        <span class="k">Version</span><span class="p">:</span> <span class="mi">10</span>
+     <span class="n">Row_format</span><span class="p">:</span> <span class="k">Dynamic</span>
+           <span class="k">Rows</span><span class="p">:</span> <span class="mi">100256</span>
+ <span class="n">Avg_row_length</span><span class="p">:</span> <span class="mi">36</span>
+    <span class="n">Data_length</span><span class="p">:</span> <span class="mi">3686400</span>
+<span class="n">Max_data_length</span><span class="p">:</span> <span class="mi">0</span>
+   <span class="n">Index_length</span><span class="p">:</span> <span class="mi">3178496</span>
+      <span class="n">Data_free</span><span class="p">:</span> <span class="mi">15728640</span>
+ <span class="n">Auto_increment</span><span class="p">:</span> <span class="mi">300001</span>
+    <span class="n">Create_time</span><span class="p">:</span> <span class="mi">2020</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">14</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span><span class="mi">46</span>
+    <span class="n">Update_time</span><span class="p">:</span> <span class="mi">2020</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">16</span> <span class="mi">15</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mi">39</span>
+     <span class="n">Check_time</span><span class="p">:</span> <span class="k">NULL</span>
+      <span class="k">Collation</span><span class="p">:</span> <span class="n">utf8_unicode_ci</span>
+       <span class="n">Checksum</span><span class="p">:</span> <span class="k">NULL</span>
+ <span class="n">Create_options</span><span class="p">:</span> 
+        <span class="k">Comment</span><span class="p">:</span> 
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><h2 id="如何给字符串字段加索引">如何给字符串字段加索引?<a href="#如何给字符串字段加索引" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>在字符串字段上加索引,是可以指定只取前几个字节的,如下:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*city全字段加索引*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t</span> <span class="k">add</span> <span class="k">index</span> <span class="n">index1</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">48</span> <span class="n">sec</span><span class="p">)</span>
+<span class="n">Records</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Duplicates</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+
+<span class="cm">/*city字段前6个字节加索引*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t</span> <span class="k">add</span> <span class="k">index</span> <span class="n">index2</span><span class="p">(</span><span class="n">name</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
+<span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">48</span> <span class="n">sec</span><span class="p">)</span>
+<span class="n">Records</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Duplicates</span><span class="p">:</span> <span class="mi">0</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
+</code></pre></div><p>针对索引index2,占用的空间更小,这是前缀索引的优势,但带来的损失是可能会增加额外的记录扫描次数.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*先插入数据*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">)</span> <span class="k">values</span> <span class="p">(</span><span class="s1">&#39;hangzhou&#39;</span><span class="p">,</span> <span class="s1">&#39;zhangyi&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">)</span> <span class="k">values</span> <span class="p">(</span><span class="s1">&#39;hangzhou&#39;</span><span class="p">,</span> <span class="s1">&#39;zhanger&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">)</span> <span class="k">values</span> <span class="p">(</span><span class="s1">&#39;hangzhou&#39;</span><span class="p">,</span> <span class="s1">&#39;zhangsan&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">)</span> <span class="k">values</span> <span class="p">(</span><span class="s1">&#39;hangzhou&#39;</span><span class="p">,</span> <span class="s1">&#39;zhangsi&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">)</span> <span class="k">values</span> <span class="p">(</span><span class="s1">&#39;hangzhou&#39;</span><span class="p">,</span> <span class="s1">&#39;zhangwu&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+
+<span class="cm">/*查询*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">where</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;zhangsi&#39;</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">--------+----------+---------+-----+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span>     <span class="o">|</span> <span class="n">city</span>     <span class="o">|</span> <span class="n">name</span>    <span class="o">|</span> <span class="n">age</span> <span class="o">|</span> <span class="n">addr</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+----------+---------+-----+------+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">128004</span> <span class="o">|</span> <span class="n">hangzhou</span> <span class="o">|</span> <span class="n">zhangsi</span> <span class="o">|</span>  <span class="mi">20</span> <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+----------+---------+-----+------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">07</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>查询如果使用的是索引index1</p>
+<ol>
+<li>在索引树上能直接定位到索引值为<code>zhangsi</code>的记录,取得主键ID的值</li>
+<li>然后回表查询整行记录</li>
+<li>继续取下一个索引值,发现已不满足条件,循环结束.</li>
+</ol>
+<p>查询如果使用的是索引index2</p>
+<ol>
+<li>在索引树上先定位到<code>zhang</code>的记录,取主键ID的值</li>
+<li>然后回表获取字段<code>name</code>的值发现不满足条件,丢弃</li>
+<li>继续取下一个索引值,值仍为<code>zhang</code>,取出主键ID的值</li>
+<li>重复步骤2,若满足条件就把行放入记录集中</li>
+<li>直到索引值不为<code>zhang</code>,循环结束.</li>
+</ol>
+<p>使用索引index2,总共会有5次回表,扫描了5次.使用前缀索引,导致查询语句读数据的次数变多了.
+如果索引index2设置为<code>name(6)</code>列?此时只需要扫描2次了.
+<em><strong>使用前缀索引,定义好长度,就可以做到既节省空间,又不用额外增加太多的查询成本.</strong></em></p>
+<p>建立索引时要关注索引的区分度,区分度越高越好.可以通过统计索引上有多少个不同的值来判断要使用多长的前缀.从如下sql可以看出,可以选用<code>name(4)</code>来作为索引.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*统计各个长度的前缀数量*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="k">count</span><span class="p">(</span><span class="k">distinct</span> <span class="n">name</span><span class="p">)</span> <span class="k">as</span> <span class="n">L</span><span class="p">,</span> <span class="k">count</span><span class="p">(</span><span class="k">distinct</span> <span class="k">left</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="k">as</span> <span class="n">L4</span><span class="p">,</span> <span class="k">count</span><span class="p">(</span><span class="k">distinct</span> <span class="k">left</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span> <span class="k">as</span> <span class="n">L5</span><span class="p">,</span> <span class="k">count</span><span class="p">(</span><span class="k">distinct</span> <span class="k">left</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span> <span class="k">as</span> <span class="n">L6</span><span class="p">,</span> <span class="k">count</span><span class="p">(</span><span class="k">distinct</span> <span class="k">left</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span> <span class="k">as</span> <span class="n">L7</span> <span class="n">f</span>
+<span class="n">rom</span> <span class="n">t</span><span class="p">;</span><span class="o">+</span><span class="c1">-----+-----+-----+-----+-----+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">L</span>   <span class="o">|</span> <span class="n">L4</span>  <span class="o">|</span> <span class="n">L5</span>  <span class="o">|</span> <span class="n">L6</span>  <span class="o">|</span> <span class="n">L7</span>  <span class="o">|</span>
+<span class="o">+</span><span class="c1">-----+-----+-----+-----+-----+
+</span><span class="c1"></span><span class="o">|</span> <span class="mi">149</span> <span class="o">|</span> <span class="mi">145</span> <span class="o">|</span> <span class="mi">145</span> <span class="o">|</span> <span class="mi">148</span> <span class="o">|</span> <span class="mi">149</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">-----+-----+-----+-----+-----+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">52</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p><em><strong>当使用前缀索引时,会导致覆盖索引无效(无论前缀使用多少位).</strong></em>
+以<code>select id, name from t where name = 'zhangsi'</code>为例,如果使用索引index2(就算使用<code>name(16)</code>为索引),获取主键ID的值后还必须回表,然后判断name的值是否满足条件,这就导致覆盖索引无效了.</p>
+<h2 id="索引失效">索引失效<a href="#索引失效" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<h3 id="条件字段函数操作">条件字段函数操作<a href="#条件字段函数操作" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>如果在<code>where</code>条件查询的字段上使用函数为如何?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*创建交易流水表*/</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">tradelog</span><span class="o">`</span> <span class="p">(</span>
+  <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">tradeid</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="k">operator</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">t_modified</span><span class="o">`</span> <span class="n">datetime</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="o">`</span><span class="n">id</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">tradeid</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="n">tradeid</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">t_modified</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="n">t_modified</span><span class="o">`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span> <span class="k">DEFAULT</span> <span class="n">CHARSET</span><span class="o">=</span><span class="n">utf8mb4</span>
+
+<span class="cm">/*整个表模拟了10万行数据*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">from</span> <span class="n">tradelog</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----------+
+</span><span class="c1"></span><span class="o">|</span> <span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+
+</span><span class="c1"></span><span class="o">|</span>   <span class="mi">100000</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">02</span> <span class="n">sec</span><span class="p">)</span>
+
+<span class="cm">/*在字段t_modified使用month函数*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="k">where</span> <span class="k">month</span><span class="p">(</span><span class="n">t_modified</span><span class="p">)</span> <span class="o">=</span> <span class="mi">7</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+-------+---------------+------------+---------+------+--------+----------+--------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span>    <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>        <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>   <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+-------+---------------+------------+---------+------+--------+----------+--------------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">tradelog</span> <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">index</span> <span class="o">|</span> <span class="k">NULL</span>          <span class="o">|</span> <span class="n">t_modified</span> <span class="o">|</span> <span class="mi">6</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">100194</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span><span class="p">;</span> <span class="k">Using</span> <span class="k">index</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+-------+---------------+------------+---------+------+--------+----------+--------------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>查询语句是统计所有7月份的流水,从Extra可以看出是使用了索引<code>t_modified</code>,从rows看是索引全扫描.
+使用函数<code>month</code>之后,获取到的值并不是有序的,所以无法利用索引的有序性来快速查找,只能是全索引扫描.</p>
+<p>为了能利用索引的快速定位能力,就需要把上面的sql改造成按照字段本身的范围查询</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*按照范围来查询,利用索引特性快速定位*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="k">where</span>
+    <span class="o">-&gt;</span> <span class="p">(</span><span class="n">t_modified</span> <span class="o">&gt;=</span> <span class="s1">&#39;2016-07-01&#39;</span> <span class="k">and</span> <span class="n">t_modified</span> <span class="o">&lt;</span> <span class="s1">&#39;2016-08-01&#39;</span><span class="p">)</span> <span class="k">or</span>
+    <span class="o">-&gt;</span> <span class="p">(</span><span class="n">t_modified</span> <span class="o">&gt;=</span> <span class="s1">&#39;2017-07-01&#39;</span> <span class="k">and</span> <span class="n">t_modified</span> <span class="o">&lt;</span> <span class="s1">&#39;2017-08-01&#39;</span><span class="p">)</span> <span class="k">or</span>
+    <span class="o">-&gt;</span> <span class="p">(</span><span class="n">t_modified</span> <span class="o">&gt;=</span> <span class="s1">&#39;2018-07-01&#39;</span> <span class="k">and</span> <span class="n">t_modified</span> <span class="o">&lt;</span> <span class="s1">&#39;2018-08-01&#39;</span><span class="p">);</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+-------+---------------+------------+---------+------+------+----------+--------------------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span>    <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>        <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>                    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+-------+---------------+------------+---------+------+------+----------+--------------------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">tradelog</span> <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">range</span> <span class="o">|</span> <span class="n">t_modified</span>    <span class="o">|</span> <span class="n">t_modified</span> <span class="o">|</span> <span class="mi">6</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">5605</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span><span class="p">;</span> <span class="k">Using</span> <span class="k">index</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+-------+---------------+------------+---------+------+------+----------+--------------------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>再来看看一个非常简单的加法操作,也是全表扫描,无法利用主键索引.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="k">where</span> <span class="n">id</span><span class="o">+</span><span class="mi">1</span><span class="o">=</span><span class="mi">1000</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span>    <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>   <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">tradelog</span> <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>  <span class="o">|</span> <span class="k">NULL</span>          <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">100194</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p><em><strong>在索引字段上使用函数会导致无法利用索引的快速定位能力,不管是什么函数,都会导致优化器认为无法使用索引快速定位.</strong></em></p>
+<h3 id="隐式类型转换">隐式类型转换<a href="#隐式类型转换" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="k">where</span> <span class="n">tradeid</span> <span class="o">=</span> <span class="mi">6981747220</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span>    <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>   <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">tradelog</span> <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>  <span class="o">|</span> <span class="n">tradeid</span>       <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">100194</span> <span class="o">|</span>    <span class="mi">10</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">3</span> <span class="n">warnings</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>字段<code>tradeid</code>上是有索引的,而上面的语句直接走的主键全表扫描,为什么没有使用<code>tradeid</code>索引?
+在表中字段<code>tradeid</code>的定义是<code>varchar(32)</code>,为字符串类型.而<code>where</code>里等号右边是个整数,当两边类型不一致时,MySQL是如何处理的?</p>
+<p>当字符串与数字进行比较时,是把字符串转化为数字还是把数字转换为字符串?</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="s2">&#34;10&#34;</span> <span class="o">&gt;</span> <span class="mi">9</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----------+
+</span><span class="c1"></span><span class="o">|</span> <span class="s2">&#34;10&#34;</span> <span class="o">&gt;</span> <span class="mi">9</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+
+</span><span class="c1"></span><span class="o">|</span>        <span class="mi">1</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+
+</span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>上面<code>select &quot;10&quot; &gt; 9</code>返回1,说明是把字符串转换为数字了.
+实际上语句<code>select * from tradelog where tradeid = 6981747220</code>相当于被转化为了<code>select * from tradelog where CAST(tradeid AS signed int) = 6981747220</code>,这条语句就触发了上面说的:对索引字段做函数操作,优化器放弃走树搜索功能.</p>
+<h3 id="隐式字符编码转换">隐式字符编码转换<a href="#隐式字符编码转换" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*新建交易明细表*/</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">`</span><span class="n">trade_detail</span><span class="o">`</span> <span class="p">(</span>
+  <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">tradeid</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">trade_step</span><span class="o">`</span> <span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="o">`</span><span class="n">step_info</span><span class="o">`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="o">`</span><span class="n">id</span><span class="o">`</span><span class="p">),</span>
+  <span class="k">KEY</span> <span class="o">`</span><span class="n">tradeid</span><span class="o">`</span> <span class="p">(</span><span class="o">`</span><span class="n">tradeid</span><span class="o">`</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span> <span class="k">DEFAULT</span> <span class="n">CHARSET</span><span class="o">=</span><span class="n">utf8</span>
+
+<span class="cm">/*关联查询*/</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="n">l</span><span class="p">,</span> <span class="n">trade_detail</span> <span class="n">d</span> <span class="k">where</span> <span class="n">d</span><span class="p">.</span><span class="n">tradeid</span><span class="o">=</span><span class="n">l</span><span class="p">.</span><span class="n">tradeid</span> <span class="k">and</span> <span class="n">l</span><span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">100002</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+-----------------+---------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span>   <span class="o">|</span> <span class="k">key</span>     <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+-----------------+---------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">l</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span> <span class="k">PRIMARY</span><span class="p">,</span><span class="n">tradeid</span> <span class="o">|</span> <span class="k">PRIMARY</span> <span class="o">|</span> <span class="mi">4</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>        <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">d</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>   <span class="o">|</span> <span class="k">NULL</span>            <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>   <span class="mi">11</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+-----------------+---------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>驱动表为表<code>tradelog</code>,被驱动表为表<code>trade_detail</code>.查询对表<code>tradelog</code>是走的主键索引,但表<code>trade_detail</code>却是全表扫描,但在其字段<code>tradeid</code>是存在索引的,为何?
+对比发现,表<code>tradelog</code>的字符集是<code>utf8mb4</code>,而表<code>trade_detail</code>的字符集是<code>utf8</code>,字符集不一样时查询时如何处理的?
+字符集<code>utf8mb4</code>是<code>utf8</code>的超集,MySQL会把<code>utf8</code>字符串转换为<code>utf8mb4</code>字符集,然后再做比较.查询语句会转化为如下:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="n">l</span><span class="p">,</span> <span class="n">trade_detail</span> <span class="n">d</span> <span class="k">where</span> <span class="k">convert</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">tradeid</span> <span class="k">USING</span> <span class="n">utf8mb4</span><span class="p">)</span><span class="o">=</span><span class="n">l</span><span class="p">.</span><span class="n">tradeid</span> <span class="k">and</span> <span class="n">l</span><span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">100002</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+-----------------+---------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span>   <span class="o">|</span> <span class="k">key</span>     <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+-----------------+---------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">l</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span> <span class="k">PRIMARY</span><span class="p">,</span><span class="n">tradeid</span> <span class="o">|</span> <span class="k">PRIMARY</span> <span class="o">|</span> <span class="mi">4</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>        <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">d</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>   <span class="o">|</span> <span class="k">NULL</span>            <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>   <span class="mi">11</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+-----------------+---------+---------+-------+------+----------+-------------+
+</span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>转化后的语句对表<code>trade_detail</code>的索引上的字段做了函数操作,此时优化器是会放弃树搜索功能的,就导致做了全表扫描.</p>
+<p>再来看看如下语句:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="n">l</span><span class="p">.</span><span class="k">operator</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="n">l</span><span class="p">,</span> <span class="n">trade_detail</span> <span class="n">d</span> <span class="k">where</span> <span class="n">d</span><span class="p">.</span><span class="n">tradeid</span><span class="o">=</span><span class="n">l</span><span class="p">.</span><span class="n">tradeid</span> <span class="k">and</span> <span class="n">d</span><span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">4</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>     <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">d</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span> <span class="k">PRIMARY</span>       <span class="o">|</span> <span class="k">PRIMARY</span> <span class="o">|</span> <span class="mi">4</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">l</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="n">tradeid</span>       <span class="o">|</span> <span class="n">tradeid</span> <span class="o">|</span> <span class="mi">131</span>     <span class="o">|</span> <span class="n">const</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div><p>驱动表为表<code>trade_detail</code>,被驱动表为表<code>tradelog</code>.这个语句里两个表都有用到索引,但驱动表用的是主键索引,而被驱动表用的是索引<code>tradeid</code>.
+语句在转化时是针对驱动表的<code>tradeid</code>字段,所以被驱动表可以用上索引<code>tradeid</code>.</p>
+<p>针对字符集不一样的情况下的优化:</p>
+<ul>
+<li>修改表结构,把字符集设置成一样.</li>
+<li>修改sql语句,可以主动把驱动表的字符集修改为被驱动表的字符集,使得可以使用被驱动表的索引.</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">tradelog</span> <span class="n">l</span><span class="p">,</span> <span class="n">trade_detail</span> <span class="n">d</span> <span class="k">where</span> <span class="n">d</span><span class="p">.</span><span class="n">tradeid</span><span class="o">=</span><span class="k">convert</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">tradeid</span> <span class="k">using</span> <span class="n">utf8</span><span class="p">)</span> <span class="k">and</span> <span class="n">l</span><span class="p">.</span><span class="n">id</span><span class="o">=</span><span class="mi">100002</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>     <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">l</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span> <span class="k">PRIMARY</span>       <span class="o">|</span> <span class="k">PRIMARY</span> <span class="o">|</span> <span class="mi">4</span>       <span class="o">|</span> <span class="n">const</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">d</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ref</span>   <span class="o">|</span> <span class="n">tradeid</span>       <span class="o">|</span> <span class="n">tradeid</span> <span class="o">|</span> <span class="mi">99</span>      <span class="o">|</span> <span class="n">const</span> <span class="o">|</span>    <span class="mi">4</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">NULL</span>  <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+</span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div>
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://shenbaise9527.com/tags/mysql">mysql</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>11064 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-24 20:43 &#43;0800</p>
+			</footer>
+		</article>
+		<aside id="toc">
+			<div class="toc-title">Table of Contents</div>
+			<nav id="TableOfContents">
+  <ul>
+    <li><a href="#b树">B+树</a></li>
+    <li><a href="#索引分类">索引分类</a>
+      <ul>
+        <li><a href="#主键索引">主键索引</a></li>
+        <li><a href="#非主键索引">非主键索引</a></li>
+      </ul>
+    </li>
+    <li><a href="#索引维护">索引维护</a></li>
+    <li><a href="#索引优化">索引优化</a>
+      <ul>
+        <li><a href="#覆盖索引">覆盖索引</a></li>
+        <li><a href="#前缀索引">前缀索引</a></li>
+        <li><a href="#索引下推">索引下推</a></li>
+      </ul>
+    </li>
+    <li><a href="#索引选择">索引选择</a>
+      <ul>
+        <li><a href="#查询">查询</a></li>
+        <li><a href="#更新">更新</a></li>
+      </ul>
+    </li>
+    <li><a href="#为什么会选错索引">为什么会选错索引?</a>
+      <ul>
+        <li><a href="#现象分析">现象分析</a></li>
+        <li><a href="#选择异常的处理">选择异常的处理</a></li>
+        <li><a href="#思考">思考</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何给字符串字段加索引">如何给字符串字段加索引?</a></li>
+    <li><a href="#索引失效">索引失效</a>
+      <ul>
+        <li><a href="#条件字段函数操作">条件字段函数操作</a></li>
+        <li><a href="#隐式类型转换">隐式类型转换</a></li>
+        <li><a href="#隐式字符编码转换">隐式字符编码转换</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+		</aside>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://shenbaise9527.com/posts/mysql%E4%B9%8Bjoin/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>MySQL的join分析</span>
+			</a>
+			<a class="prev-post" href="https://shenbaise9527.com/posts/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>golang数据类型</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://shenbaise9527.com">shenbaise9527</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://shenbaise9527.com/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+
+	<script src="https://shenbaise9527.com/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
+	
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'G-R1HW7DNZ94', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+</body>
+
+</html>

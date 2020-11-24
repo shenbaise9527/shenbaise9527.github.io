@@ -7,95 +7,95 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Sun, 22 Nov 2020 11:41:27 +0800</lastBuildDate><atom:link href="https://shenbaise9527.com/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 24 Nov 2020 20:50:44 +0800</lastBuildDate><atom:link href="https://shenbaise9527.com/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL的orderby分析</title>
+      <link>https://shenbaise9527.com/db/mysql%E7%9A%84orderby%E5%88%86%E6%9E%90/</link>
+      <pubDate>Tue, 24 Nov 2020 20:50:44 +0800</pubDate>
+      
+      <guid>https://shenbaise9527.com/db/mysql%E7%9A%84orderby%E5%88%86%E6%9E%90/</guid>
+      <description>数据准备 /*mysql版本*/ Server version: 5.7.27-log MySQL Community Server (GPL) /*创建表t*/ CREATE TABLE `t` ( `id` int(11) NOT NULL AUTO_INCREMENT, `city` varchar(16) NOT NULL, `name` varchar(16) NOT NULL, `age` int(11) NOT NULL, `addr` varchar(128) DEFAULT NULL, PRIMARY KEY (`id`), KEY `city` (`city`) ) ENGINE=InnoDB; /*数据分布*</description>
+    </item>
+    
+    <item>
+      <title>MySQL锁机制分析</title>
+      <link>https://shenbaise9527.com/db/mysql%E9%94%81%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/</link>
+      <pubDate>Tue, 24 Nov 2020 20:50:10 +0800</pubDate>
+      
+      <guid>https://shenbaise9527.com/db/mysql%E9%94%81%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/</guid>
+      <description>全局锁 全局锁就是对整个数据库实例加锁.MySQL提供了命令Flush tables with read lock(FTWRL),可使整库处于只读状态,其它线程的数据更新语</description>
+    </item>
+    
+    <item>
+      <title>MySQL的join分析</title>
+      <link>https://shenbaise9527.com/db/mysql%E4%B9%8Bjoin/</link>
+      <pubDate>Tue, 24 Nov 2020 20:47:44 +0800</pubDate>
+      
+      <guid>https://shenbaise9527.com/db/mysql%E4%B9%8Bjoin/</guid>
+      <description>问题 使用join时驱动表、被驱动表是如何选择的?影响因素有哪些? 如何优化? 数据准备 /*创建表*/ CREATE TABLE `t1` ( `id` int(11) NOT NULL, `a` int(11) DEFAULT NULL, `b` int(11) DEFAULT NULL, PRIMARY KEY (`id`), KEY `a` (`a`)</description>
+    </item>
+    
+    <item>
+      <title>MySQL索引(InnoDB引擎)</title>
+      <link>https://shenbaise9527.com/db/mysql%E4%B9%8Binnodb%E7%B4%A2%E5%BC%95/</link>
+      <pubDate>Tue, 24 Nov 2020 20:43:33 +0800</pubDate>
+      
+      <guid>https://shenbaise9527.com/db/mysql%E4%B9%8Binnodb%E7%B4%A2%E5%BC%95/</guid>
+      <description>B+树 基于N叉树(每个父节点有N个子节点,子节点的值从左到右按照从小到大的顺序排列),非叶子节点只存储索引值,叶子节点储存索引值和数据,所有</description>
+    </item>
+    
     <item>
       <title>golang数据类型</title>
-      <link>https://shenbaise9527.com/posts/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</link>
+      <link>https://shenbaise9527.com/golang/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</link>
       <pubDate>Sun, 22 Nov 2020 11:41:27 +0800</pubDate>
       
-      <guid>https://shenbaise9527.com/posts/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</guid>
+      <guid>https://shenbaise9527.com/golang/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</guid>
       <description>主要包含基本的内建类型(布尔类型、数值类型和字符串类型)和复合类型(array、slice、map、channel、function、str</description>
     </item>
     
     <item>
       <title>MySQL基于GTID复制</title>
-      <link>https://shenbaise9527.com/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</link>
+      <link>https://shenbaise9527.com/db/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</link>
       <pubDate>Mon, 09 Nov 2020 21:27:12 +0800</pubDate>
       
-      <guid>https://shenbaise9527.com/posts/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</guid>
+      <guid>https://shenbaise9527.com/db/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</guid>
       <description>开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制.</description>
     </item>
     
     <item>
       <title>gRPC系列之连接异常机制</title>
-      <link>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</link>
+      <link>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</link>
       <pubDate>Sat, 07 Nov 2020 13:27:24 +0800</pubDate>
       
-      <guid>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</guid>
+      <guid>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</guid>
       <description>连接server端失败的处理 重试机制 // 重点关注addrConn.resetTransport方法. func (ac *addrConn) resetTransport() { // 代码逻辑放在一个死循环里的. for</description>
     </item>
     
     <item>
       <title>gRPC系列之client和server的timetou机制</title>
-      <link>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</link>
+      <link>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</link>
       <pubDate>Sat, 07 Nov 2020 13:22:04 +0800</pubDate>
       
-      <guid>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</guid>
+      <guid>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</guid>
       <description>客户端超时的处理 客户端在调用rpc接口时带timeout的context是如何传递给服务端的. // 在调用对应的rpc方法时设置了超时时间为3秒</description>
     </item>
     
     <item>
       <title>gRPC系列之client端调用</title>
-      <link>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+      <link>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
       <pubDate>Sat, 07 Nov 2020 13:16:47 +0800</pubDate>
       
-      <guid>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+      <guid>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
       <description>Dail/DailContext与服务端建立连接 // 直接调用的DialContext. // Dial creates a client connection to the given target. func Dial(target string, opts ...DialOption) (*ClientConn, error) { return DialContext(context.Background(), target, opts...) } // Dial</description>
     </item>
     
     <item>
       <title>gRPC系列之server端调用</title>
-      <link>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+      <link>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
       <pubDate>Sat, 07 Nov 2020 11:47:48 +0800</pubDate>
       
-      <guid>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+      <guid>https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
       <description>NewServer创建gRPC服务对象 主要是基于grpc-go的1.33.1版本Unary RPC来分析. // NewServer creates a gRPC server which has no service registered and has not // started to accept</description>
-    </item>
-    
-    <item>
-      <title>gRPC系列之初识</title>
-      <link>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</link>
-      <pubDate>Fri, 06 Nov 2020 22:05:51 +0800</pubDate>
-      
-      <guid>https://shenbaise9527.com/posts/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</guid>
-      <description>RPC RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需</description>
-    </item>
-    
-    <item>
-      <title>go性能分析</title>
-      <link>https://shenbaise9527.com/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</link>
-      <pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
-      
-      <guid>https://shenbaise9527.com/posts/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</guid>
-      <description>性能分析 Go语言项目中的性能分析主要有以下几个方面: CPU profile: CPU使用情况,按照一定频率去采集应用程序在CPU和寄存器上面的数据. Memory profile(Heap profile): 报告程序</description>
-    </item>
-    
-    <item>
-      <title>tcp连接过程</title>
-      <link>https://shenbaise9527.com/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</link>
-      <pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
-      
-      <guid>https://shenbaise9527.com/posts/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</guid>
-      <description>tcp建连接三次握手 客户端发送SYN到服务器发起握手. 服务器收到SYN后回复SYN+ACK给客户端. 客户端收到SYN+ACK后,回复服务器一</description>
-    </item>
-    
-    <item>
-      <title>记录cgo调用C实现的加解密静态库中遇到的问题</title>
-      <link>https://shenbaise9527.com/posts/cgo/</link>
-      <pubDate>Tue, 03 Nov 2020 21:35:24 +0800</pubDate>
-      
-      <guid>https://shenbaise9527.com/posts/cgo/</guid>
-      <description>起因 公司有个公共的加解密库,供所有后端C++服务调用的,但最近要使用Go来实现个服务需要用到加解密,而Go并没有提供AES-256-ECB的</description>
     </item>
     
   </channel>
