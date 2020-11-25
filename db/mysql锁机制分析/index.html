@@ -84,10 +84,14 @@
 	</div>
 
 
-	<main class="site-main section-inner thin animated fadeIn faster">
-		<h1>MySQL锁机制分析</h1>
-		<div class="content">
-			<h2 id="全局锁">全局锁<a href="#全局锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Nov 24, 2020</span></div>
+				<h1>MySQL锁机制分析</h1>
+			</header>
+			<div class="content">
+				<h2 id="全局锁">全局锁<a href="#全局锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>全局锁就是对整个数据库实例加锁.MySQL提供了命令<code>Flush tables with read lock</code>(FTWRL),可使整库处于只读状态,其它线程的数据更新语句(数据的增删改)、数据定义语句(DDL)和更新类事务的提交语句都会被阻塞.</p>
 <p>全局锁的典型使用场景是做全库的逻辑备份.使用FTWRL可确保不会有其它线程对数据库做更新,然后再对整个库做备份,这样可以保证数据库的数据逻辑一致性.但让整库只读,是危险操作:</p>
 <ol>
@@ -720,7 +724,50 @@ session B要插入c=12的行,不在加锁范围内,可正常插入.</p>
 </ol>
 <p>在读已提交下锁的范围更小,锁的时间更短.</p>
 
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://shenbaise9527.com/tags/mysql">mysql</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>7363 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-24 20:50 &#43;0800</p>
+			</footer>
+		</article>
+		<aside id="toc">
+			<div class="toc-title">Table of Contents</div>
+			<nav id="TableOfContents">
+  <ul>
+    <li><a href="#全局锁">全局锁</a></li>
+    <li><a href="#表级锁">表级锁</a>
+      <ul>
+        <li><a href="#表锁">表锁</a></li>
+        <li><a href="#元数据锁">元数据锁</a></li>
+      </ul>
+    </li>
+    <li><a href="#行锁">行锁</a>
+      <ul>
+        <li><a href="#两阶段协议锁">两阶段协议锁</a></li>
+        <li><a href="#死锁和死锁检测">死锁和死锁检测</a></li>
+        <li><a href="#锁等待分析">锁等待分析</a></li>
+        <li><a href="#幻读">幻读</a></li>
+        <li><a href="#innodb加锁规则可重复读隔离级别">InnoDB加锁规则(可重复读隔离级别)</a></li>
+        <li><a href="#innodb加锁规则读已提交隔离级别">InnoDB加锁规则(读已提交隔离级别)</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+		</aside>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://shenbaise9527.com/db/mysql%E7%9A%84orderby%E5%88%86%E6%9E%90/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>MySQL的orderby分析</span>
+			</a>
+			<a class="prev-post" href="https://shenbaise9527.com/db/mysql%E4%B9%8Bjoin/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>MySQL的join分析</span>
+			</a>
 		</div>
+		<div id="comments" class="thin">
+</div>
 	</main>
 
 	<footer id="site-footer" class="section-inner thin animated fadeIn faster">

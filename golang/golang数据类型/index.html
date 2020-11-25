@@ -84,10 +84,14 @@
 	</div>
 
 
-	<main class="site-main section-inner thin animated fadeIn faster">
-		<h1>golang数据类型</h1>
-		<div class="content">
-			<p>主要包含基本的内建类型(布尔类型、数值类型和字符串类型)和复合类型(array、slice、map、channel、function、struct、interface)</p>
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Nov 22, 2020</span></div>
+				<h1>golang数据类型</h1>
+			</header>
+			<div class="content">
+				<p>主要包含基本的内建类型(布尔类型、数值类型和字符串类型)和复合类型(array、slice、map、channel、function、struct、interface)</p>
 <h2 id="基本数据类型">基本数据类型<a href="#基本数据类型" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <h3 id="布尔类型">布尔类型<a href="#布尔类型" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>类型标记为bool，值为true/false，零值为false，<strong>值类型，可定义为常量</strong></p>
@@ -652,7 +656,52 @@ Go语言的常量有个不同寻常之处。虽然一个常量可以有任意有
 </span><span class="c1"></span><span class="p">}</span>
 </code></pre></div><p>空的interface可以被当作任意类型来使用，它使得Go语言拥有了一定的动态性，但却又不损失静态语言在类型安全方面拥有的编译时检查的优势。</p>
 
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://shenbaise9527.com/tags/go">go</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>10190 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-22 11:41 &#43;0800</p>
+			</footer>
+		</article>
+		<aside id="toc">
+			<div class="toc-title">Table of Contents</div>
+			<nav id="TableOfContents">
+  <ul>
+    <li><a href="#基本数据类型">基本数据类型</a>
+      <ul>
+        <li><a href="#布尔类型">布尔类型</a></li>
+        <li><a href="#整数类型">整数类型</a></li>
+        <li><a href="#浮点数类型">浮点数类型</a></li>
+        <li><a href="#复数类型">复数类型</a></li>
+        <li><a href="#字符串类型">字符串类型</a></li>
+        <li><a href="#常量特别说明">常量特别说明</a></li>
+      </ul>
+    </li>
+    <li><a href="#复合数据类型">复合数据类型</a>
+      <ul>
+        <li><a href="#数组array">数组(array)</a></li>
+        <li><a href="#切片slice">切片(slice)</a></li>
+        <li><a href="#字典map">字典(map)</a></li>
+        <li><a href="#通道channel">通道(channel)</a></li>
+        <li><a href="#函数function">函数(function)</a></li>
+        <li><a href="#方法">方法</a></li>
+        <li><a href="#结构体struct">结构体(struct)</a></li>
+        <li><a href="#接口interface">接口(interface)</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+		</aside>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://shenbaise9527.com/golang/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>gRPC系列之连接异常机制</span>
+			</a>
 		</div>
+		<div id="comments" class="thin">
+</div>
 	</main>
 
 	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
