@@ -11,7 +11,7 @@
 <meta itemprop="description" content="全局锁 全局锁就是对整个数据库实例加锁.MySQL提供了命令Flush tables with read lock(FTWRL),可使整库处于只读状态,其它线程的数据更新语">
 <meta itemprop="datePublished" content="2020-11-24T20:50:10+08:00" />
 <meta itemprop="dateModified" content="2020-11-24T20:50:10+08:00" />
-<meta itemprop="wordCount" content="7357">
+<meta itemprop="wordCount" content="7363">
 
 
 
@@ -89,14 +89,13 @@
 		<div class="content">
 			<h2 id="全局锁">全局锁<a href="#全局锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>全局锁就是对整个数据库实例加锁.MySQL提供了命令<code>Flush tables with read lock</code>(FTWRL),可使整库处于只读状态,其它线程的数据更新语句(数据的增删改)、数据定义语句(DDL)和更新类事务的提交语句都会被阻塞.</p>
-<p>全局锁的典型使用场景是做全库的逻辑备份.使用FTWRL可确保不会有其它线程对数据库做更新,然后再对整个库做备份,这样可以保证数据库的数据逻辑一致性.
-但让整库只读,是危险操作:</p>
+<p>全局锁的典型使用场景是做全库的逻辑备份.使用FTWRL可确保不会有其它线程对数据库做更新,然后再对整个库做备份,这样可以保证数据库的数据逻辑一致性.但让整库只读,是危险操作:</p>
 <ol>
 <li>如果在主库上备份,那么在备份期间都不能执行更新,业务基本上停摆.</li>
 <li>如果在从库上备份,那么在备份期间不能执行主库同步过来的binlog,会主从延迟.</li>
 </ol>
-<p>在针对InnoDB引擎的表做全库备份时,可以采用可重复读隔离级别下来进行备份,不会对其它线程的操作造成堵塞,还可以保证数据的逻辑一致性.是基于一致性视图+MVCC来实现的.
-可以使用官方工具mysqldump,使用参数<code>-single-transaction</code>时,会在可重复读隔离级别下启动一个事务,确保拿到一致性视图.但该方法只适用于所有的表都使用事务引擎的库.</p>
+<p>在针对InnoDB引擎的表做全库备份时,可以采用可重复读隔离级别下来进行备份,不会对其它线程的操作造成堵塞,还可以保证数据的逻辑一致性.是基于一致性视图+MVCC来实现的.</p>
+<p>可以使用官方工具mysqldump,使用参数<code>-single-transaction</code>时,会在可重复读隔离级别下启动一个事务,确保拿到一致性视图.但该方法只适用于所有的表都使用事务引擎的库.</p>
 <p>使用命令<code>set global readonly=true</code>也可使整库处于只读状态,但这个操作更加的危险.</p>
 <ol>
 <li>在有些系统中,readonly的值会被用来做其它逻辑,比如判断一个库是主库还是备库.修改该值影响面更广.</li>
@@ -136,10 +135,12 @@
 </span><span class="s1">ERROR 1100 (HY000): Table &#39;</span><span class="n">t2</span><span class="s1">&#39; was not locked with LOCK TABLES
 </span><span class="s1">mysql&gt; insert into t2 values(1001, 1001, 1001);
 </span><span class="s1">ERROR 1100 (HY000): Table &#39;</span><span class="n">t2</span><span class="s1">&#39; was not locked with LOCK TABLES
-</span></code></pre></div><p>针对表<code>t</code>读锁,表<code>t1</code>为写锁.本线程两个表的查询操作都正常,表<code>t1</code>插入正常,但针对表<code>t</code>的插入操作报错.
-本线程只能操作表<code>t</code>和表<code>t1</code>,操作其它表都会报错.
-本线程只能读表<code>t</code>,写会报错.
-本线程能读写表<code>t1</code>.</p>
+</span></code></pre></div><ul>
+<li>针对表<code>t</code>读锁,表<code>t1</code>为写锁.本线程两个表的查询操作都正常,表<code>t1</code>插入正常,但针对表<code>t</code>的插入操作报错.</li>
+<li>本线程只能操作表<code>t</code>和表<code>t1</code>,操作其它表都会报错.</li>
+<li>本线程只能读表<code>t</code>,写会报错.</li>
+<li>本线程能读写表<code>t1</code>.</li>
+</ul>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session2
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
 <span class="o">+</span><span class="c1">----+--------+------+-----+------+
@@ -162,17 +163,22 @@
 
 <span class="c1">-- block
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span> <span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="s1">&#39;gongan&#39;</span><span class="p">,</span> <span class="s1">&#39;guanguan&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">);</span>
-</code></pre></div><p>其它线程能正常读表<code>t</code>,但写表<code>t</code>时被阻塞
-其它线程能正常读写其它表.</p>
+</code></pre></div><ul>
+<li>其它线程能正常读表<code>t</code>,但写表<code>t</code>时被阻塞</li>
+<li>其它线程能正常读写其它表.</li>
+</ul>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session3(block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
-</code></pre></div><p>其它线程读表<code>t1</code>时被阻塞.</p>
+</code></pre></div><ul>
+<li>其它线程读表<code>t1</code>时被阻塞.</li>
+</ul>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session4(block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t1</span> <span class="k">values</span><span class="p">(</span><span class="mi">102</span><span class="p">,</span> <span class="mi">102</span><span class="p">,</span> <span class="mi">102</span><span class="p">);</span>
-</code></pre></div><p>其它线程写表<code>t1</code>时被阻塞.</p>
+</code></pre></div><ul>
+<li>其它线程写表<code>t1</code>时被阻塞.</li>
+</ul>
 <h3 id="元数据锁">元数据锁<a href="#元数据锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-<p>MySQL5.5版本之后的功能,会自动加锁、解锁.主要是为了解决DDL和DML并发的问题.
-DML时会加MDL读锁,DDL时会加MDL写锁,读读之间不互斥,读写、写写之间互斥.</p>
+<p>MySQL5.5版本之后的功能,会自动加锁、解锁.主要是为了解决DDL和DML并发的问题.DML时会加MDL读锁,DDL时会加MDL写锁,读读之间不互斥,读写、写写之间互斥.</p>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session1
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
 <span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
@@ -190,10 +196,12 @@ DML时会加MDL读锁,DDL时会加MDL写锁,读读之间不互斥,读写、写�
 
 <span class="c1">-- session3
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t1</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">;</span>
-</code></pre></div><p>在session1提交事务之前,session2和session3都被阻塞了.
-session1是获取了表<code>t1</code>的MDL读锁,但由于事务未提交,导致该MDL读锁未被释放.
-session2是给表<code>t1</code>增加列,需要MDL写锁,由于读写互斥,导致该操作被堵塞.
-session3是读表<code>t1</code>,需要MDL读锁,但之前已经有MDL写锁在等待了,也导致获取不到MDL读锁,从而被堵塞.</p>
+</code></pre></div><ol>
+<li>在session1提交事务之前,session2和session3都被阻塞了.</li>
+<li>session1是获取了表<code>t1</code>的MDL读锁,但由于事务未提交,导致该MDL读锁未被释放.</li>
+<li>session2是给表<code>t1</code>增加列,需要MDL写锁,由于读写互斥,导致该操作被堵塞.</li>
+<li>session3是读表<code>t1</code>,需要MDL读锁,但之前已经有MDL写锁在等待了,也导致获取不到MDL读锁,从而被堵塞.</li>
+</ol>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session1
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">commit</span><span class="p">;</span>
 <span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
@@ -211,8 +219,8 @@ session3是读表<code>t1</code>,需要MDL读锁,但之前已经有MDL写锁在�
 </span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>
 <span class="o">+</span><span class="c1">----+------+------+
 </span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">4</span> <span class="k">min</span> <span class="mi">20</span><span class="p">.</span><span class="mi">25</span> <span class="n">sec</span><span class="p">)</span>
-</code></pre></div><p>session1提交之后,session2和session3才执行完,但注意session3在session2之前执行,也就是session3先获取到了MDL读锁.
-<strong>当有多个线程在等待MDL锁时,获取锁的规则是什么?会由哪个线程得到锁?读锁优先还是写锁优先?</strong></p>
+</code></pre></div><p>session1提交之后,session2和session3才执行完,但注意session3在session2之前执行,也就是session3先获取到了MDL读锁.</p>
+<p><strong>当有多个线程在等待MDL锁时,获取锁的规则是什么?会由哪个线程得到锁?读锁优先还是写锁优先?</strong></p>
 <p><em><strong>MDL锁是在需要的时候由MySQL自动加的,但要等待事务被提交后才会被释放.</strong></em></p>
 <h2 id="行锁">行锁<a href="#行锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>全局锁和表级锁是在server层实现的,而行锁是由引擎层实现的,这里主要关注InnoDB的行锁.行锁是自动加的.</p>
@@ -231,11 +239,10 @@ session3是读表<code>t1</code>,需要MDL读锁,但之前已经有MDL写锁在�
 
 <span class="c1">-- session B(block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t2</span> <span class="k">set</span> <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">where</span> <span class="n">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-</code></pre></div><p>可以看到session A未提交,会导致session B阻塞.当session A在<code>commit</code>提交之后,session B才能开始执行.
-行锁是在需要的时候由InnoDB自动加上,但直到事务结束时锁才会被释放.这就是两阶段协议锁.</p>
+</code></pre></div><p>可以看到session A未提交,会导致session B阻塞.当session A在<code>commit</code>提交之后,session B才能开始执行.</p>
+<p>行锁是在需要的时候由InnoDB自动加上,但直到事务结束时锁才会被释放.这就是两阶段协议锁.</p>
 <h3 id="死锁和死锁检测">死锁和死锁检测<a href="#死锁和死锁检测" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-<p>在并发系统中当不同的线程出现循环资源依赖,就会导致这些线程都进入无限等待的状态,称为死锁.
-如下session A和session B就出现了循环资源依赖,导致死锁.</p>
+<p>在并发系统中当不同的线程出现循环资源依赖,就会导致这些线程都进入无限等待的状态,称为死锁.如下session A和session B就出现了循环资源依赖,导致死锁.</p>
 <table>
 <thead>
 <tr>
@@ -271,9 +278,7 @@ session3是读表<code>t1</code>,需要MDL读锁,但之前已经有MDL写锁在�
 </span><span class="c1"></span><span class="o">|</span> <span class="n">innodb_deadlock_detect</span> <span class="o">|</span> <span class="k">ON</span>    <span class="o">|</span>
 <span class="o">+</span><span class="c1">------------------------+-------+
 </span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
-</code></pre></div><p>每个新来的被堵住的线程,都要判断会不会由于自己的加入导致了死锁,这是一个时间复杂度为O(n)的操作.
-假设有1000个线程要同时更新同一行,那么死锁检测操作就是100万量级的,这期间会消耗大量的CPU资源.注意死锁检测只会检测相关联的线程.
-比如当前session A在等待session B,而session B在等待session C;session D在等待session E.当session F加入需要等待session A时,只会检测F-&gt;A-&gt;B-&gt;C,D和E是不会检测的.</p>
+</code></pre></div><p>每个新来的被堵住的线程,都要判断会不会由于自己的加入导致了死锁,这是一个时间复杂度为O(n)的操作.假设有1000个线程要同时更新同一行,那么死锁检测操作就是100万量级的,这期间会消耗大量的CPU资源.注意死锁检测只会检测相关联的线程.比如当前session A在等待session B,而session B在等待session C;session D在等待session E.当session F加入需要等待session A时,只会检测F-&gt;A-&gt;B-&gt;C,D和E是不会检测的.</p>
 <p><em><strong>怎么解决由热点行更新导致的性能问题?</strong></em></p>
 <p><em><strong>若在事务中需要锁多个行,把最可能造成锁冲突、最可能影响并发度的锁的申请时机尽量往后放.</strong></em></p>
 <p>另外需要注意的是,当等待锁一定时间后,会出现超时现象,是参数<code>innodb_lock_wait_timeout</code>控制的.</p>
@@ -438,15 +443,14 @@ session3是读表<code>t1</code>,需要MDL读锁,但之前已经有MDL写锁在�
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">commit</span><span class="p">;</span>
 <span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
 </code></pre></div><p>如上所示的流程,假如session A只是对a=4这行加了行锁.</p>
-<p>session B的事务是先提交,session A的事务是后提交.此时数据库的数据为(4, 4, 5)和(1002, 4, 1002).
-在binlog中先是session B的操作,然后是session A的操作,该binlog同步到从库上开始执行,会得到什么结果?
-session B先执行,插入一行数据(1002, 4, 1002),然后更新a=4的行,从库的数据为(4, 4, 5)和(1002, 4, 5),此时主库和从库的数据不一致了.</p>
+<p>session B的事务是先提交,session A的事务是后提交.此时数据库的数据为(4, 4, 5)和(1002, 4, 1002).但在binlog中先是session B的操作,然后是session A的操作,该binlog同步到从库上开始执行,会得到什么结果?</p>
+<p>session B先执行,插入一行数据(1002, 4, 1002),然后更新a=4的行,从库的数据为(4, 4, 5)和(1002, 4, 5),此时主库和从库的数据不一致了.</p>
 <p>session A本来是想更新所有a=4的行的,但在这之后session B插入了一行a=4的数据,导致session A的语义被破坏了.</p>
 <p><em><strong>主从数据不一致和语义被破坏,这就是幻读的问题.</strong></em></p>
 <p>实际上InnoDB在可重复读级别下是不会出现幻读的现象的,上面的sql语句,session B的<code>insert</code>操作会被阻塞,直到session A的事务提交后才能执行.</p>
 <h4 id="如何解决幻读">如何解决幻读?<a href="#如何解决幻读" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
-<p>通过上例,只是加行锁,无法阻止幻读的出现.InnoDB是通过加间隙锁(Gap Lock),来锁住a=4的间隙,这样可以阻塞别的线程的插入操作.
-间隙锁,锁的就是两个值之间的间隙,以上例session A来说,会锁住(3, 4)和(4, 5)的间隙.这样再插入session B的数据,会落入到(4, 5)间隙,导致被阻塞.</p>
+<p>通过上例,只是加行锁,无法阻止幻读的出现.InnoDB是通过加间隙锁(Gap Lock),来锁住a=4的间隙,这样可以阻塞别的线程的插入操作.</p>
+<p>间隙锁,锁的就是两个值之间的间隙,以上例session A来说,会锁住(3, 4)和(4, 5)的间隙.这样再插入session B的数据,会落入到(4, 5)间隙,导致被阻塞.</p>
 <p>间隙锁一般是针对可重复隔离级别的.读已提交一般情况下只有行锁(说明该隔离级别会出现幻读的现象).</p>
 <p>间隙锁的引入会导致锁的范围变大,这样其实会影响并发度的.</p>
 <p><em><strong>需要注意,间隙锁之间是不互斥的,不同的session之间可以锁住同样的间隙</strong></em></p>
@@ -490,9 +494,11 @@ session B先执行,插入一行数据(1002, 4, 1002),然后更新a=4的行,从�
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="n">id</span><span class="o">=</span><span class="mi">10</span><span class="p">;</span>
 <span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
 <span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
-</code></pre></div><p>session A在主键索引上加锁,根据规则一加锁为(5, 10],根据优化二退化为间隙锁(5, 10)
-session B要插入id=8,落在间隙锁(5, 10)之间,被阻塞.
-session C更新id=10的行,根据规则一加锁为(5, 10],根据优化一退化为行锁(10),锁不冲突,可以更新成功.</p>
+</code></pre></div><ol>
+<li>session A在主键索引上加锁,根据规则一加锁为(5, 10],根据优化二退化为间隙锁(5, 10)</li>
+<li>session B要插入id=8,落在间隙锁(5, 10)之间,被阻塞.</li>
+<li>session C更新id=10的行,根据规则一加锁为(5, 10],根据优化一退化为行锁(10),锁不冲突,可以更新成功.</li>
+</ol>
 <h4 id="非唯一索引等值锁">非唯一索引等值锁<a href="#非唯一索引等值锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
@@ -513,9 +519,11 @@ session C更新id=10的行,根据规则一加锁为(5, 10],根据优化一退化
 
 <span class="c1">-- session C(block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">);</span>
-</code></pre></div><p>session A在索引c上加锁,根据规则一为(0, 5]和(5, 10],根据优化二退化为(0, 5]和(5, 10).注意该语句是使用了覆盖索引,所以并没有在主键索引上加锁.
-session B是在主键索引上加锁,根据优化一退化为行锁(5),和session A并不冲突,可以更新成功.
-session C要再索引c上插入c=7的行,落在了(5, 10)之间,被session A阻塞.</p>
+</code></pre></div><ol>
+<li>session A在索引c上加锁,根据规则一为(0, 5]和(5, 10],根据优化二退化为(0, 5]和(5, 10).注意该语句是使用了覆盖索引,所以并没有在主键索引上加锁.</li>
+<li>session B是在主键索引上加锁,根据优化一退化为行锁(5),和session A并不冲突,可以更新成功.</li>
+<li>session C要再索引c上插入c=7的行,落在了(5, 10)之间,被session A阻塞.</li>
+</ol>
 <p><strong>注意:语句中使用的是<code>lock in share mode</code>,是读锁且使用了覆盖索引,并不需要访问主键索引.但如果使用的是<code>for update</code>,又是什么效果列?</strong></p>
 <h4 id="主键索引范围锁">主键索引范围锁<a href="#主键索引范围锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">--session A
@@ -539,9 +547,11 @@ session C要再索引c上插入c=7的行,落在了(5, 10)之间,被session A阻�
 
 <span class="c1">--session C (block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="n">id</span><span class="o">=</span><span class="mi">15</span><span class="p">;</span>
-</code></pre></div><p>session A在主键索引上加锁,满足条件的第一行是id=10,则加锁(5, 10],但根据优化一退化为行锁(10);范围查询要继续查找,则加锁(10, 15],由于是范围查询没有适用的优化规则.故加锁范围为[10, 15]
-session B第一条插入id=8,不在锁的范围,可以插入成功.第二条插入id=13,在锁的范围,被阻塞.
-session C更新id=15的行,在锁的范围,被阻塞.</p>
+</code></pre></div><ol>
+<li>session A在主键索引上加锁,满足条件的第一行是id=10,则加锁(5, 10],但根据优化一退化为行锁(10);范围查询要继续查找,则加锁(10, 15],由于是范围查询没有适用的优化规则.故加锁范围为[10, 15]</li>
+<li>session B第一条插入id=8,不在锁的范围,可以插入成功.第二条插入id=13,在锁的范围,被阻塞.</li>
+<li>session C更新id=15的行,在锁的范围,被阻塞.</li>
+</ol>
 <h4 id="非唯一索引范围锁">非唯一索引范围锁<a href="#非唯一索引范围锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
@@ -560,9 +570,11 @@ session C更新id=15的行,在锁的范围,被阻塞.</p>
 
 <span class="c1">-- session C(block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">15</span><span class="p">;</span>
-</code></pre></div><p>session A在索引c上加锁,满足条件的第一行是c=10,则加锁(5, 10],注意c是非唯一索引没有优化规则;范围查询要继续查找,则加锁(10, 15],由于是范围查询没有适用的优化规则.故加锁范围为(5, 15].
-session B要插入c=8的行,在锁的范围内,被阻塞.
-session C要更新c=15的行,在锁的范围内,被阻塞.</p>
+</code></pre></div><ol>
+<li>session A在索引c上加锁,满足条件的第一行是c=10,则加锁(5, 10],注意c是非唯一索引没有优化规则;范围查询要继续查找,则加锁(10, 15],由于是范围查询没有适用的优化规则.故加锁范围为(5, 15].</li>
+<li>session B要插入c=8的行,在锁的范围内,被阻塞.</li>
+<li>session C要更新c=15的行,在锁的范围内,被阻塞.</li>
+</ol>
 <h4 id="唯一索引范围bug">唯一索引范围bug<a href="#唯一索引范围bug" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">--session A
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
@@ -581,9 +593,11 @@ session C要更新c=15的行,在锁的范围内,被阻塞.</p>
 
 <span class="c1">--session C(block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">);</span>
-</code></pre></div><p>session A在主键索引上加锁,按照原则一,加锁(10, 15],但InnoDB会扫描到第一个不满足条件的行为止,这里也就是id=20，由于是范围扫描,所以还会加锁(15, 20].但(15, 20]是完全没必要的,可以认为是bug.
-session B要更新id=20的行,在锁的范围内,被阻塞.
-session C要插入id=16的行,在锁的范围内,被阻塞.</p>
+</code></pre></div><ol>
+<li>session A在主键索引上加锁,按照原则一,加锁(10, 15],但InnoDB会扫描到第一个不满足条件的行为止,这里也就是id=20，由于是范围扫描,所以还会加锁(15, 20].但(15, 20]是完全没必要的,可以认为是bug.</li>
+<li>session B要更新id=20的行,在锁的范围内,被阻塞.</li>
+<li>session C要插入id=16的行,在锁的范围内,被阻塞.</li>
+</ol>
 <h4 id="非唯一索引上存在相同键">非唯一索引上存在相同键<a href="#非唯一索引上存在相同键" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- 插入新行,c=10的有两行数据.
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">);</span>
@@ -618,9 +632,11 @@ session C要插入id=16的行,在锁的范围内,被阻塞.</p>
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">update</span> <span class="n">t</span> <span class="k">set</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span> <span class="k">where</span> <span class="k">c</span><span class="o">=</span><span class="mi">15</span><span class="p">;</span>
 <span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">1</span> <span class="k">row</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">01</span> <span class="n">sec</span><span class="p">)</span>
 <span class="k">Rows</span> <span class="n">matched</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Changed</span><span class="p">:</span> <span class="mi">1</span>  <span class="n">Warnings</span><span class="p">:</span> <span class="mi">0</span>
-</code></pre></div><p>session A是在索引c上加锁,满足条件的第一行为(id=10,c=10),则加锁((id=5,c=5),(id=10,c=10)],非唯一索引没有优化规则.第一行为(id=30,c=10),则加锁((id=10,c=10),(id=30,c=10)],继续查找到(id=15,c=15)结束,根据优化规则二,退化为间隙锁((id=30,c=10),(id=15,c=15))
-session B插入c=12的行,在锁的范围内,被阻塞.
-session C更新c=15的行,不再锁的范围内,可正常更新.</p>
+</code></pre></div><ol>
+<li>session A是在索引c上加锁,满足条件的第一行为(id=10,c=10),则加锁((id=5,c=5),(id=10,c=10)],非唯一索引没有优化规则.第一行为(id=30,c=10),则加锁((id=10,c=10),(id=30,c=10)],继续查找到(id=15,c=15)结束,根据优化规则二,退化为间隙锁((id=30,c=10),(id=15,c=15))</li>
+<li>session B插入c=12的行,在锁的范围内,被阻塞.</li>
+<li>session C更新c=15的行,不再锁的范围内,可正常更新.</li>
+</ol>
 <h4 id="limit语句加锁">limit语句加锁<a href="#limit语句加锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">--session A
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
@@ -670,11 +686,13 @@ session B要插入c=12的行,不在加锁范围内,可正常插入.</p>
 
 <span class="c1">--session B(死锁,回滚)
 </span><span class="c1"></span><span class="n">ERROR</span> <span class="mi">1213</span> <span class="p">(</span><span class="mi">40001</span><span class="p">):</span> <span class="n">Deadlock</span> <span class="k">found</span> <span class="k">when</span> <span class="n">trying</span> <span class="k">to</span> <span class="k">get</span> <span class="k">lock</span><span class="p">;</span> <span class="n">try</span> <span class="n">restarting</span> <span class="k">transaction</span>
-</code></pre></div><p>首先session A的加锁范围为next-key lock(5, 10]和间隙锁(10, 15)
-session B的update语句被阻塞,其加锁逻辑为:先加间隙锁(5, 10),然后是行锁(10).由于间隙锁之间是不冲突的,有冲突的是行锁(10),导致sesssion B的阻塞.
-此时session A拥有(5, 10]和(10, 15)的锁,session B拥有(5, 10)的锁且在等待行锁(10).
-最后session A插入c=8的新行,落在间隙(5, 10)中,该间隙锁session B也拥有导致阻塞.
-此时会进行死锁检测,发现session B在等待session A的行锁,而session A又在等待session B的间隙锁,导致死锁.</p>
+</code></pre></div><ol>
+<li>首先session A的加锁范围为next-key lock(5, 10]和间隙锁(10, 15)</li>
+<li>session B的update语句被阻塞,其加锁逻辑为:先加间隙锁(5, 10),然后是行锁(10).由于间隙锁之间是不冲突的,有冲突的是行锁(10),导致sesssion B的阻塞.</li>
+<li>此时session A拥有(5, 10]和(10, 15)的锁,session B拥有(5, 10)的锁且在等待行锁(10).</li>
+<li>最后session A插入c=8的新行,落在间隙(5, 10)中,该间隙锁session B也拥有导致阻塞.</li>
+<li>此时会进行死锁检测,发现session B在等待session A的行锁,而session A又在等待session B的间隙锁,导致死锁.</li>
+</ol>
 <h4 id="order-by加锁">order by加锁<a href="#order-by加锁" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="c1">-- session A
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">begin</span><span class="p">;</span>
@@ -691,8 +709,10 @@ session B的update语句被阻塞,其加锁逻辑为:先加间隙锁(5, 10),然�
 
 <span class="c1">-- session B(block)
 </span><span class="c1"></span><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">insert</span> <span class="k">into</span> <span class="n">t</span> <span class="k">values</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span>
-</code></pre></div><p>session A由于是倒序,第一个访问的是索引c上最右边的c=20的行,会加间隙锁(20, 25)和next-key lock(15, 20],继续遍历到c=10才会停下来,则next-key lock(5, 10].故整个锁的范围是索引c上的(5, 25),主键索引上id=15和id=20的两个行锁.
-session B要插入c=6的行,落在了间隙锁(5, 25)中,所以被阻塞.</p>
+</code></pre></div><ol>
+<li>session A由于是倒序,第一个访问的是索引c上最右边的c=20的行,会加间隙锁(20, 25)和next-key lock(15, 20],继续遍历到c=10才会停下来,则next-key lock(5, 10].故整个锁的范围是索引c上的(5, 25),主键索引上id=15和id=20的两个行锁.</li>
+<li>session B要插入c=6的行,落在了间隙锁(5, 25)中,所以被阻塞.</li>
+</ol>
 <h3 id="innodb加锁规则读已提交隔离级别">InnoDB加锁规则(读已提交隔离级别)<a href="#innodb加锁规则读已提交隔离级别" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <ol>
 <li>主要是行锁(只有在外键场景下会有间隙锁)</li>
