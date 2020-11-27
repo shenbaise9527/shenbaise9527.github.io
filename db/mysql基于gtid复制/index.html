@@ -11,7 +11,7 @@
 <meta itemprop="description" content="开启GTID. # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启gtid的一些安全限制.">
 <meta itemprop="datePublished" content="2020-11-09T21:27:12+08:00" />
 <meta itemprop="dateModified" content="2020-11-09T21:27:12+08:00" />
-<meta itemprop="wordCount" content="1666">
+<meta itemprop="wordCount" content="1667">
 
 
 
@@ -34,6 +34,7 @@
 	<link rel="shortcut icon" href="/favicon.ico">
 
 	<title>深白色9527</title>
+	
 	<link rel="stylesheet" href="https://shenbaise9527.com/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
 	
 </head>
@@ -104,7 +105,7 @@ enforce_gtid_consistency=ON
 # 从库启动复制,master_auto_position=1表示开启基于GTID的复制.
 CHANGE MASTER TO MASTER_HOST='xxx', MASTER_PORT=3306, MASTER_USER='user_name', MASTER_PASSWORD='password', MASTER_AUTO_POSITION=1;
 start slave;
-</code></pre><h2 id="从库相关参数">从库相关参数<a href="#从库相关参数" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+</code></pre><h2 id="并行复制参数">并行复制参数.<a href="#并行复制参数" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <pre><code># 并行复制类型,默认值为DATABASE,即按库来并行复制,LOGICAL_CLOCK为根据同时进入prepare和commit来并行复制.
 slave_parallel_type=LOGICAL_CLOCK
 
@@ -291,7 +292,7 @@ INSERT INTO xxxx SELECT * FROM t;
 				<p>
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://shenbaise9527.com/tags/mysql">mysql</a></span>
 				</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1666 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1667 Words</p>
 				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-09 21:27 &#43;0800</p>
 			</footer>
 		</article>
@@ -300,7 +301,7 @@ INSERT INTO xxxx SELECT * FROM t;
 			<nav id="TableOfContents">
   <ul>
     <li><a href="#开启gtid">开启GTID.</a></li>
-    <li><a href="#从库相关参数">从库相关参数</a></li>
+    <li><a href="#并行复制参数">并行复制参数.</a></li>
     <li><a href="#gtid的限制">GTID的限制.</a></li>
     <li><a href="#查看gtid">查看GTID</a></li>
   </ul>

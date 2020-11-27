@@ -1863,7 +1863,7 @@ enforce_gtid_consistency=ON
 # 从库启动复制,master_auto_position=1表示开启基于GTID的复制.
 CHANGE MASTER TO MASTER_HOST='xxx', MASTER_PORT=3306, MASTER_USER='user_name', MASTER_PASSWORD='password', MASTER_AUTO_POSITION=1;
 start slave;
-</code></pre><h2 id="从库相关参数">从库相关参数</h2>
+</code></pre><h2 id="并行复制参数">并行复制参数.</h2>
 <pre><code># 并行复制类型,默认值为DATABASE,即按库来并行复制,LOGICAL_CLOCK为根据同时进入prepare和commit来并行复制.
 slave_parallel_type=LOGICAL_CLOCK
 
