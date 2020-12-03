@@ -33,7 +33,8 @@
 	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
 	<link rel="shortcut icon" href="/favicon.ico">
 
-	<title>MySQL的orderby分析</title>
+	<title>深白色9527</title>
+	
 	<link rel="stylesheet" href="https://shenbaise9527.com/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
 	
 </head>
@@ -81,7 +82,7 @@
 	<main class="site-main section-inner animated fadeIn faster">
 		<article class="thin">
 			<header class="post-header">
-				<div class="post-meta"><span>Nov 24, 2020</span></div>
+				<div class="post-meta"><span>2020-11-24</span></div>
 				<h1>MySQL的orderby分析</h1>
 			</header>
 			<div class="content">
@@ -181,11 +182,11 @@
 <li>对sort_buffer中的数据按照字段name做排序.</li>
 <li>排序完成sort_buffer内存空间就会被释放.</li>
 </ol>
-<p><code>Innodb_rows_read</code>的差值为什么是5506而不是5505？
-因为在查询<code>OPTIMIZER_TRACE</code>表时，需要用到临时表，而临时表的存储引擎默认是InnoDB(通过参数<code>internal_tmp_disk_storage_engine</code>来控制的)，再把数据从临时表取出来时，会让Innodb_rows_read的值加1</p>
+<p><code>Innodb_rows_read</code>的差值为什么是5506而不是5505？</p>
+<p>因为在查询<code>OPTIMIZER_TRACE</code>表时，需要用到临时表，而临时表的存储引擎默认是InnoDB(通过参数<code>internal_tmp_disk_storage_engine</code>来控制的)，再把数据从临时表取出来时，会让Innodb_rows_read的值加1</p>
 <h3 id="rowid排序">rowid排序<a href="#rowid排序" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-<p>若查询的字段很多,总长度超过了<code>max_length_for_sort_data</code>所规定的长度,排序的过程是如何的?
-修改参数<code>set max_length_for_sort_data=16;</code>,查询的三个字段的总长度为为36,则可触发上面说的情况.然后再来看看排序的过程.</p>
+<p>若查询的字段很多,总长度超过了<code>max_length_for_sort_data</code>所规定的长度,排序的过程是如何的?</p>
+<p>修改参数<code>set max_length_for_sort_data=16;</code>,查询的三个字段的总长度为为36,则可触发上面说的情况.然后再来看看排序的过程.</p>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*@a保存Innodb_rows_read的初始值*/</span>
 <span class="k">select</span> <span class="n">variable_value</span> <span class="k">into</span> <span class="o">@</span><span class="n">a</span> <span class="k">from</span> <span class="n">performance_schema</span><span class="p">.</span><span class="n">session_status</span> <span class="k">where</span> <span class="n">variable_name</span><span class="o">=</span><span class="s1">&#39;Innodb_rows_read&#39;</span><span class="p">;</span>
 
@@ -255,8 +256,7 @@
 </span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="n">city</span><span class="p">,</span><span class="n">city_name</span> <span class="o">|</span> <span class="n">city_name</span> <span class="o">|</span> <span class="mi">50</span>      <span class="o">|</span> <span class="n">const</span> <span class="o">|</span> <span class="mi">5505</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">index</span> <span class="n">condition</span> <span class="o">|</span>
 <span class="o">+</span><span class="c1">----+-------------+-------+------------+------+----------------+-----------+---------+-------+------+----------+-----------------------+
 </span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
-</code></pre></div><p>可以看到执行计划Extra中只有<code>Using index condition</code>,使用索引<code>city_name</code>而不用再排序了.
-虽然不用再排序,但仍然需要回表操作来获取city、name和age的值.</p>
+</code></pre></div><p>可以看到执行计划Extra中只有<code>Using index condition</code>,使用索引<code>city_name</code>而不用再排序了.虽然不用再排序,但仍然需要回表操作来获取city、name和age的值.</p>
 <p>如果使用了覆盖索引,该查询语句又会是怎样的列?</p>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*增加city+name+age的索引,覆盖所有查询字段*/</span>
 <span class="n">mysql</span><span class="o">&gt;</span> <span class="k">alter</span> <span class="k">table</span> <span class="n">t</span> <span class="k">add</span> <span class="k">index</span> <span class="n">city_name_age</span><span class="p">(</span><span class="n">city</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">age</span><span class="p">);</span>
@@ -331,8 +331,8 @@
 </code></pre></div><p>可以看出查询结果明显不一样.</p>
 <p><strong>但如何解释同时存在索引<code>city_name</code>和<code>city_name_age</code>时,查询为什么不优先使用索引<code>city_name_age</code>来避免回表操作,而强制使用<code>city_name_age</code>时explain中rows为什么会是9940?</strong></p>
 <h2 id="不带条件的orderby分析">不带条件的orderby分析<a href="#不带条件的orderby分析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>针对语句<code>select * from t order by city limit 1000</code>,会使用索引吗?如果会是哪个索引?
-针对语句<code>select * from t order by city limit 10000</code>列?</p>
+<p>针对语句<code>select * from t order by city limit 1000</code>,会使用索引吗?如果会是哪个索引?</p>
+<p>针对语句<code>select * from t order by city limit 10000</code>列?</p>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">t</span> <span class="k">order</span> <span class="k">by</span> <span class="n">city</span> <span class="k">limit</span> <span class="mi">1000</span><span class="p">;</span>
 <span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+------+---------+------+------+----------+-------+
 </span><span class="c1"></span><span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span>  <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span> <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span> <span class="o">|</span>
@@ -348,10 +348,12 @@
 </span><span class="c1"></span><span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t</span>     <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>  <span class="o">|</span> <span class="k">NULL</span>          <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">44064</span> <span class="o">|</span>   <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="n">filesort</span> <span class="o">|</span>
 <span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+----------------+
 </span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
-</code></pre></div><p>从执行计划中可以看出,语句1是有使用索引<code>city</code>且不用排序.而语句2是全表扫描且使用了排序(Extra的<code>Using filesort</code>).
-当把limit从1000改成10000时查询为什么造成这种差异?
-使用索引<code>city</code>是需要进行回表操作的,当limit数据量大时优化器认为回表操作代价太大,还不如直接全表扫描.
-针对回表操作,从索引<code>city</code>中获取到的id不是有序的,回表会造成随机读,这也是优化器认为代价太大的原因(Mysql其实有提供MRR机制来优化这种情况),还不如直接全表扫描,使用顺序读.</p>
+</code></pre></div><p>从执行计划中可以看出,语句1是有使用索引<code>city</code>且不用排序.而语句2是全表扫描且使用了排序(Extra的<code>Using filesort</code>).</p>
+<p>当把limit从1000改成10000时查询为什么造成这种差异?</p>
+<ul>
+<li>使用索引<code>city</code>是需要进行回表操作的,当limit数据量大时优化器认为回表操作代价太大,还不如直接全表扫描.</li>
+<li>针对回表操作,从索引<code>city</code>中获取到的id不是有序的,回表会造成随机读,这也是优化器认为代价太大的原因(Mysql其实有提供MRR机制来优化这种情况),还不如直接全表扫描,使用顺序读.</li>
+</ul>
 <h2 id="总结">总结<a href="#总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <ul>
 <li>可以通过合理的创建索引来避免<code>order by</code>排序,提高查询性能.</li>
@@ -393,6 +395,9 @@
 </nav>
 		</aside>
 		<div class="post-nav thin">
+			<a class="next-post" href="https://shenbaise9527.com/posts/makefile%E8%AF%AD%E6%B3%95%E8%AF%B4%E6%98%8E/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>makefile语法说明</span>
+			</a>
 			<a class="prev-post" href="https://shenbaise9527.com/posts/mysql%E9%94%81%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/">
 				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>MySQL锁机制分析</span>
 			</a>

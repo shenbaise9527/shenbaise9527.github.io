@@ -33,7 +33,8 @@
 	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
 	<link rel="shortcut icon" href="/favicon.ico">
 
-	<title>MySQL的join分析</title>
+	<title>深白色9527</title>
+	
 	<link rel="stylesheet" href="https://shenbaise9527.com/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
 	
 </head>
@@ -81,7 +82,7 @@
 	<main class="site-main section-inner animated fadeIn faster">
 		<article class="thin">
 			<header class="post-header">
-				<div class="post-meta"><span>Nov 24, 2020</span></div>
+				<div class="post-meta"><span>2020-11-24</span></div>
 				<h1>MySQL的join分析</h1>
 			</header>
 			<div class="content">
@@ -139,8 +140,7 @@
 <li>取出表<code>t2</code>中满足条件的行,跟R组成一行,作为结果集的一部分.</li>
 <li>重复执行步骤1到3,直到表<code>t1</code>的末尾,循环结束.</li>
 </ol>
-<p>假定驱动表有N行,被驱动表有M行,每扫描一行驱动表,使用字段a的值去被驱动表的索引树a上查找,然后再回表到被驱动表的主键索引树,则被驱动表要扫描2*$log_2{M}$.
-则总的扫描行数为N+N*2*$log_2{M}$.显然N对扫描行数的影响更大,因此在这种情况下应该使用小表为驱动表.</p>
+<p>假定驱动表有N行,被驱动表有M行,每扫描一行驱动表,使用字段a的值去被驱动表的索引树a上查找,然后再回表到被驱动表的主键索引树,则被驱动表要扫描2*$log_2{M}$.则总的扫描行数为N+N*2*$log_2{M}$.显然N对扫描行数的影响更大,因此在这种情况下应该使用小表为驱动表.</p>
 <p>但如果被驱动表没有索引列?</p>
 <h2 id="block-nested-loop-joinbnl">Block Nested-Loop Join(BNL)<a href="#block-nested-loop-joinbnl" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>join时被驱动表没有索引时,称之为<code>Block Nested-Loop Join</code>,简称为BNL</p>
@@ -159,9 +159,8 @@
 <li>把表<code>t1</code>的数据读入线程内存<code>join_buffer</code>中</li>
 <li>扫描表<code>t2</code>,把每一行取出,跟<code>join_buffer</code>中的数据比对,满足<code>join</code>条件的,作为结果集的一部分.</li>
 </ol>
-<p>整个过程表<code>t1</code>和表<code>t2</code>都是全表扫描,扫描行数为1000+100=1100,由于<code>join_buffer</code>中的数据时无序的,对表<code>t2</code>里的每一行都要做100次判断,总判断次数为1000*100=10万次.
-判读次数是纯内存操作,相比读表会快上不少,整个过程就是扫描1100行+10万次内存操作.
-<em><strong>在这种情况下,不论选择哪个表为驱动表其实是没有差异的.</strong></em></p>
+<p>整个过程表<code>t1</code>和表<code>t2</code>都是全表扫描,扫描行数为1000+100=1100,由于<code>join_buffer</code>中的数据时无序的,对表<code>t2</code>里的每一行都要做100次判断,总判断次数为1000*100=10万次.判读次数是纯内存操作,相比读表会快上不少,整个过程就是扫描1100行+10万次内存操作.</p>
+<p><em><strong>在这种情况下,不论选择哪个表为驱动表其实是没有差异的.</strong></em></p>
 <p><code>join_buffer</code>的大小是由参数<code>join_buffer_size</code>来控制的,默认大小为256k.</p>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">variables</span> <span class="k">like</span> <span class="s1">&#39;join%&#39;</span><span class="p">;</span>
 <span class="o">+</span><span class="c1">------------------+--------+
@@ -170,8 +169,8 @@
 </span><span class="c1"></span><span class="o">|</span> <span class="n">join_buffer_size</span> <span class="o">|</span> <span class="mi">262144</span> <span class="o">|</span>
 <span class="o">+</span><span class="c1">------------------+--------+
 </span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">26</span> <span class="n">sec</span><span class="p">)</span>
-</code></pre></div><p>如果表<code>t1</code>的数据量很大,导致<code>join_buffer</code>放不下了,整个过程又会是怎么样的?
-策略很简单,就是分段放入,分次比较.详见<a href="https://dev.mysql.com/doc/internals/en/join-buffer-size.html">官网说明</a>
+</code></pre></div><p>如果表<code>t1</code>的数据量很大,导致<code>join_buffer</code>放不下了,整个过程又会是怎么样的?</p>
+<p>策略很简单,就是分段放入,分次比较.详见<a href="https://dev.mysql.com/doc/internals/en/join-buffer-size.html">官网说明</a>
 Basic information about the join buffer cache:</p>
 <ul>
 <li>The size of each join buffer is determined by the value of the join_buffer_size system variable.</li>
@@ -199,10 +198,8 @@ Basic information about the join buffer cache:</p>
 <span class="o">-</span> <span class="k">Read</span> <span class="n">through</span> <span class="k">all</span> <span class="k">rows</span> <span class="k">in</span> <span class="n">t3</span>
  <span class="o">-</span> <span class="n">Compare</span> <span class="n">t3</span> <span class="k">row</span> <span class="n">against</span> <span class="k">all</span> <span class="n">stored</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="n">combinations</span> <span class="k">in</span> <span class="k">cache</span>
    <span class="o">-</span> <span class="k">If</span> <span class="k">row</span> <span class="n">satisfies</span> <span class="k">join</span> <span class="n">condition</span><span class="p">,</span> <span class="n">send</span> <span class="n">it</span> <span class="k">to</span> <span class="n">client</span>
-</code></pre></div><p>假设驱动表的行数是N,需要分K段才能完成算法流程,被驱动表数据行数是M.显然N越大,K就会越大,K=$\lambda$*N,$\lambda$取值范围为(0,1).
-此算法扫描的行数为N+$\lambda$*N*M,内存判断次数为N*M,在N和M确定的情况下,N小些,扫描行数的算式会更小些,可见此时应小表当驱动表.
-参数$\lambda$才是影响扫描行数的关键因素,这个值应该越小越好.在N固定时若<code>join_buffer_size</code>越大,能放入的行数越多,该值就会越小.
-若join语句很慢,可尝试把<code>join_buffer_size</code>改大点.</p>
+</code></pre></div><p>假设驱动表的行数是N,需要分K段才能完成算法流程,被驱动表数据行数是M.显然N越大,K就会越大,K=$\lambda$*N,$\lambda$取值范围为(0,1).此算法扫描的行数为N+$\lambda$*N*M,内存判断次数为N*M,在N和M确定的情况下,N小些,扫描行数的算式会更小些,可见此时应小表当驱动表.参数$\lambda$才是影响扫描行数的关键因素,这个值应该越小越好.在N固定时若<code>join_buffer_size</code>越大,能放入的行数越多,该值就会越小.</p>
+<p>若join语句很慢,可尝试把<code>join_buffer_size</code>改大点.</p>
 <p>以上两个join算法都应该尽量使用小表作为驱动表,但什么是小表列?</p>
 <h2 id="什么是小表">什么是小表?<a href="#什么是小表" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>先来看看两组sql语句</p>
@@ -245,14 +242,16 @@ Basic information about the join buffer cache:</p>
 <span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="n">t1</span>    <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>   <span class="o">|</span> <span class="k">NULL</span>          <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span>  <span class="mi">100</span> <span class="o">|</span>    <span class="mi">10</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span><span class="p">;</span> <span class="k">Using</span> <span class="k">join</span> <span class="n">buffer</span> <span class="p">(</span><span class="n">Block</span> <span class="n">Nested</span> <span class="n">Loop</span><span class="p">)</span> <span class="o">|</span>
 <span class="o">+</span><span class="c1">----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+----------------------------------------------------+
 </span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
-</code></pre></div><p>针对语句Q1和Q2来说,Q2放入<code>join_buffer</code>的数据只有50行,相对来说此时t2是小表,应该为驱动表.
-针对语句Q3和Q4来说,放入<code>join_buffer</code>的行数是一样的,但Q3只需要放入表t1的一个字段,相对来说此时t1是小表,应该为驱动表.</p>
+</code></pre></div><ul>
+<li>针对语句Q1和Q2来说,Q2放入<code>join_buffer</code>的数据只有50行,相对来说此时t2是小表,应该为驱动表.</li>
+<li>针对语句Q3和Q4来说,放入<code>join_buffer</code>的行数是一样的,但Q3只需要放入表t1的一个字段,相对来说此时t1是小表,应该为驱动表.</li>
+</ul>
 <p><strong>在决定哪个表为驱动表时,应该要两个表按照各自的条件过滤,然后计算参与join的各个字段的总数据量,数据量小的那个表就是小表,应该为驱动表.</strong></p>
 <h2 id="优化">优化<a href="#优化" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <h3 id="multi-range-readmrr优化">Multi-Range Read(MRR)优化<a href="#multi-range-readmrr优化" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-<p>MRR优化的主要目的是使用顺序读盘.
-在查询过程中使用非主键索引时需要进行回表操作去主键索引树中获取相关字段的值.在非主键索引树中获取的主键ID不是有序的,当循环回表时会触发主键索引树的磁盘随机读取,而这是最耗时的操作.
-而MRR优化过程:</p>
+<p>MRR优化的主要目的是使用顺序读盘.</p>
+<p>在查询过程中使用非主键索引时需要进行回表操作去主键索引树中获取相关字段的值.在非主键索引树中获取的主键ID不是有序的,当循环回表时会触发主键索引树的磁盘随机读取,而这是最耗时的操作.</p>
+<p>而MRR优化过程:</p>
 <ol>
 <li>从非主键索引中把符合的主键ID先全部读取出来,放入<code>read_rnd_buffer</code>中</li>
 <li>把<code>read_rnd_buffer</code>中的主键ID排序</li>
@@ -283,9 +282,9 @@ Basic information about the join buffer cache:</p>
 </span><span class="c1"></span><span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">04</span> <span class="n">sec</span><span class="p">)</span>
 </code></pre></div><p><em><strong>需要注意,当未使用MRR优化时,查询返回的记录是按照索引<code>a</code>来排序的,但使用了MRR优化时,返回的记录若<code>read_rnd_buffer</code>未满时是按照主键ID来排序的;若满记录就不是有序的了.</strong></em></p>
 <h3 id="batched-key-accessbka">Batched Key Access(BKA)<a href="#batched-key-accessbka" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-<p>BKA算法是基于MRR对NLJ算法做的优化.
-从驱动表中取出数据放入到<code>join_buffer</code>中,然后按照被驱动表的索引键排序,顺序去被驱动表查找相关数据.相比于NLJ的过程,BKA使用了MRR优化的思路,在被驱动表中是顺序读取,避免随机读取.
-要启用BKA,需要设置参数.</p>
+<p>BKA算法是基于MRR对NLJ算法做的优化.</p>
+<p>从驱动表中取出数据放入到<code>join_buffer</code>中,然后按照被驱动表的索引键排序,顺序去被驱动表查找相关数据.相比于NLJ的过程,BKA使用了MRR优化的思路,在被驱动表中是顺序读取,避免随机读取.</p>
+<p>要启用BKA,需要设置参数.</p>
 <div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="cm">/*启动BKA,要先启动MRR*/</span>
 <span class="n">mysql</span><span class="o">&gt;</span> <span class="k">set</span> <span class="n">optimizer_switch</span><span class="o">=</span><span class="s1">&#39;mrr=on,mrr_cost_based=off,batched_key_access=on&#39;</span><span class="p">;</span>
 <span class="n">Query</span> <span class="n">OK</span><span class="p">,</span> <span class="mi">0</span> <span class="k">rows</span> <span class="n">affected</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
@@ -301,11 +300,11 @@ Basic information about the join buffer cache:</p>
 </span><span class="c1"></span><span class="mi">2</span> <span class="k">rows</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
 </code></pre></div><h3 id="bnl算法的性能问题">BNL算法的性能问题<a href="#bnl算法的性能问题" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>基于BNL算法时,由于<code>join_buffer</code>容量有限,如果驱动表是大表时需要进行分段处理,这样会导致被驱动表进行多次扫描,如果被驱动表是一个大的冷数据库,除了导致IO压力大外,还有什么其它影响?</p>
-<p>从磁盘读取数据后是放入到<code>Buffer Pool</code>里的,而<code>Buffer Pool</code>的容量也是有限的,当空间不够时会淘汰一些老数据页来容纳新的数据页,淘汰算法InnoDB引擎使用的是变种LRU算法.
-把<code>Buffer Pool</code>按照3:5的比例划分为old和young区域,从磁盘读取的数据先放入到old区域,如果超过1秒该数据页还在old区域且还有被访问就会被移入到young区域,在old和young区域都是LRU算法来淘汰老数据的.</p>
-<p>若被驱动表的数据量小于old区域(即整个表能全部放入到old区域),由于需要多次扫描被驱动表,而时间间隔可能超过1秒,这会导致这部分数据会被移入到young区域.
-若被驱动表的数据量超过了old区域,在遍历的过程中会涉及到淘汰old区域的数据来存放该表的数据,这样会导致业务正常访问的数据没有机会放入到young区域(没有超过1秒就被淘汰出old了).
-以上两种情况都会对<code>Buffer Pool</code>的正常运作产生影响.</p>
+<p>从磁盘读取数据后是放入到<code>Buffer Pool</code>里的,而<code>Buffer Pool</code>的容量也是有限的,当空间不够时会淘汰一些老数据页来容纳新的数据页,淘汰算法InnoDB引擎使用的是变种LRU算法.</p>
+<p>把<code>Buffer Pool</code>按照3:5的比例划分为old和young区域,从磁盘读取的数据先放入到old区域,如果超过1秒该数据页还在old区域且还有被访问就会被移入到young区域,在old和young区域都是LRU算法来淘汰老数据的.</p>
+<p>若被驱动表的数据量小于old区域(即整个表能全部放入到old区域),由于需要多次扫描被驱动表,而时间间隔可能超过1秒,这会导致这部分数据会被移入到young区域.</p>
+<p>若被驱动表的数据量超过了old区域,在遍历的过程中会涉及到淘汰old区域的数据来存放该表的数据,这样会导致业务正常访问的数据没有机会放入到young区域(没有超过1秒就被淘汰出old了).</p>
+<p>以上两种情况都会对<code>Buffer Pool</code>的正常运作产生影响.</p>
 <p>BNL算法对系统的影响主要包括:</p>
 <ul>
 <li>可能会多次扫描被驱动表,占用磁盘IO.</li>
