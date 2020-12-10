@@ -6,8 +6,1112 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 28 Nov 2020 20:06:39 +0800</lastBuildDate>
+		<lastBuildDate>Thu, 10 Dec 2020 21:35:42 +0800</lastBuildDate>
 		<atom:link href="https://shenbaise9527.com/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>Zipkin指南</title>
+			<link>https://shenbaise9527.com/posts/zipkin%E6%8C%87%E5%8D%97/</link>
+			<pubDate>Thu, 10 Dec 2020 21:35:42 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.com/posts/zipkin%E6%8C%87%E5%8D%97/</guid>
+			<description>快速启动 可以通过http://your_host:9411去访问zipkin UI. Docker docker run -d -p 9411:9411 openzipkin/zipkin Java 需要Java8或更高版本. curl -sSL https://zipkin.io/quickstart.sh | bash -s java -jar zipkin.jar Source</description>
+			<content type="html"><![CDATA[<h2 id="快速启动">快速启动</h2>
+<p>可以通过<code>http://your_host:9411</code>去访问zipkin UI.</p>
+<p><strong>Docker</strong>
+<code>docker run -d -p 9411:9411 openzipkin/zipkin</code></p>
+<p><strong>Java</strong>
+需要Java8或更高版本.</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">curl -sSL https://zipkin.io/quickstart.sh <span class="p">|</span> bash -s
+java -jar zipkin.jar
+</code></pre></div><p><strong>Source</strong>
+可以通过源码来安装并运行.</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># get the latest source</span>
+git clone https://github.com/openzipkin/zipkin
+<span class="nb">cd</span> zipkin
+<span class="c1"># Build the server and also make its dependencies</span>
+./mvnw -DskipTests --also-make -pl zipkin-server clean install
+<span class="c1"># Run the server</span>
+java -jar ./zipkin-server/target/zipkin-server-*exec.jar
+</code></pre></div><h2 id="架构">架构</h2>
+<p>整体架构如下图所示(来源于<a href="https://zipkin.io/pages/architecture.html">官网</a>):
+<img src="/images/zk-architecture-1.png" alt="架构" title="架构图"></p>
+<p>zipkin已支持的平台和语言<a href="https://zipkin.io/pages/tracers_instrumentation">列表</a>.</p>
+<h2 id="流程示例">流程示例</h2>
+<p>标示符会在服务之间传播,而详细信息会被发送到zipkin.在这两种情况下,追踪库都负责创建有效的追踪并呈现它们.追踪库会确保两种数据之间保持奇偶校验一致性.</p>
+<p>下面是http追踪的示例,其中用户代码调用了资源<code>/foo</code>.这是一个单独的<code>Span</code>,在用户代码收到响应后会被异步发送到zipkin中.</p>
+<pre><code>┌─────────────┐ ┌───────────────────────┐  ┌─────────────┐  ┌──────────────────┐
+│ User Code   │ │ Trace Instrumentation │  │ Http Client │  │ Zipkin Collector │
+└─────────────┘ └───────────────────────┘  └─────────────┘  └──────────────────┘
+       │                 │                         │                 │
+           ┌─────────┐
+       │ ──┤GET /foo ├─▶ │ ────┐                   │                 │
+           └─────────┘         │ record tags
+       │                 │ ◀───┘                   │                 │
+                           ────┐
+       │                 │     │ add trace headers │                 │
+                           ◀───┘
+       │                 │ ────┐                   │                 │
+                               │ record timestamp
+       │                 │ ◀───┘                   │                 │
+                             ┌─────────────────┐
+       │                 │ ──┤GET /foo         ├─▶ │                 │
+                             │X-B3-TraceId: aa │     ────┐
+       │                 │   │X-B3-SpanId: 6b  │   │     │           │
+                             └─────────────────┘         │ invoke
+       │                 │                         │     │ request   │
+                                                         │
+       │                 │                         │     │           │
+                                 ┌────────┐          ◀───┘
+       │                 │ ◀─────┤200 OK  ├─────── │                 │
+                           ────┐ └────────┘
+       │                 │     │ record duration   │                 │
+            ┌────────┐     ◀───┘
+       │ ◀──┤200 OK  ├── │                         │                 │
+            └────────┘       ┌────────────────────────────────┐
+       │                 │ ──┤ asynchronously report span     ├────▶ │
+                             │                                │
+                             │{                               │
+                             │  &quot;traceId&quot;: &quot;aa&quot;,              │
+                             │  &quot;id&quot;: &quot;6b&quot;,                   │
+                             │  &quot;name&quot;: &quot;get&quot;,                │
+                             │  &quot;timestamp&quot;: 1483945573944000,│
+                             │  &quot;duration&quot;: 386000,           │
+                             │  &quot;annotations&quot;: [              │
+                             │--snip--                        │
+                             └────────────────────────────────┘
+</code></pre><p>追踪库会异步发送<code>Span</code>,是为了防止与追踪系统有关的延迟或故障导致用户代码的延迟或破坏.</p>
+<h2 id="transport">Transport</h2>
+<p>追踪库发送<code>Span</code>时,必须要从被追踪系统传输到Zipkin的collectors组件.目前主要有三种方式传输:HTTP,kafka和Scribe.</p>
+<h2 id="组件">组件</h2>
+<p>主要包含四个组件:</p>
+<ul>
+<li>collector</li>
+<li>storage</li>
+<li>query service</li>
+<li>web UI</li>
+</ul>
+<h3 id="collector">Collector</h3>
+<p>当数据到达zipkin的收集器守护程序后,将对其进行验证、存储及索引,供zipkin收集器进行查找.</p>
+<p><strong>HTTP</strong>
+默认HTTP方式是可用的,URI为<code>POST /api/v1/spans</code>和<code>POST /api/v2/spans</code>,目前主要使用v2版本.支持如下配置项:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">属性</th>
+<th style="text-align:left">环境变量</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">zipkin.collector.http.enabled</td>
+<td style="text-align:left">COLLECTOR_HTTP_ENABLED</td>
+<td style="text-align:left"><code>false</code>禁用HTTP方式,默认为<code>true</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Kafka</strong>
+当参数<code>KAFKA_BOOTSTRAP_SERVERS</code>设置为v0.10+版本的Kafka时,该收集器就会启用.支持如下配置项:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">变量</th>
+<th style="text-align:left">新Consumer配置</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">COLLECTOR_KAFKA_ENABLED</td>
+<td style="text-align:left">N/A</td>
+<td style="text-align:left"><code>false</code>禁用Kafka收集器,默认为<code>true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_BOOTSTRAP_SERVERS</td>
+<td style="text-align:left">bootstrap.servers</td>
+<td style="text-align:left">以逗号分隔的broker地址,如127.0.0.1:9092.没有默认值</td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_GROUP_ID</td>
+<td style="text-align:left">group.id</td>
+<td style="text-align:left">此过程代表的消费组.默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_TOPIC</td>
+<td style="text-align:left">N/A</td>
+<td style="text-align:left">以逗号分隔的topic列表,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_STREAMS</td>
+<td style="text-align:left">N/A</td>
+<td style="text-align:left">消费topic的线程数,默认为1</td>
+</tr>
+</tbody>
+</table>
+<p>启动命令:<code>KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092 java -jar zipkin.jar</code></p>
+<p>也可以设置其它<a href="https://kafka.apache.org/documentation/#newconsumerconfigs">Kafka的conusmer属性</a></p>
+<p>举例:</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 容器方式启动kafka</span>
+$ <span class="nb">export</span> <span class="nv">KAFKA_BOOTSTRAP_SERVERS</span><span class="o">=</span><span class="k">$(</span>docker-machine ip <span class="sb">`</span>docker-machine active<span class="sb">`</span><span class="k">)</span>
+<span class="c1"># Run Kafka in the background</span>
+$ docker run -d -p 9092:9092 <span class="se">\
+</span><span class="se"></span>    --env <span class="nv">ADVERTISED_HOST</span><span class="o">=</span><span class="nv">$KAFKA_BOOTSTRAP_SERVERS</span> <span class="se">\
+</span><span class="se"></span>    --env <span class="nv">AUTO_CREATE_TOPICS</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
+</span><span class="se"></span>    spotify/kafka
+<span class="c1"># Start the zipkin server, which reads $KAFKA_BOOTSTRAP_SERVERS</span>
+$ java -jar zipkin.jar
+
+<span class="c1"># 设置多个broker地址</span>
+$ <span class="nv">KAFKA_BOOTSTRAP_SERVERS</span><span class="o">=</span>broker1.local:9092,broker2.local:9092 java -jar zipkin.jar
+
+<span class="c1"># 备用topic名称</span>
+$ <span class="nv">KAFKA_BOOTSTRAP_SERVERS</span><span class="o">=</span>127.0.0.1:9092 java -Dzipkin.collector.kafka.topic<span class="o">=</span>zapkin,zipken -jar zipkin.jar
+
+<span class="c1"># 使用系统属性取代环境变量KAFKA_BOOTSTRAP_SERVERS.</span>
+$ java -Dzipkin.collector.kafka.bootstrap-servers<span class="o">=</span>127.0.0.1:9092 -jar zipkin.jar
+</code></pre></div><p><strong>RabbitMQ</strong>
+支持如下配置项:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">属性</th>
+<th style="text-align:left">环境变量</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.concurrency</td>
+<td style="text-align:left">RABBIT_CONCURRENCY</td>
+<td style="text-align:left">当前消费者数量,默认为1</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.connection-timeout</td>
+<td style="text-align:left">RABBIT_CONNECTION_TIMEOUT</td>
+<td style="text-align:left">等待建立连接的超时时间,单位为毫秒,默认为60000(1分钟)</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.queue</td>
+<td style="text-align:left">RABBIT_QUEUE</td>
+<td style="text-align:left">队列名称,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.uri</td>
+<td style="text-align:left">RABBIT_URI</td>
+<td style="text-align:left">rabbitmq完整的uri,如:<code>amqp://user:pass@host:10000/vhost</code></td>
+</tr>
+<tr>
+<td style="text-align:left">如果uri被设置了,下面的配置项将会被忽略:</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:left">属性</td>
+<td style="text-align:left">环境变量</td>
+<td style="text-align:left">描述</td>
+</tr>
+<tr>
+<td style="text-align:left">:&ndash;</td>
+<td style="text-align:left">:&ndash;</td>
+<td style="text-align:left">:&ndash;</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.addresses</td>
+<td style="text-align:left">RABBIT_ADDRESSES</td>
+<td style="text-align:left">逗号分隔的rabbitmq地址,如:<code>localhost:5672,localhost:5673</code></td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.password</td>
+<td style="text-align:left">RABBIT_PASSWORD</td>
+<td style="text-align:left">连接rabbitmq的密码,默认为guest</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.username</td>
+<td style="text-align:left">RABBIT_USER</td>
+<td style="text-align:left">连接rabbitmq的用户名,默认为guest</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.virtual-host</td>
+<td style="text-align:left">RABBIT_VIRTUAL_HOST</td>
+<td style="text-align:left">rabbitmq的虚拟主机名,默认为<code>/</code></td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.use-ssl</td>
+<td style="text-align:left">RABBIT_USE_SSL</td>
+<td style="text-align:left">设置为<code>true</code>,表示使用ssl连接到rabbitmq</td>
+</tr>
+</tbody>
+</table>
+<p>队列会被申明为持久化的,收集器使用单个conn连接到rabbitmq,通过配置的<code>concurrency</code>数量的线程(每个线程一个channel)来消费消息.消费消息时<code>autoAck</code>设置为<code>on</code>了,表示消费者收到消息后rabbitmq就会在队列中自动删除该消息,若消费者出现异常是不能再重复消费该消息的.</p>
+<p>启动命令:<code>RABBIT_ADDRESSES=localhost java -jar zipkin.jar</code></p>
+<p><strong>ActiveMQ</strong>
+支持ActiveMQ v5.x版本.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">属性</th>
+<th style="text-align:left">环境变量</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.enabled</td>
+<td style="text-align:left">COLLECTOR_ACTIVEMQ_ENABLED</td>
+<td style="text-align:left"><code>false</code>表示禁用该收集器,默认为<code>true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.url</td>
+<td style="text-align:left">ACTIVEMQ_URL</td>
+<td style="text-align:left">ActiveMQ broker地址,如:tcp://localhost:61616或者故障转移:(tcp://localhost:61616,tcp://remotehost:61616)</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.queue</td>
+<td style="text-align:left">ACTIVEMQ_QUEUE</td>
+<td style="text-align:left">队列名,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.client-id-prefix</td>
+<td style="text-align:left">ACTIVEMQ_CLIENT_ID_PREFIX</td>
+<td style="text-align:left">消费者的客户端ID的前缀,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.concurrency</td>
+<td style="text-align:left">ACTIVEMQ_CONCURRENCY</td>
+<td style="text-align:left">消费者数量,默认为1</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.username</td>
+<td style="text-align:left">ACTIVEMQ_USERNAME</td>
+<td style="text-align:left">连接到ActiveMQ时的用户名,可选</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.password</td>
+<td style="text-align:left">ACTIVEMQ_PASSWORD</td>
+<td style="text-align:left">连接到ActiveMQ时的密码,可选</td>
+</tr>
+</tbody>
+</table>
+<p>启动命令:<code>ACTIVEMQ_URL=tcp://localhost:61616 java -jar zipkin.jar</code></p>
+<h3 id="storage">Storage</h3>
+<p>存储组件是采用插件化的方式实现,目前支持InMemory、Cassandra、ElasticSearch和MySQL,还有其它第三方实现的.</p>
+<p><strong>InMemory</strong>
+默认启动的就是In-Memory方式,所有数据全部保存在内存中,没有持久化功能.
+启动方式:</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 默认启动方式</span>
+java -jar zipkin.jar
+
+<span class="c1"># 指定STORAGE_TYPE为mem</span>
+<span class="nv">STORAGE_TYPE</span><span class="o">=</span>mem java -jar zipkin.jar
+</code></pre></div><p>提供了参数<code>MEM_MAX_SPANS</code>来控制<code>Span</code>占用的内存大小.当碰到<code>out-of-memory</code>错误时,可以增大该参数或者调整堆大小(-Xmx).</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash"><span class="sb">`</span>MEM_MAX_SPANS<span class="sb">`</span>: Oldest traces <span class="o">(</span>and their spans<span class="o">)</span> will be purged first when this limit is exceeded. Default <span class="m">500000</span>
+
+<span class="c1"># 调整内存大小.</span>
+<span class="nv">MEM_MAX_SPANS</span><span class="o">=</span><span class="m">1000000</span> java -Xmx1G -jar zipkin.jar
+</code></pre></div><p><strong>MySQL</strong>
+基于MySQL5.7版本,需要先建库建表,<a href="https://github.com/openzipkin/zipkin/tree/master/zipkin-storage/mysql-v1">脚本文件地址</a>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="n">install</span> <span class="n">the</span> <span class="k">schema</span> <span class="k">and</span> <span class="n">indexes</span>
+<span class="err">$</span> <span class="n">mysql</span> <span class="o">-</span><span class="n">uroot</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&#34;create database if not exists zipkin&#34;</span>
+<span class="err">$</span> <span class="n">mysql</span> <span class="o">-</span><span class="n">uroot</span> <span class="o">-</span><span class="n">Dzipkin</span> <span class="o">&lt;</span> <span class="n">zipkin</span><span class="o">-</span><span class="k">storage</span><span class="o">/</span><span class="n">mysql</span><span class="o">-</span><span class="n">v1</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">resources</span><span class="o">/</span><span class="n">mysql</span><span class="p">.</span><span class="k">sql</span>
+
+<span class="o">#</span> <span class="err">根据</span><span class="n">trace</span> <span class="n">id来查询</span>
+<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">zipkin_spans</span> <span class="k">where</span> <span class="n">trace_id</span> <span class="o">=</span> <span class="n">x</span><span class="s1">&#39;27960dafb1ea7454&#39;</span>
+</code></pre></div><p>启动时可设置的相关参数</p>
+<ul>
+<li><code>MYSQL_DB</code>: The database to use. Defaults to &ldquo;zipkin&rdquo;.</li>
+<li><code>MYSQL_USER</code> and <code>MYSQL_PASS</code>: MySQL authentication, which defaults to empty string.</li>
+<li><code>MYSQL_HOST</code>: Defaults to localhost</li>
+<li><code>MYSQL_TCP_PORT</code>: Defaults to 3306</li>
+<li><code>MYSQL_MAX_CONNECTIONS</code>: Maximum concurrent connections, defaults to 10</li>
+<li><code>MYSQL_USE_SSL</code>: Requires <code>javax.net.ssl.trustStore</code> and <code>javax.net.ssl.trustStorePassword</code>, defaults to false.</li>
+</ul>
+<p>启动命令:<code>STORAGE_TYPE=mysql MYSQL_USER=root java -jar zipkin.jar</code></p>
+<p><strong>Cassandra</strong></p>
+<p><strong>Elasticsearch</strong>
+启动时可设置的相关参数</p>
+<ul>
+<li><code>ES_HOSTS</code>: A comma separated list of elasticsearch base urls to connect to ex. http://host:9200. Defaults to &ldquo;http://localhost:9200&rdquo;.</li>
+<li><code>ES_PIPELINE</code>: Indicates the ingest pipeline used before spans are indexed. No default.</li>
+<li><code>ES_TIMEOUT</code>: Controls the connect, read and write socket timeouts (in milliseconds) for Elasticsearch API. Defaults to 10000 (10 seconds)</li>
+<li><code>ES_INDEX</code>: The index prefix to use when generating daily index names. Defaults to zipkin.</li>
+<li><code>ES_DATE_SEPARATOR</code>: The date separator to use when generating daily index names. Defaults to &lsquo;-&rsquo;.</li>
+<li><code>ES_INDEX_SHARDS</code>: The number of shards to split the index into. Each shard and its replicas are assigned to a machine in the cluster. Increasing the number of shards and machines in the cluster will improve read and write performance. Number of shards cannot be changed for existing indices, but new daily indices will pick up changes to the setting. Defaults to 5.</li>
+<li><code>ES_INDEX_REPLICAS</code>: The number of replica copies of each shard in the index. Each shard and its replicas are assigned to a machine in the cluster. Increasing the number of replicas and machines in the cluster will improve read performance, but not write performance. Number of replicas can be changed for existing indices. Defaults to 1. It is highly discouraged to set this to 0 as it would mean a machine failure results in data loss.</li>
+<li><code>ES_ENSURE_TEMPLATES</code>: Installs Zipkin index templates when missing. Setting this to false can lead to corrupted data when index templates mismatch expectations. If you set this to false, you choose to troubleshoot your own data or migration problems as opposed to relying on the community for this. Defaults to true.</li>
+<li><code>ES_USERNAME</code> and <code>ES_PASSWORD</code>: Elasticsearch basic authentication, which defaults to empty string. Use when X-Pack security (formerly Shield) is in place.</li>
+<li><code>ES_CREDENTIALS_FILE</code>: The location of a file containing Elasticsearch basic authentication credentials, as properties. The username property is <code>zipkin.storage.elasticsearch.username</code>, password <code>zipkin.storage.elasticsearch.password</code>.This file is reloaded periodically, using <code>ES_CREDENTIALS_REFRESH_INTERVAL</code> as the interval. This parameter takes precedence over ES_USERNAME and ES_PASSWORD when specified.</li>
+<li><code>ES_CREDENTIALS_REFRESH_INTERVAL</code>: Credentials refresh interval in seconds, which defaults to 1 second. This is the maximum amount of time spans will drop due to stale credentials. Any errors reading the credentials file occur in logs at this rate.</li>
+<li><code>ES_HTTP_LOGGING</code>: When set, controls the volume of HTTP logging of the Elasticsearch API. Options are BASIC, HEADERS, BODY</li>
+<li><code>ES_SSL_NO_VERIFY</code>: When true, disables the verification of server&rsquo;s key certificate chain. This is not appropriate for production. Defaults to false.</li>
+<li><code>ES_TEMPLATE_PRIORITY</code>: The priority value of the composable index templates. This is only applicable for ES version 7.8 or above. Must be set, even to 0, to use composable template</li>
+</ul>
+<p>启动命令:<code>STORAGE_TYPE=elasticsearch ES_HOSTS=http://myhost:9200 java -jar zipkin.jar</code></p>
+<h3 id="query-service">Query Service</h3>
+<p>查询服务提供简单的<code>JSON API</code>来查询和检索追踪信息,主要是供Web UI使用.</p>
+<h3 id="web-ui">Web UI</h3>
+<p>以网页的形式来展示追踪数据.</p>
+<h2 id="客户端代码">客户端代码</h2>
+<p>基于OpenTracing来使用zipkin,以<a href="https://golang.org">Golang</a>为例.
+依赖于<a href="https://github.com/openzipkin/zipkin-go">zipkin-go</a>、<a href="https://github.com/openzipkin-contrib/zipkin-go-opentracing">zipkin-go-opentracing</a>和<a href="https://github.com/opentracing/opentracing-go">opentracing-go</a>这三个库.</p>
+<h3 id="reporter接口">Reporter接口</h3>
+<p>接口定义:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer依赖该接口来发送Span数据.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Reporter</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">Send</span><span class="p">(</span><span class="nx">model</span><span class="p">.</span><span class="nx">SpanModel</span><span class="p">)</span>
+    <span class="nf">Close</span><span class="p">()</span> <span class="kt">error</span>
+<span class="p">}</span>
+</code></pre></div><p>具体实现:
+<strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/reporter.go">noopReporter</a></strong>
+具体实现都是空的,不做任何处理.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建接口.
+</span><span class="c1"></span><span class="nx">reporter</span> <span class="o">:=</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">NewNoopReporter</span><span class="p">()</span>
+</code></pre></div><p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/http/http.go">httpReporter</a></strong>
+基于HTTP协议来发送Span数据.</p>
+<p>函数原型:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// url表示zipkin服务端接收数据的端点,如http://127.0.0.1:9411/api/v2/spans.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">url</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span>
+</code></pre></div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置http的超时时间,默认为5秒.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Timeout</span><span class="p">(</span><span class="nx">duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置最大的待发送数量,当到达此阈值后就会触发收集操作,默认为100.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">BatchSize</span><span class="p">(</span><span class="nx">n</span> <span class="kt">int</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置触发收集操作的时间间隔,默认为1秒.可见触发收集操作有两个因素,当间隔时间达到指定时间或者待发送数量超过batchsize,就会立即触发.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">BatchInterval</span><span class="p">(</span><span class="nx">d</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置最大的缓存数量,当超过此阈值,从队列开头到超出数量的Span将会被丢弃,默认为1000.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">MaxBacklog</span><span class="p">(</span><span class="nx">n</span> <span class="kt">int</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置回调,在发送span到zipkin之前会被调用,默认为nil,回调定义是type RequestCallbackFn func(*http.Request).
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">RequestCallback</span><span class="p">(</span><span class="nx">rc</span> <span class="nx">RequestCallbackFn</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置日志对象,默认为Stderr
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置span的序列化方式,默认实现的是json格式.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Serializer</span><span class="p">(</span><span class="nx">serializer</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">SpanSerializer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置发送请求到zipkin收集器的方式,默认为http.Client.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Client</span><span class="p">(</span><span class="nx">client</span> <span class="nx">HTTPDoer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+</code></pre></div><p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/amqp/amqp.go">rmqReporter</a></strong>
+把Span数据发送到<a href="https://www.rabbitmq.com/">rabbitmq</a>消息总线上.</p>
+<p>函数原型:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address表示rabbitmq的地址,如:amqp://guest:guest@localhost:5672/test
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">address</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">logger</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置rabbitmq中交换器的名字,默认为zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Exchange</span><span class="p">(</span><span class="nx">exchange</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置rabbitmq队列的名字,默认为zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Queue</span><span class="p">(</span><span class="nx">queue</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置channel通道对象,默认为nil.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Channel</span><span class="p">(</span><span class="nx">ch</span> <span class="o">*</span><span class="nx">amqp</span><span class="p">.</span><span class="nx">Channel</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置与rabbitmq连接的对象,默认为nil.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Connection</span><span class="p">(</span><span class="nx">conn</span> <span class="o">*</span><span class="nx">amqp</span><span class="p">.</span><span class="nx">Connection</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+</code></pre></div><p>rabbitmq的交换器类型默认为<code>direct</code>,交换器和队列默认都是持久化的,非独占的.</p>
+<p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/kafka/kafka.go">kafkaReporter</a></strong>
+把Span数据发送到<a href="https://kafka.apache.org/">kafka</a>中.</p>
+<p>函数原型:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address为broker地址列表.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">address</span> <span class="p">[]</span><span class="kt">string</span><span class="p">,</span> <span class="nx">options</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</code></pre></div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">logger</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置生产者.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Producer</span><span class="p">(</span><span class="nx">p</span> <span class="nx">sarama</span><span class="p">.</span><span class="nx">AsyncProducer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置topic名字,默认为zipkin
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Topic</span><span class="p">(</span><span class="nx">t</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置span的序列化方式,默认实现的是json格式.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Serializer</span><span class="p">(</span><span class="nx">serializer</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">SpanSerializer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+</code></pre></div><p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/log/log.go">logReporter</a></strong>
+把Span数据发送到日志对象中.</p>
+<p>函数原型:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span>
+</code></pre></div><p>只是把Span数据记录到指定的日志对象中,并不会发送到zipkin中.</p>
+<h3 id="newtracer函数">NewTracer函数</h3>
+<p>函数原型:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// rep指定Reporter.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewTracer</span><span class="p">(</span><span class="nx">rep</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">TracerOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">Tracer</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></div><p>当指定的rep为nil时,会默认创建为noopRepoerter.</p>
+<p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置被追踪服务的本地endpoint,可调用zipkin.NewEndpoint来生成对应的Endpoint对象,默认为nil.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithLocalEndpoint</span><span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">)</span> <span class="nx">TracerOption</span>
+
+<span class="c1">// 设置采样策略,默认为AlwaysSample.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithSampler</span><span class="p">(</span><span class="nx">sampler</span> <span class="nx">Sampler</span><span class="p">)</span> <span class="nx">TracerOption</span>
+</code></pre></div><p>针对采样策略,<code>Sampler</code>原型为<code>type Sampler func(id uint64) bool</code>,可按照需求来自定义采样策略.官方默认提供了如下几种方式:
+<strong>AlwaysSample</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 所有span都会被发送到zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">AlwaysSample</span><span class="p">(</span><span class="nx">_</span> <span class="kt">uint64</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">true</span> <span class="p">}</span>
+</code></pre></div><p><strong>NewModuloSampler</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 当mod小于2时采用AlwaysSmaple.当mod大于2时,若trace id对mod求余为0就会被发送zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewModuloSampler</span><span class="p">(</span><span class="nx">mod</span> <span class="kt">uint64</span><span class="p">)</span> <span class="nx">Sampler</span>
+</code></pre></div><p><strong>NewBoundarySampler</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// BoundarySampler适用于提供随机trace id且仅做出一次采样决定的高流量场景.它可以防止集群中的节点选择完全相同的ID.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewBoundarySampler</span><span class="p">(</span><span class="nx">rate</span> <span class="kt">float64</span><span class="p">,</span> <span class="nx">salt</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="nx">Sampler</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></div><p><strong>NewCountingSampler</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// CountingSampler适用于低流量或不提供随机trace id的场景,由于采样决策不是幂等的(根据traceid一致),因此不适用于收集器.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewCountingSampler</span><span class="p">(</span><span class="nx">rate</span> <span class="kt">float64</span><span class="p">)</span> <span class="p">(</span><span class="nx">Sampler</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></div><h3 id="完整例子">完整例子</h3>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;io&#34;</span>
+
+	<span class="s">&#34;github.com/opentracing/opentracing-go&#34;</span>
+	<span class="nx">zipkinot</span> <span class="s">&#34;github.com/openzipkin-contrib/zipkin-go-opentracing&#34;</span>
+	<span class="s">&#34;github.com/openzipkin/zipkin-go&#34;</span>
+	<span class="nx">zipkinhttp</span> <span class="s">&#34;github.com/openzipkin/zipkin-go/reporter/http&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span> <span class="nx">noopZkCloser</span> <span class="kd">struct</span><span class="p">{}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">noopZkCloser</span><span class="p">)</span> <span class="nf">Close</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// newTracer 创建基于zipkin的tracer对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newTracer</span><span class="p">(</span><span class="nx">tracingURL</span><span class="p">,</span> <span class="nx">serverName</span><span class="p">,</span> <span class="nx">localEndpoint</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tracer</span><span class="p">,</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Closer</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 基于HTTP的Reporter.
+</span><span class="c1"></span>    <span class="nx">zipkinReporter</span> <span class="o">:=</span> <span class="nx">zipkinhttp</span><span class="p">.</span><span class="nf">NewReporter</span><span class="p">(</span><span class="nx">tracingURL</span><span class="p">)</span>
+    
+    <span class="c1">// 创建localendpoint对象.
+</span><span class="c1"></span>	<span class="nx">endpoint</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">NewEndpoint</span><span class="p">(</span><span class="nx">serverName</span><span class="p">,</span> <span class="nx">localEndpoint</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 创建zipkin原生的tracer对象,采样策略使用默认的AlwaysSample.
+</span><span class="c1"></span>	<span class="nx">nativeTracer</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">NewTracer</span><span class="p">(</span><span class="nx">zipkinReporter</span><span class="p">,</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">WithLocalEndpoint</span><span class="p">(</span><span class="nx">endpoint</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 把zipkin原生tracer对象包装成OpenTracing的tracer对象.
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nx">zipkinot</span><span class="p">.</span><span class="nf">Wrap</span><span class="p">(</span><span class="nx">nativeTracer</span><span class="p">),</span> <span class="nx">noopZkCloser</span><span class="p">{},</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div>]]></content>
+		</item>
+		
+		<item>
+			<title>OpenTracing最佳实践</title>
+			<link>https://shenbaise9527.com/posts/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</link>
+			<pubDate>Thu, 10 Dec 2020 21:35:32 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.com/posts/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/</guid>
+			<description>回顾: OpenTracing的目标是什么? OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下: +-------------+ +---------+ +----------+ +------------+</description>
+			<content type="html"><![CDATA[<h2 id="回顾-opentracing的目标是什么">回顾: OpenTracing的目标是什么?</h2>
+<p>OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下:</p>
+<pre><code>   +-------------+  +---------+  +----------+  +------------+
+   | Application |  | Library |  |   OSS    |  |  RPC/IPC   |
+   |    Code     |  |  Code   |  | Services |  | Frameworks |
+   +-------------+  +---------+  +----------+  +------------+
+          |              |             |             |
+          |              |             |             |
+          v              v             v             v
+     +-----------------------------------------------------+
+     | · · · · · · · · · · OpenTracing · · · · · · · · · · |
+     +-----------------------------------------------------+
+       |               |                |               |
+       |               |                |               |
+       v               v                v               v
+ +-----------+  +-------------+  +-------------+  +-----------+
+ |  Tracing  |  |   Logging   |  |   Metrics   |  |  Tracing  |
+ | System A  |  | Framework B |  | Framework C |  | System D  |
+ +-----------+  +-------------+  +-------------+  +-----------+
+</code></pre><h2 id="用例">用例</h2>
+<p>下面列出一些OpenTracing的用例,并对其进行详细描述:</p>
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>应用程序代码</td>
+<td>编写应用程序代码的开发人员可以使用OpenTracing来描述因果关系,划分控制流,并添加细粒度的日志记录信息.</td>
+</tr>
+<tr>
+<td>库代码</td>
+<td>对于请求进行中间控制的库也可以与OpenTracing集成.例如:Web中间件可以使用OpenTracing为每个请求创建spans,或者ORM库可以使用OpenTracing来描述更高级别的ORM语义并衡量特定SQL查询的执行.</td>
+</tr>
+<tr>
+<td>OSS服务</td>
+<td>除了嵌入式库之后,整个OSS服务都可以采用OpenTracing来与分布式跟踪系统集成,在较大的分布式系统中启动或传播到其它进程.例如:HTTP负载均衡器可以使用OpenTracing包装所有请求,或者在分布式KV存储系统中使用OpenTracing来跟踪读写性能.</td>
+</tr>
+<tr>
+<td>RPC/IPC框架</td>
+<td>任何跨进程边界的任务子系统都可以使用OpenTracing来标准化trace状态,OpenTracing提供了统一的Inject和Extract格式.</td>
+</tr>
+</tbody>
+</table>
+<p>所有上述都可以使用OpenTracing来描述和传播分布式跟踪信息,而不用了解分布式追踪系统的底层实现.</p>
+<p>OpenTracing优先考虑易用性的问题,主要是站在调用者的角度,而不是分布式追踪系统的实现者上.</p>
+<h2 id="举例">举例</h2>
+<h3 id="追踪函数">追踪函数</h3>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">TopLevelFunction</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+	<span class="nx">span1</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;toplevelfunction&#34;</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">span1</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
+	<span class="nx">subctx</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ContextWithSpan</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">span</span><span class="p">)</span>
+
+	<span class="c1">// 业务逻辑.
+</span><span class="c1"></span>	<span class="nf">Function2</span><span class="p">(</span><span class="nx">subctx</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><p>作为业务逻辑的一部分,调用了<code>Function2</code>方法,也想被追踪.为了让<code>Function2</code>里的追踪和<code>TopLevelFunction</code>里的追踪形成因果关系,必须在<code>Function2</code>里要能访问到<code>span1</code>,通过<code>span1</code>来创建一个子span.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Function2</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">span1</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+		<span class="nx">span2</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;function2&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">span1</span><span class="p">.</span><span class="nf">Context</span><span class="p">()))</span>
+		<span class="k">defer</span> <span class="nx">span2</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>通过<code>context.Context</code>来传递<code>span</code>,可以让整个函数调用过程形成一个完整的调用链.</p>
+<h3 id="服务端追踪">服务端追踪</h3>
+<p>当服务端想要去跟踪每个请求的执行过程,一般需要以下几个步骤.</p>
+<ul>
+<li>试图中从请求中获取<code>SpanContext</code>(客户端已经开启了trace),如果无法获取就开启一个新的trace.</li>
+<li>在上下文中存储最新创建的<code>Span</code>,上下文会通过应用程序代码或RPC框架传播.</li>
+<li>最后当处理完请求时需要调用<code>span.Finish()</code>来关闭<code>Span</code>.</li>
+</ul>
+<p><strong>从请求中获取<code>SpanContext</code></strong>
+假设有个HTTP服务器,<code>SpanContext</code>通过http头从客户端传播到服务端,可通过<code>request.headers</code>来访问.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+<span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
+<span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+</code></pre></div><p>把<code>headers</code>转换成<code>carrier</code>,<code>tracer</code>对象知道需要<code>headers</code>中的哪些字段,用来重建tracer的状态及Baggage.</p>
+<p><strong>从请求中获取一个已经存在的trace,或者开启一个新的trace</strong>
+假设客户端没有发送相应字段的值,在服务端就无法从<code>Header</code>中获取到,上文中的<code>spanContext</code>可能为<code>nil</code>.在这种情况下,服务端需要开启一个新的trace.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+<span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
+<span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">span</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Span</span>
+<span class="k">if</span> <span class="nx">spanContext</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RequestURI</span><span class="p">)</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+	<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RequestURI</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">spanContext</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="nx">ext</span><span class="p">.</span><span class="nx">HTTPMethod</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Method</span><span class="p">)</span>
+</code></pre></div><p><code>ext.HTTPMethod.Set</code>是给<code>span</code>设置一个附加信息,等同于<code>span.SetTag(&quot;http.method&quot;, r.Method)</code>.</p>
+<p><code>StartSpan</code>的第一个参数是operationName,用来指定新创建的<code>Span</code>的名字.举例,若HTTP请求是<code>POST</code>类型且URI为<code>/save_user/123</code>,这此时<code>Span</code>的名字会被设置为<code>/save_user/123</code>.OpenTracing规范不会强制要求应用程序如何给<code>Span</code>命名.</p>
+<p><strong>进程内请求上下文传播</strong>
+请求上下文是指:对于一个请求,所有处理这个请求的层都可以访问到同一个<code>context(上下文)</code>.可以通过特定值,如用户id、token、请求截止时间等来获取这个<code>context</code>,也可以用这个方式来获取当前正在追踪的<code>Span</code>.</p>
+<p>OpenTracing规范中并没有规定请求上下文的传输实现方式,但这点是非常重要的,便于我们理解后面的章节.一般有两种常见的基数:</p>
+<ul>
+<li>隐式传输,<code>context</code>需要被储存在平台特定的位置,允许应用程序在任何地方都能访问到.常用的RPC框架会利用<code>thread-local</code>或<code>continuation-local</code>来存储,或者是全局变量(在单线程程序中).这种方式的缺点是性能低下,并且有些平台如Go是不支持线程本地存储的,隐式传输就几乎不可能实现了.</li>
+<li>显示传输,要求应用程序代码包装和传递一个<code>context</code>对象.这种方式的缺点在于向应用程序暴露了底层的实现,<a href="https://blog.golang.org/context">Go blog post</a>这篇文章提供了这种方式的深层次解析.</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">HandleHttp</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span>
+    <span class="o">...</span>
+    <span class="nf">BusinessFunction1</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">arg1</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">BusinessFunction1</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">arg1</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="nf">BusinessFunction2</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">arg1</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">BusinessFunction2</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">arg1</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">parentSpan</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="nx">childSpan</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
+        <span class="s">&#34;...&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">parentSpan</span><span class="p">.</span><span class="nf">Context</span><span class="p">()),</span> <span class="o">...</span><span class="p">)</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div><h3 id="客户端追踪">客户端追踪</h3>
+<p>当一个应用程序扮演RPC客户端的角色时,在调用外部接口前可以开启一个新的<code>Span</code>,在请求期间传播该<code>Span</code>.下面通过一个HTTP请求来展示如何处理.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">tracedPost</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">operation</span><span class="p">,</span> <span class="nx">url</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">body</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="nx">parent_span</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+    <span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
+        <span class="nx">operation</span><span class="p">,</span>
+        <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">parent_span</span><span class="p">.</span><span class="nf">Context</span><span class="p">()),</span>
+        <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tag</span><span class="p">{</span><span class="s">&#34;http.url&#34;</span><span class="p">,</span> <span class="nx">url</span><span class="p">},</span>
+        <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tag</span><span class="p">{</span><span class="s">&#34;http.method&#34;</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">MethodPost</span><span class="p">})</span>
+    <span class="k">defer</span> <span class="nx">span</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
+    <span class="nx">reader</span> <span class="o">:=</span> <span class="nx">bytes</span><span class="p">.</span><span class="nf">NewBuffer</span><span class="p">(</span><span class="nx">body</span><span class="p">)</span>
+    <span class="nx">req</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nf">NewRequest</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">MethodPost</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="nx">reader</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">ext</span><span class="p">.</span><span class="nf">LogError</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="s">&#34;Content-Type&#34;</span><span class="p">,</span> <span class="s">&#34;application/json&#34;</span><span class="p">)</span>
+    <span class="nx">err</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Inject</span><span class="p">(</span><span class="nx">span</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">ext</span><span class="p">.</span><span class="nf">LogError</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="nx">cli</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nx">Client</span><span class="p">{</span><span class="nx">Timeout</span><span class="p">:</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span> <span class="o">*</span> <span class="mi">5</span><span class="p">}</span>
+    <span class="nx">rsp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Do</span><span class="p">(</span><span class="nx">req</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">ext</span><span class="p">.</span><span class="nf">LogError</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="nx">ext</span><span class="p">.</span><span class="nx">HTTPStatusCode</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nb">uint16</span><span class="p">(</span><span class="nx">rsp</span><span class="p">.</span><span class="nx">StatusCode</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div><ul>
+<li>首先从<code>context</code>中获取<code>parent_span</code>,可以跟上游<code>Span</code>构成一个链条.</li>
+<li>针对http请求创建一个新的<code>Span</code>,设置相应的Tag,然后调用<code>Inject</code>把需要传播的信息注入到<code>req.Header</code>中,在服务端就可以利用<code>Header</code>来重组<code>Span</code>.</li>
+<li>当有错误发生的时候,调用<code>ext.LogError</code>把错误信息关联到<code>Span</code>上.</li>
+<li>最后把相应的状态码作为Tag设置到<code>Span</code>上.</li>
+</ul>
+<h3 id="使用baggage分布式上下文传输">使用Baggage/分布式上下文传输</h3>
+<p>上面的例子都是通过网络在客户端和服务端之间传递<code>Span/Tracer</code>,包含任意的<code>Baggage</code>.客户端可以利用<code>Baggage</code>来传播一些附加信息到服务端及任何其下游服务.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 客户端.
+</span><span class="c1"></span><span class="nx">span</span> <span class="p">=</span> <span class="nx">span</span><span class="p">.</span><span class="nf">SetBaggageItem</span><span class="p">(</span><span class="s">&#34;auto_token&#34;</span><span class="p">,</span> <span class="s">&#34;token&#34;</span><span class="p">)</span>
+
+<span class="c1">// 服务端.
+</span><span class="c1"></span><span class="nx">token</span> <span class="o">:=</span> <span class="nx">span</span><span class="p">.</span><span class="nf">BaggageItem</span><span class="p">(</span><span class="s">&#34;auto_token&#34;</span><span class="p">)</span>
+</code></pre></div><h3 id="logging事件">Logging事件</h3>
+<p>在上面<a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BF%BD%E8%B8%AA">客户端追踪</a>的例子中已经使用过Log了.可以记录事件而不需要有<code>payload</code>,而不仅在<code>Span</code>被创建和完成时.举个例子,应用程序在执行过程中可能会需要记录<code>cache miss</code>事件,可以通过在请求上下文中来获取当前<code>Span</code>然后把该事件附加到<code>Span</code>中.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="c1">// 不带payload的.
+</span><span class="c1"></span><span class="nx">span</span><span class="p">.</span><span class="nf">LogEvent</span><span class="p">(</span><span class="s">&#34;cache_miss&#34;</span><span class="p">)</span>
+<span class="c1">// 带payload的.
+</span><span class="c1"></span><span class="nx">span</span><span class="p">.</span><span class="nf">LogEventWithPayload</span><span class="p">(</span><span class="s">&#34;cache_miss&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div><p><code>Tracer</code>会自动记录该事件的时间戳,与应用于整个<code>Span</code>的tags相反.也可以将外部提供的时间戳与事件想关联,可以查看<a href="https://github.com/opentracing/opentracing-go">opentracing-go</a>中<code>Span</code>接口的<code>LogFields</code>方法.</p>
+<h3 id="使用外部时间戳记录span">使用外部时间戳记录Span</h3>
+<p>因为各种各样的原因,在有些场景下会将OpenTracing兼容的tracer集成到服务中.比如一个用户有一个日志文件,其中包含大量来自黑盒系统(如HAProxy)产生的Span数据,为了把这些数据导入到OpenTracing兼容的系统中,API必须提供一种方法通过外部自定义时间戳来记录<code>Span</code>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;operationname&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">StartTime</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()))</span>
+<span class="nx">span</span><span class="p">.</span><span class="nf">FinishWithOptions</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">FinishOptions</span><span class="p">{</span><span class="nx">FinishTime</span><span class="p">:</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()})</span>
+</code></pre></div><h3 id="开启tracer之前设置好采样策略">开启tracer之前设置好采样策略</h3>
+<p>大多数分布式追踪系统都会通过应用不同的采样策略来减少需要记录和处理的追踪数据的总量.有时开发人员希望有一种方式来确保一个tracer数据会被系统记录(采样),如在HTTP请求中包含一个特殊的参数(<code>debug=true</code>).OpenTracing API标准化了一些有用的tags,其中一个叫<code>sampling.priority</code>(采样优先级):精确的实现是由追踪系统的实现者决定的,但任何大于0(默认)代表一条tracer的高优先级.为了传递这个属性到追踪系统中,需要在追踪前进行预处理,如下:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">b</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseBool</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;debug&#34;</span><span class="p">))</span>
+<span class="k">if</span> <span class="nx">b</span> <span class="o">&amp;&amp;</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
+		<span class="s">&#34;operationname&#34;</span><span class="p">,</span> 
+		<span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tag</span><span class="p">{</span><span class="nb">string</span><span class="p">(</span><span class="nx">ext</span><span class="p">.</span><span class="nx">SamplingPriority</span><span class="p">),</span> <span class="mi">1</span><span class="p">},</span> 
+	<span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><h3 id="追踪消息总线的方案">追踪消息总线的方案</h3>
+<p>有两种类别的消息总线需要处理,包括消息队列和发布/订阅(主题).</p>
+<p>从追踪的视角来看,消息总线的类型并不重要,只是要将生产者关联的<code>SpanContext</code>传播到零个或多个消费者中.然后消费者就有责任创建<code>Span</code>来封装都消息的处理,并建立对传播来的<code>SpanContext</code>的<code>FollowsFrom</code>引用.</p>
+<p>以RPC客户端为例,生产者在发送消息之前开启了一个新<code>Span</code>,并跟随消息传播该<code>Span</code>的<code>Context</code>.在消息成功发布到消息总线上后这个<code>Span</code>就完成了.下面展示代码是如何实现的:</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">traced_send</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+    <span class="c1"># retrieve current span from propagated message context</span>
+    <span class="n">parent_span</span> <span class="o">=</span> <span class="n">get_current_span</span><span class="p">()</span>
+
+    <span class="c1"># start a new span to represent the message producer</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">start_span</span><span class="p">(</span>
+        <span class="n">operation_name</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span>
+        <span class="n">child_of</span><span class="o">=</span><span class="n">parent_span</span><span class="o">.</span><span class="n">context</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;message.destination&#39;</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">destination</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># propagate the Span via message headers</span>
+    <span class="n">tracer</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span>
+        <span class="n">span</span><span class="o">.</span><span class="n">context</span><span class="p">,</span>
+        <span class="n">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
+        <span class="n">carrier</span><span class="o">=</span><span class="n">message</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">span</span><span class="p">:</span>
+        <span class="n">messaging_client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="n">e</span><span class="p">:</span>
+        <span class="o">...</span>
+        <span class="k">raise</span>
+</code></pre></div><p>接下来消费者会判断消息中是否包含了<code>SpanContext</code>,如果有,就会用它来与生产者的<code>Span</code>建立联系.</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="n">extracted_context</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span>
+    <span class="n">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
+    <span class="n">carrier</span><span class="o">=</span><span class="n">message</span><span class="o">.</span><span class="n">headers</span>
+<span class="p">)</span>
+<span class="n">span</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">start_span</span><span class="p">(</span><span class="n">operation_name</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span> <span class="n">references</span><span class="o">=</span><span class="n">follows_from</span><span class="p">(</span><span class="n">extracted_context</span><span class="p">))</span>
+<span class="n">span</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="s1">&#39;message.destination&#39;</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">destination</span><span class="p">)</span>
+</code></pre></div><h3 id="基于队列的同步请求-响应">基于队列的同步请求-响应</h3>
+<p>尽管使用不多,但有些消息平台/标准(如JMS)支持在消息头中提供ReplyTo目标的功能.消费者收到消息后,它会将结果返回到指定的目的地.</p>
+<p>这种模式常用来模拟同步请求/响应,这种情况下消费者和生产者之间是<code>ClildOf</code>的关系.</p>
+<p>但此模式也可以用于委托来指示将结果告知第三方.在这种情况下,它将被视为两个单独的消息交换并具有链接每个阶段的<code>Follows From</code>关系类型(A-&gt;B-&gt;C).</p>
+<p>由于很难区分这两种情况,不建议将面向消息中间件用于同步的请求/响应模式,因此从建议跟踪角度忽略请求/响应方案.</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://opentracing.io/specification/conventions/">语义约定</a></li>
+<li><a href="https://opentracing.io/docs/best-practices/">Best Practices</a></li>
+<li><a href="https://wu-sheng.gitbooks.io/opentracing-io/content/pages/instrumentation/">最佳实践</a></li>
+<li><a href="https://github.com/yurishkuro/opentracing-tutorial">opentracing-tutorial</a></li>
+</ul>
+]]></content>
+		</item>
+		
+		<item>
+			<title>OpenTracing分布式链路追踪</title>
+			<link>https://shenbaise9527.com/posts/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/</link>
+			<pubDate>Thu, 10 Dec 2020 21:35:19 +0800</pubDate>
+			
+			<guid>https://shenbaise9527.com/posts/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/</guid>
+			<description>概述 简介 虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事</description>
+			<content type="html"><![CDATA[<h2 id="概述">概述</h2>
+<h3 id="简介">简介</h3>
+<p>虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事务,无法直接在内存或堆栈中来调试或观察.</p>
+<p>在这种情况下,分布式追踪系统进入到视野之中,分布式追踪系统对于描述和分析跨进程事务的问题提供了解决方案.大部分的分布式追踪系统的思想都来源于<a href="https://ai.google/research/pubs/pub36356">Google&rsquo;s Dapper paper</a></p>
+<h3 id="分布式追踪系统的模型">分布式追踪系统的模型</h3>
+<p>大多数分布式追踪系统的模型来自于Google&rsquo;s Dapper paper.OpenTracing也是一样的,采用了相同的名词和动词.
+<img src="/images/tracing1_0.png" alt="模型" title="tracing模型"></p>
+<ol>
+<li>Trace: 用来描述在分布式系统中一个完整的事务(这里的事务不是指数据库中的事务,而是指一个完整的业务流).</li>
+<li>Span: 可命名的、记录耗时的一个工作流片段,Span上可设置多个key:value的tags,也可以记录某个时间点的结构化的log.</li>
+<li>SpanContext: 追踪信息会伴随着整个分布式事务,会通过网络或者消息总线来传递到下游服务中.包含了trace id、span id和其它需要传播(分布式追踪系统需要传播到下游的)的数据.</li>
+</ol>
+<h3 id="四个主要的问题">四个主要的问题</h3>
+<p>从应用程序层分布式跟踪系统的角度来看，现代软件系统如下图所示：
+<img src="/images/tracing2_0.png" alt="系统" title="系统结构"></p>
+<p>现代软件系统中的组件可分为三大类:</p>
+<ul>
+<li>应用程序和业务逻辑: 自己的代码.</li>
+<li>广泛使用的共享库: 别人的代码.</li>
+<li>广泛使用的服务: 别人的基础设施.</li>
+</ul>
+<p>这三类组件有不同的需求,并驱动着负责监控应用程序的分布式追踪系统的设计.最终有四个非常重要的设计要点:</p>
+<ul>
+<li>追踪系统的API: 应用程序如何使用?</li>
+<li>传播协议: 在RPC请求中与应用程序一起发送的内容(传递到下游服务中).</li>
+<li>数据协议: 异步(带外)发送到分析系统中的内容.</li>
+<li>分析系统: 用于处理追踪数据的数据库和交互式UI.</li>
+</ul>
+<h3 id="opentracing是如何解决的">OpenTracing是如何解决的?</h3>
+<p>OpenTracing API提供了标准的、与厂商无关的工具框架.当开发人员想尝试不同的分布式追踪系统时,只需要简单的更改Tracer的配置,而不用为了适配新的分布式追踪系统而重复开发整个追踪过程.</p>
+<h2 id="什么是分布式追踪">什么是分布式追踪?</h2>
+<p>分布式追踪是一种用来分析和监控应用程序的方法,特别是使用微服务架构的系统.分布式追踪有助于查明发生故障的位置以及导致性能下降的原因.</p>
+<h3 id="分布式追踪的使用场景">分布式追踪的使用场景</h3>
+<ul>
+<li>IT和DevOps团队可以用分布式追踪来监控整个应用程序.分布式追踪特别适合用来调试和监控现代分布式软件体系结构,如微服务.</li>
+<li>开发人员可以利用分布式追踪来帮助调试和优化代码.</li>
+</ul>
+<h3 id="什么是opentracing">什么是OpenTracing?</h3>
+<p>首先从什么不是OpenTracing开始可能更容易.</p>
+<ul>
+<li>OpenTracing不是一个下载文件或程序.分布式追踪系统要求软件开发人员将追踪代码添加到应用程序的代码中,或者应用程序所使用的框架中.</li>
+<li>OpenTracing不是一个标准,<a href="https://www.cncf.io/">CNCF</a>不是一个标准化组织.OpenTracing API项目正在努力为分布式追踪系统创建更加标准的API和工具.</li>
+</ul>
+<p>OpenTracing是由API规范,已实现该规范的框架和库以及该项目的文档组成.OpenTracing允许开发人员使用不会将其受限于任何一种特定的产品或供应商的API来将追踪代码添加到应用程序中.</p>
+<p>关于更多已实现OpenTracing规范的信息,可以查看<a href="https://opentracing.io/docs/supported-languages">已支持的语言列表</a>和<a href="https://opentracing.io/docs/supported-tracers/">已支持的分布式追踪系统</a></p>
+<h2 id="spans">Spans</h2>
+<p>Span是分布式追踪的主要构建对象,代表分布式系统中已完成的单个工作单元.</p>
+<p>分布式系统中的每个组件都会构建一个Span(命名的、记录耗时的一个工作流片段).</p>
+<p>Spans可以包含对其它Spans的引用,这样就允许多个Span关联到一个已完成的Trace(把一个请求在分布式系统中的生命周期可视化).</p>
+<p>根据OpenTracing规范,每个Span会封装以下内容:</p>
+<ul>
+<li>Operation Name(操作名称).</li>
+<li>开始时间和结束时间.</li>
+<li>Tags,key:value的集合,伴随整个Span.</li>
+<li>Logs,key:value的集合,记录某个时间点的日志.</li>
+<li>SpanContext.</li>
+</ul>
+<h3 id="tags">Tags</h3>
+<p>key:value的集合,对Span的自定义标记,可以用来查询、过滤和理解追踪数据.</p>
+<p>tags是伴随Span的整个生命周期,在文件<a href="https://github.com/opentracing/specification/blob/master/semantic_conventions.md">semantic_conventions.md</a>定义了常见场景中Span的常规tags.如<code>db.instance</code>表示数据库主机地址,<code>http.status_code</code>表示HTTP的响应码,<code>error</code>可以设置为<code>True</code>表示Span所代表的操作失败了.</p>
+<h3 id="logs">Logs</h3>
+<p>key:value的集合,可用于抓取Span的特定的日志信息以及应用程序本身的其它调试信息或输出信息.也常用于记录Span某个特定时刻或事件(和tags应用与Span的整个生命周期不同).</p>
+<h3 id="spancontext">SpanContext</h3>
+<p>SpanContext用于跨进程边界时携带数据,主要包含两个方面的数据:</p>
+<ol>
+<li>依赖于实现的状态来引用trace中不同的span.
+<ul>
+<li>Tracer定义的spanID和traceID.</li>
+</ul>
+</li>
+<li>任何Baggage Items.
+<ul>
+<li>需要跨进程边界传播的key:value数据对.</li>
+<li>其它对整个追踪访问有用的数据.</li>
+</ul>
+</li>
+</ol>
+<h3 id="举例">举例</h3>
+<pre><code>    t=0            operation name: db_query               t=x
+
+     +-----------------------------------------------------+
+     | · · · · · · · · · ·    Span     · · · · · · · · · · |
+     +-----------------------------------------------------+
+
+Tags:
+- db.instance:&quot;customers&quot;
+- db.statement:&quot;SELECT * FROM mytable WHERE foo='bar'&quot;
+- peer.address:&quot;mysql://127.0.0.1:3306/customers&quot;
+
+Logs:
+- message:&quot;Can't connect to mysql server on '127.0.0.1'(10061)&quot;
+
+SpanContext:
+- trace_id:&quot;abc123&quot;
+- span_id:&quot;xyz789&quot;
+- Baggage Items:
+  - special_id:&quot;vsid1738&quot;
+</code></pre><h2 id="tracers">Tracers</h2>
+<h3 id="简介-1">简介</h3>
+<p>OpenTracing提供了一个开放的、与厂商无关的标准API,用来描述分布式事务,尤其是因果关系、语义和时间.它提供了一个通用的分布式上下文传播框架,该框架由以下API原语组成:</p>
+<ul>
+<li>在进程间传播元数据上下文.</li>
+<li>编码和解码元数据上下文之后,通过网络传输它用来进行进程间通信.</li>
+<li>因果关系追踪: 父子关系、分叉和连接.</li>
+</ul>
+<p>OpenTracing消除了众多分布式追踪系统之间的差异.这意味着无论开发人员使用哪个分布式追踪系统,追踪代码都将保持不变.为了在应用程序中使用OpenTracing规范的追踪代码,必须部署兼容OpenTracing的追踪系统,<a href="https://opentracing.io/docs/supported-tracers/">已支持OpenTracing规范的追踪系统</a>.</p>
+<h3 id="tracer接口">Tracer接口</h3>
+<p>Tracer接口能创建<code>Spans</code>,还知道如何跨进程边界注入(序列化)和提取(反序列化)元数据,主要包含三个方面的能力:</p>
+<ul>
+<li>开启一个新的<code>Span</code>.</li>
+<li>将<code>SpanContext</code>注入到<code>carrier</code>中.</li>
+<li>从<code>carrier</code>中提取出<code>SpanContext</code>.</li>
+</ul>
+<p>以Golang语言为例:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer is a simple, thin interface for Span creation and SpanContext
+</span><span class="c1">// propagation.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Tracer</span> <span class="kd">interface</span> <span class="p">{</span>
+
+	<span class="c1">// Create, start, and return a new Span with the given `operationName` and
+</span><span class="c1"></span>	<span class="c1">// incorporate the given StartSpanOption `opts`. (Note that `opts` borrows
+</span><span class="c1"></span>	<span class="c1">// from the &#34;functional options&#34; pattern, per
+</span><span class="c1"></span>	<span class="c1">// http://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// A Span with no SpanReference options (e.g., opentracing.ChildOf() or
+</span><span class="c1"></span>	<span class="c1">// opentracing.FollowsFrom()) becomes the root of its own trace.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Examples:
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     var tracer opentracing.Tracer = ...
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // The root-span case:
+</span><span class="c1"></span>	<span class="c1">//     sp := tracer.StartSpan(&#34;GetFeed&#34;)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // The vanilla child span case:
+</span><span class="c1"></span>	<span class="c1">//     sp := tracer.StartSpan(
+</span><span class="c1"></span>	<span class="c1">//         &#34;GetFeed&#34;,
+</span><span class="c1"></span>	<span class="c1">//         opentracing.ChildOf(parentSpan.Context()))
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // All the bells and whistles:
+</span><span class="c1"></span>	<span class="c1">//     sp := tracer.StartSpan(
+</span><span class="c1"></span>	<span class="c1">//         &#34;GetFeed&#34;,
+</span><span class="c1"></span>	<span class="c1">//         opentracing.ChildOf(parentSpan.Context()),
+</span><span class="c1"></span>	<span class="c1">//         opentracing.Tag{&#34;user_agent&#34;, loggedReq.UserAgent},
+</span><span class="c1"></span>	<span class="c1">//         opentracing.StartTime(loggedReq.Timestamp),
+</span><span class="c1"></span>	<span class="c1">//     )
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="nf">StartSpan</span><span class="p">(</span><span class="nx">operationName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">StartSpanOption</span><span class="p">)</span> <span class="nx">Span</span>
+
+	<span class="c1">// Inject() takes the `sm` SpanContext instance and injects it for
+</span><span class="c1"></span>	<span class="c1">// propagation within `carrier`. The actual type of `carrier` depends on
+</span><span class="c1"></span>	<span class="c1">// the value of `format`.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// OpenTracing defines a common set of `format` values (see BuiltinFormat),
+</span><span class="c1"></span>	<span class="c1">// and each has an expected carrier type.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Other packages may declare their own `format` values, much like the keys
+</span><span class="c1"></span>	<span class="c1">// used by `context.Context` (see https://godoc.org/context#WithValue).
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Example usage (sans error handling):
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
+</span><span class="c1"></span>	<span class="c1">//     err := tracer.Inject(
+</span><span class="c1"></span>	<span class="c1">//         span.Context(),
+</span><span class="c1"></span>	<span class="c1">//         opentracing.HTTPHeaders,
+</span><span class="c1"></span>	<span class="c1">//         carrier)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// NOTE: All opentracing.Tracer implementations MUST support all
+</span><span class="c1"></span>	<span class="c1">// BuiltinFormats.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Implementations may return opentracing.ErrUnsupportedFormat if `format`
+</span><span class="c1"></span>	<span class="c1">// is not supported by (or not known by) the implementation.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Implementations may return opentracing.ErrInvalidCarrier or any other
+</span><span class="c1"></span>	<span class="c1">// implementation-specific error if the format is supported but injection
+</span><span class="c1"></span>	<span class="c1">// fails anyway.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// See Tracer.Extract().
+</span><span class="c1"></span>	<span class="nf">Inject</span><span class="p">(</span><span class="nx">sm</span> <span class="nx">SpanContext</span><span class="p">,</span> <span class="nx">format</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">carrier</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span>
+
+	<span class="c1">// Extract() returns a SpanContext instance given `format` and `carrier`.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// OpenTracing defines a common set of `format` values (see BuiltinFormat),
+</span><span class="c1"></span>	<span class="c1">// and each has an expected carrier type.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Other packages may declare their own `format` values, much like the keys
+</span><span class="c1"></span>	<span class="c1">// used by `context.Context` (see
+</span><span class="c1"></span>	<span class="c1">// https://godoc.org/golang.org/x/net/context#WithValue).
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Example usage (with StartSpan):
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
+</span><span class="c1"></span>	<span class="c1">//     clientContext, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // ... assuming the ultimate goal here is to resume the trace with a
+</span><span class="c1"></span>	<span class="c1">//     // server-side Span:
+</span><span class="c1"></span>	<span class="c1">//     var serverSpan opentracing.Span
+</span><span class="c1"></span>	<span class="c1">//     if err == nil {
+</span><span class="c1"></span>	<span class="c1">//         span = tracer.StartSpan(
+</span><span class="c1"></span>	<span class="c1">//             rpcMethodName, ext.RPCServerOption(clientContext))
+</span><span class="c1"></span>	<span class="c1">//     } else {
+</span><span class="c1"></span>	<span class="c1">//         span = tracer.StartSpan(rpcMethodName)
+</span><span class="c1"></span>	<span class="c1">//     }
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// NOTE: All opentracing.Tracer implementations MUST support all
+</span><span class="c1"></span>	<span class="c1">// BuiltinFormats.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Return values:
+</span><span class="c1"></span>	<span class="c1">//  - A successful Extract returns a SpanContext instance and a nil error
+</span><span class="c1"></span>	<span class="c1">//  - If there was simply no SpanContext to extract in `carrier`, Extract()
+</span><span class="c1"></span>	<span class="c1">//    returns (nil, opentracing.ErrSpanContextNotFound)
+</span><span class="c1"></span>	<span class="c1">//  - If `format` is unsupported or unrecognized, Extract() returns (nil,
+</span><span class="c1"></span>	<span class="c1">//    opentracing.ErrUnsupportedFormat)
+</span><span class="c1"></span>	<span class="c1">//  - If there are more fundamental problems with the `carrier` object,
+</span><span class="c1"></span>	<span class="c1">//    Extract() may return opentracing.ErrInvalidCarrier,
+</span><span class="c1"></span>	<span class="c1">//    opentracing.ErrSpanContextCorrupted, or implementation-specific
+</span><span class="c1"></span>	<span class="c1">//    errors.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// See Tracer.Inject().
+</span><span class="c1"></span>	<span class="nf">Extract</span><span class="p">(</span><span class="nx">format</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">carrier</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">(</span><span class="nx">SpanContext</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><h3 id="设置tracer">设置Tracer</h3>
+<p>实现了<code>Tracer</code>接口的对象,主要用来记录<code>Spans</code>并发布到某个位置.应用程序如何处理Tracer对象取决于开发人员:可以直接在整个应用程序中使用它,或将其存储在<code>GlobalTracer</code>中.</p>
+<p>不同的Tracer实现在初始化时接收参数的方式和接收的参数有所不同,如下:</p>
+<ul>
+<li>应用程序的追踪组件名称.</li>
+<li>分布式追踪系统的Endpoint.</li>
+<li>分布式追踪系统的安全连接.</li>
+<li>采样策略.</li>
+</ul>
+<p>一旦Tracer对象实例被创建出来,就可以用来手工创建<code>Span</code>,或传递该对象到框架或库中.</p>
+<p>为了不强制用户传递<code>Tracer</code>对象,提供了一个全局的<code>GlobalTracer</code>实例来存储<code>Tracer</code>对象,在任何地方都可以通过该全局实例来获取<code>Tracer</code>对象.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">registeredTracer</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">tracer</span>       <span class="nx">Tracer</span>
+	<span class="nx">isRegistered</span> <span class="kt">bool</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="p">(</span>
+	<span class="nx">globalTracer</span> <span class="p">=</span> <span class="nx">registeredTracer</span><span class="p">{</span><span class="nx">NoopTracer</span><span class="p">{},</span> <span class="kc">false</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1">// SetGlobalTracer sets the [singleton] opentracing.Tracer returned by
+</span><span class="c1">// GlobalTracer(). Those who use GlobalTracer (rather than directly manage an
+</span><span class="c1">// opentracing.Tracer instance) should call SetGlobalTracer as early as
+</span><span class="c1">// possible in main(), prior to calling the `StartSpan` global func below.
+</span><span class="c1">// Prior to calling `SetGlobalTracer`, any Spans started via the `StartSpan`
+</span><span class="c1">// (etc) globals are noops.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">SetGlobalTracer</span><span class="p">(</span><span class="nx">tracer</span> <span class="nx">Tracer</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">globalTracer</span> <span class="p">=</span> <span class="nx">registeredTracer</span><span class="p">{</span><span class="nx">tracer</span><span class="p">,</span> <span class="kc">true</span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// GlobalTracer returns the global singleton `Tracer` implementation.
+</span><span class="c1">// Before `SetGlobalTracer()` is called, the `GlobalTracer()` is a noop
+</span><span class="c1">// implementation that drops all data handed to it.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">GlobalTracer</span><span class="p">()</span> <span class="nx">Tracer</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">globalTracer</span><span class="p">.</span><span class="nx">tracer</span>
+<span class="p">}</span>
+</code></pre></div><h3 id="开启一个新的trace">开启一个新的Trace</h3>
+<p>当创建一个新的<code>Span</code>且该<code>Span</code>没有关联到一个父<code>Span</code>时,一个新的trace就开启了.当创建一个新的<code>Span</code>时,需要为其定义一个<code>operation name</code>,主要用来帮助确定<code>Span</code>与代码的关联关系.</p>
+<p><code>Span</code>之间的关联关系目前支持<code>ChildOf</code>和<code>FollowsFrom</code>:</p>
+<ul>
+<li><code>ChildOf</code>,表示两个<code>Span</code>之间存在父子关系.子<code>Span</code>是在父<code>Span</code>内执行的一个子流程.</li>
+<li><code>FollowsFrom</code>,表示两个<code>Span</code>之间是独立的,父<code>Span</code>不依赖新的<code>Span</code>的执行结果,主要用于pipiline.</li>
+</ul>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ChildOfRef refers to a parent Span that caused *and* somehow depends
+</span><span class="c1">// upon the new child Span. Often (but not always), the parent Span cannot
+</span><span class="c1">// finish until the child Span does.
+</span><span class="c1">//
+</span><span class="c1">// An timing diagram for a ChildOfRef that&#39;s blocked on the new Span:
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span---------]
+</span><span class="c1">//          [-Child Span----]
+</span><span class="c1">//
+</span><span class="c1">// See http://opentracing.io/spec/
+</span><span class="c1">//
+</span><span class="c1">// See opentracing.ChildOf()
+</span><span class="c1"></span><span class="nx">ChildOfRef</span> <span class="nx">SpanReferenceType</span> <span class="p">=</span> <span class="kc">iota</span>
+
+<span class="c1">// FollowsFromRef refers to a parent Span that does not depend in any way
+</span><span class="c1">// on the result of the new child Span. For instance, one might use
+</span><span class="c1">// FollowsFromRefs to describe pipeline stages separated by queues,
+</span><span class="c1">// or a fire-and-forget cache insert at the tail end of a web request.
+</span><span class="c1">//
+</span><span class="c1">// A FollowsFromRef Span is part of the same logical trace as the new Span:
+</span><span class="c1">// i.e., the new Span is somehow caused by the work of its FollowsFromRef.
+</span><span class="c1">//
+</span><span class="c1">// All of the following could be valid timing diagrams for children that
+</span><span class="c1">// &#34;FollowFrom&#34; a parent.
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span-]  [-Child Span-]
+</span><span class="c1">//
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span--]
+</span><span class="c1">//      [-Child Span-]
+</span><span class="c1">//
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span-]
+</span><span class="c1">//                 [-Child Span-]
+</span><span class="c1">//
+</span><span class="c1">// See http://opentracing.io/spec/
+</span><span class="c1">//
+</span><span class="c1">// See opentracing.FollowsFrom()
+</span><span class="c1"></span><span class="nx">FollowsFromRef</span>
+</code></pre></div><h3 id="传播追踪信息">传播追踪信息</h3>
+<p>为了在分布式系统中跨进程边界进行追踪,服务需要具备继续追踪每个被客户端注入追踪信息的请求.OpenTracing通过提供了<code>Inject</code>和<code>Extract</code>方法来实现此目标,将<code>Span</code>的上下文编码为载体.<code>Inject</code>方法可以将<code>SpanContext</code>传递到<code>carrier</code>中.举例,传递追踪信息到客户端请求中,这样下游服务就能继续进行跟踪了.<code>Extract</code>方法作用是相反的,从<code>carrier</code>中提取出<code>SpanContext</code>.
+<img src="/images/tracing_extract.png" alt="跨进程追踪" title="跨进程边界追踪"></p>
+<h2 id="inject和extract">Inject和Extract</h2>
+<p>开发人员在添加跨进程边界的追踪代码时必须懂得OpenTracing规范中定义的<code>Tracer.Inject</code>和<code>Tracer.Extract</code>的能力.它们在概念上很强大,允许开发人员编写正确和通用的跨进程传播代码,而不用绑定到某种特定的OpenTracing实现上.</p>
+<p>无论特定的OpenTracing语言或具体的实现如何,下面会简要介绍Inject和Extract的设计以及正确使用.</p>
+<h3 id="用于追踪传播的全景图">用于追踪传播的全景图</h3>
+<p>对于分布式追踪系统来说最困难的部分是分布式.任何追踪系统都需要一种了解许多不同进程中活动之间的因果关系的方式,不论这些进程是通过RPC框架、订阅/发布系统、通用消息队列、HTTP调用、UDP或其它方式连接的.</p>
+<p>有些分布式追踪系统(2003年的<a href="http://dl.acm.org/citation.cfm?id=945454">Project5</a>,或2006年的<a href="http://www.2006.org/programme/item.php?id=2033">WAP5</a>或2014年的<a href="https://www.usenix.org/node/186168">The Mystery Machine</a>)可以推断出跨进程边界的因果关系.</p>
+<h3 id="opentracing传播方案的要求">OpenTracing传播方案的要求</h3>
+<p>为了使<code>Inject</code>和<code>Extract</code>方案有效,必须满足以下所有条件:</p>
+<ul>
+<li>使用OpenTracing在跨进程传播时必须不能依赖特定分布式追踪系统的代码.</li>
+<li>实现OpenTracing规范的系统必须不能为每种已知的进程间通信机制做特殊处理,否则会有太多的工作,甚至定义不明确.</li>
+<li>传播机制为了优化可扩展.</li>
+</ul>
+<h3 id="基本元素injectextract和carriers">基本元素:Inject,Extract和Carriers</h3>
+<p>trace中的任何<code>SpanContext</code>都可以注入到OpenTracing称为<code>Carriers</code>之中,<code>Carriers</code>可以是接口或者结构,可用于进程间通信(IPC).把trace的状态从一个进程传递到另一个进程.OpenTracing规范包含两种<code>Carriesrs</code>格式,但也可以自定义格式.</p>
+<p>类似的,给定一个被注入了trace的<code>Carriers</code>,可以被提取出来从而生成一个<code>SpanContext</code>实例,该实例在语义上与被注入到<code>Carriers</code>中的保持一致.</p>
+<p><strong>Inject代码</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
+<span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Inject</span><span class="p">(</span><span class="nx">span</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+</code></pre></div><p><strong>Extract代码</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
+<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">md</span> <span class="p">{</span>
+    <span class="nx">carrier</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="p">}</span>
+
+<span class="nx">spanctx</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+<span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">FullMethod</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">spanctx</span><span class="p">))</span>
+</code></pre></div><h3 id="injectextract格式">Inject/Extract格式</h3>
+<p>支持OpenTracing规范的所有追踪系统都必须支持两个格式:<code>text map</code>格式和<code>binary</code>格式.</p>
+<ul>
+<li>text map格式是一个string-&gt;string的映射.</li>
+<li>binary格式是不透明的字节数组(并且可能更紧凑和高效).</li>
+</ul>
+<p>OpenTracing规范并没有规定怎么去存储这些<code>Carriers</code>,但前提是要找到一种方法对传播的SpanContext的trace状态进行编码(例如,在Dapper中定义了<code>trace_id</code>,<code>span_id</code>,还有采样状态掩码)以及任何key:value的Baggage Items.</p>
+<p>不能指望不同的分布式追踪系统(实现了OpenTracing规范的)以兼容的方式注入和提取<code>SpanContext</code>,虽然OpenTracing对于跨整个分布式系统的跟踪的具体实现是不可知的,但对于传播双方的进程都使用相同的实现.</p>
+<p><strong>一个端到端的传播例子</strong></p>
+<ul>
+<li>客户端进程拥有一个<code>SpanContext</code>实例,准备发起一个基于HTTP协议的RPC请求.</li>
+<li>客户端调用<code>Tracer.Inject(...)</code>,传递当前的<code>SpanContext</code>实例,采用<code>text map</code>格式,把其作为参数.</li>
+<li>Inject把<code>text map</code>注入到Carrier中,客户端程序把数据编码写入HTTP协议中(一般是放入headers中).</li>
+<li>发起HTTP请求,数据跨进程边界传输.</li>
+<li>在服务端,应用程序从HTTP协议中提取text map数据,并初始化为一个Carrier.</li>
+<li>服务端程序调用<code>Tracer.Extract(...)</code>,传入text map格式的名称和上面生成的Carrier.</li>
+<li>在没有数据损坏或其它错误的情况下,服务端获取了一个<code>SpanContext</code>实例,和客户端的是同一个.</li>
+</ul>
+]]></content>
+		</item>
 		
 		<item>
 			<title>CMake语法说明</title>
