@@ -163,14 +163,14 @@
 <li>在上下文中存储最新创建的<code>Span</code>,上下文会通过应用程序代码或RPC框架传播.</li>
 <li>最后当处理完请求时需要调用<code>span.Finish()</code>来关闭<code>Span</code>.</li>
 </ul>
-<p><strong>从请求中获取<code>SpanContext</code></strong>
-假设有个HTTP服务器,<code>SpanContext</code>通过http头从客户端传播到服务端,可通过<code>request.headers</code>来访问.</p>
+<p><strong>从请求中获取<code>SpanContext</code></strong></p>
+<p>假设有个HTTP服务器,<code>SpanContext</code>通过http头从客户端传播到服务端,可通过<code>request.headers</code>来访问.</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
 <span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
 <span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
 </code></pre></div><p>把<code>headers</code>转换成<code>carrier</code>,<code>tracer</code>对象知道需要<code>headers</code>中的哪些字段,用来重建tracer的状态及Baggage.</p>
-<p><strong>从请求中获取一个已经存在的trace,或者开启一个新的trace</strong>
-假设客户端没有发送相应字段的值,在服务端就无法从<code>Header</code>中获取到,上文中的<code>spanContext</code>可能为<code>nil</code>.在这种情况下,服务端需要开启一个新的trace.</p>
+<p><strong>从请求中获取一个已经存在的trace,或者开启一个新的trace</strong></p>
+<p>假设客户端没有发送相应字段的值,在服务端就无法从<code>Header</code>中获取到,上文中的<code>spanContext</code>可能为<code>nil</code>.在这种情况下,服务端需要开启一个新的trace.</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
 <span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
 <span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
@@ -184,8 +184,8 @@
 <span class="nx">ext</span><span class="p">.</span><span class="nx">HTTPMethod</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Method</span><span class="p">)</span>
 </code></pre></div><p><code>ext.HTTPMethod.Set</code>是给<code>span</code>设置一个附加信息,等同于<code>span.SetTag(&quot;http.method&quot;, r.Method)</code>.</p>
 <p><code>StartSpan</code>的第一个参数是operationName,用来指定新创建的<code>Span</code>的名字.举例,若HTTP请求是<code>POST</code>类型且URI为<code>/save_user/123</code>,这此时<code>Span</code>的名字会被设置为<code>/save_user/123</code>.OpenTracing规范不会强制要求应用程序如何给<code>Span</code>命名.</p>
-<p><strong>进程内请求上下文传播</strong>
-请求上下文是指:对于一个请求,所有处理这个请求的层都可以访问到同一个<code>context(上下文)</code>.可以通过特定值,如用户id、token、请求截止时间等来获取这个<code>context</code>,也可以用这个方式来获取当前正在追踪的<code>Span</code>.</p>
+<p><strong>进程内请求上下文传播</strong></p>
+<p>请求上下文是指:对于一个请求,所有处理这个请求的层都可以访问到同一个<code>context(上下文)</code>.可以通过特定值,如用户id、token、请求截止时间等来获取这个<code>context</code>,也可以用这个方式来获取当前正在追踪的<code>Span</code>.</p>
 <p>OpenTracing规范中并没有规定请求上下文的传输实现方式,但这点是非常重要的,便于我们理解后面的章节.一般有两种常见的基数:</p>
 <ul>
 <li>隐式传输,<code>context</code>需要被储存在平台特定的位置,允许应用程序在任何地方都能访问到.常用的RPC框架会利用<code>thread-local</code>或<code>continuation-local</code>来存储,或者是全局变量(在单线程程序中).这种方式的缺点是性能低下,并且有些平台如Go是不支持线程本地存储的,隐式传输就几乎不可能实现了.</li>
