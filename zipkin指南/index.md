@@ -5,9 +5,11 @@
 可以通过`http://your_host:9411`去访问zipkin UI.
 
 **Docker**
+
 `docker run -d -p 9411:9411 openzipkin/zipkin`
 
 **Java**
+
 需要Java8或更高版本.
 ``` bash
 curl -sSL https://zipkin.io/quickstart.sh | bash -s
@@ -15,6 +17,7 @@ java -jar zipkin.jar
 ```
 
 **Source**
+
 可以通过源码来安装并运行.
 ``` bash
 # get the latest source
@@ -95,12 +98,14 @@ zipkin已支持的平台和语言[列表](https://zipkin.io/pages/tracers_instru
 当数据到达zipkin的收集器守护程序后,将对其进行验证、存储及索引,供zipkin收集器进行查找.
 
 **HTTP**
+
 默认HTTP方式是可用的,URI为`POST /api/v1/spans`和`POST /api/v2/spans`,目前主要使用v2版本.支持如下配置项:
 |属性|环境变量|描述|
 |:--|:--|:--|
 |zipkin.collector.http.enabled|COLLECTOR_HTTP_ENABLED|`false`禁用HTTP方式,默认为`true`|
 
 **Kafka**
+
 当参数`KAFKA_BOOTSTRAP_SERVERS`设置为v0.10+版本的Kafka时,该收集器就会启用.支持如下配置项:
 |变量|新Consumer配置|描述|
 |:--|:--|:--|
@@ -137,6 +142,7 @@ $ java -Dzipkin.collector.kafka.bootstrap-servers=127.0.0.1:9092 -jar zipkin.jar
 ```
 
 **RabbitMQ**
+
 支持如下配置项:
 |属性|环境变量|描述|
 |:--|:--|:--|
@@ -158,6 +164,7 @@ $ java -Dzipkin.collector.kafka.bootstrap-servers=127.0.0.1:9092 -jar zipkin.jar
 启动命令:`RABBIT_ADDRESSES=localhost java -jar zipkin.jar`
 
 **ActiveMQ**
+
 支持ActiveMQ v5.x版本.
 |属性|环境变量|描述|
 |:--|:--|:--|
@@ -175,6 +182,7 @@ $ java -Dzipkin.collector.kafka.bootstrap-servers=127.0.0.1:9092 -jar zipkin.jar
 存储组件是采用插件化的方式实现,目前支持InMemory、Cassandra、ElasticSearch和MySQL,还有其它第三方实现的.
 
 **InMemory**
+
 默认启动的就是In-Memory方式,所有数据全部保存在内存中,没有持久化功能.
 启动方式:
 ``` bash
@@ -194,6 +202,7 @@ MEM_MAX_SPANS=1000000 java -Xmx1G -jar zipkin.jar
 ```
 
 **MySQL**
+
 基于MySQL5.7版本,需要先建库建表,[脚本文件地址](https://github.com/openzipkin/zipkin/tree/master/zipkin-storage/mysql-v1).
 ``` sql
 # install the schema and indexes
@@ -217,6 +226,7 @@ select * from zipkin_spans where trace_id = x'27960dafb1ea7454'
 **Cassandra**
 
 **Elasticsearch**
+
 启动时可设置的相关参数
 * `ES_HOSTS`: A comma separated list of elasticsearch base urls to connect to ex. http://host:9200. Defaults to "http://localhost:9200".
 * `ES_PIPELINE`: Indicates the ingest pipeline used before spans are indexed. No default.
