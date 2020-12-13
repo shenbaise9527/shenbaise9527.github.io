@@ -1,0 +1,43 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>MySQL - 分类 - 深白色9527</title>
+        <link>https://shenbaise9527.com/categories/mysql/</link>
+        <description>MySQL - 分类 - 深白色9527</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 24 Nov 2020 20:50:44 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/categories/mysql/" rel="self" type="application/rss+xml" /><item>
+    <title>MySQL的orderby分析</title>
+    <link>https://shenbaise9527.com/mysql%E7%9A%84orderby%E5%88%86%E6%9E%90/</link>
+    <pubDate>Tue, 24 Nov 2020 20:50:44 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/mysql%E7%9A%84orderby%E5%88%86%E6%9E%90/</guid>
+    <description><![CDATA[数据准备 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 /*mysql版本*/ Server version: 5.7.27-log MySQL Community Server (GPL) /*创建表t*/ CREATE TABLE `t` ( `id` int(11) NOT NULL AUTO_INCREMENT, `city` varchar(16)]]></description>
+</item><item>
+    <title>MySQL锁机制分析</title>
+    <link>https://shenbaise9527.com/mysql%E9%94%81%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/</link>
+    <pubDate>Tue, 24 Nov 2020 20:50:10 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/mysql%E9%94%81%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90/</guid>
+    <description><![CDATA[全局锁 全局锁就是对整个数据库实例加锁.MySQL提供了命令Flush tables with read lock(FTWRL),可使整库处于只读状态,其它线程的数据更新语]]></description>
+</item><item>
+    <title>MySQL的join分析</title>
+    <link>https://shenbaise9527.com/mysql%E4%B9%8Bjoin/</link>
+    <pubDate>Tue, 24 Nov 2020 20:47:44 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/mysql%E4%B9%8Bjoin/</guid>
+    <description><![CDATA[问题 使用join时驱动表、被驱动表是如何选择的?影响因素有哪些? 如何优化? 数据准备 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29]]></description>
+</item><item>
+    <title>MySQL索引(InnoDB引擎)</title>
+    <link>https://shenbaise9527.com/mysql%E4%B9%8Binnodb%E7%B4%A2%E5%BC%95/</link>
+    <pubDate>Tue, 24 Nov 2020 20:43:33 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/mysql%E4%B9%8Binnodb%E7%B4%A2%E5%BC%95/</guid>
+    <description><![CDATA[B+树 基于N叉树(每个父节点有N个子节点,子节点的值从左到右按照从小到大的顺序排列),非叶子节点只存储索引值,叶子节点储存索引值和数据,所有]]></description>
+</item><item>
+    <title>MySQL基于GTID复制</title>
+    <link>https://shenbaise9527.com/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</link>
+    <pubDate>Mon, 09 Nov 2020 21:27:12 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/mysql%E5%9F%BA%E4%BA%8Egtid%E5%A4%8D%E5%88%B6/</guid>
+    <description><![CDATA[开启GTID. 1 2 3 4 5 6 7 8 9 10 11 12 # 启用gtid模式,每个事务有个唯一的id,全局事务ID,事务提交时分配,基于gtid来复制. gtid_mode=ON # 开启]]></description>
+</item></channel>
+</rss>

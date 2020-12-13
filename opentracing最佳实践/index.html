@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>OpenTracing最佳实践 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="OpenTracing最佳实践" />
+<meta property="og:description" content="回顾: OpenTracing的目标是什么? OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下: 1 2 3 4" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" />
+<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="article:published_time" content="2020-12-10T21:35:32+08:00" />
+<meta property="article:modified_time" content="2020-12-10T21:35:32+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="OpenTracing最佳实践"/>
+<meta name="twitter:description" content="回顾: OpenTracing的目标是什么? OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下: 1 2 3 4"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" /><link rel="prev" href="https://shenbaise9527.com/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" /><link rel="next" href="https://shenbaise9527.com/zipkin%E6%8C%87%E5%8D%97/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "OpenTracing最佳实践",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "OpenTracing","wordcount":  4047 ,
+        "url": "https:\/\/shenbaise9527.com\/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5\/","datePublished": "2020-12-10T21:35:32+08:00","dateModified": "2020-12-10T21:35:32+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">OpenTracing最佳实践</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-10">2020-12-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 4047 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 9 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#回顾-opentracing的目标是什么">回顾: OpenTracing的目标是什么?</a></li>
+    <li><a href="#用例">用例</a></li>
+    <li><a href="#举例">举例</a>
+      <ul>
+        <li><a href="#追踪函数">追踪函数</a></li>
+        <li><a href="#服务端追踪">服务端追踪</a></li>
+        <li><a href="#客户端追踪">客户端追踪</a></li>
+        <li><a href="#使用baggage分布式上下文传输">使用Baggage/分布式上下文传输</a></li>
+        <li><a href="#logging事件">Logging事件</a></li>
+        <li><a href="#使用外部时间戳记录span">使用外部时间戳记录Span</a></li>
+        <li><a href="#开启tracer之前设置好采样策略">开启tracer之前设置好采样策略</a></li>
+        <li><a href="#追踪消息总线的方案">追踪消息总线的方案</a></li>
+        <li><a href="#基于队列的同步请求-响应">基于队列的同步请求-响应</a></li>
+      </ul>
+    </li>
+    <li><a href="#参考">参考</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="回顾-opentracing的目标是什么">回顾: OpenTracing的目标是什么?</h2>
+<p>OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">   +-------------+  +---------+  +----------+  +------------+
+   | Application |  | Library |  |   OSS    |  |  RPC/IPC   |
+   |    Code     |  |  Code   |  | Services |  | Frameworks |
+   +-------------+  +---------+  +----------+  +------------+
+          |              |             |             |
+          |              |             |             |
+          v              v             v             v
+     +-----------------------------------------------------+
+     | · · · · · · · · · · OpenTracing · · · · · · · · · · |
+     +-----------------------------------------------------+
+       |               |                |               |
+       |               |                |               |
+       v               v                v               v
+ +-----------+  +-------------+  +-------------+  +-----------+
+ |  Tracing  |  |   Logging   |  |   Metrics   |  |  Tracing  |
+ | System A  |  | Framework B |  | Framework C |  | System D  |
+ +-----------+  +-------------+  +-------------+  +-----------+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="用例">用例</h2>
+<p>下面列出一些OpenTracing的用例,并对其进行详细描述:</p>
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>应用程序代码</td>
+<td>编写应用程序代码的开发人员可以使用OpenTracing来描述因果关系,划分控制流,并添加细粒度的日志记录信息.</td>
+</tr>
+<tr>
+<td>库代码</td>
+<td>对于请求进行中间控制的库也可以与OpenTracing集成.例如:Web中间件可以使用OpenTracing为每个请求创建spans,或者ORM库可以使用OpenTracing来描述更高级别的ORM语义并衡量特定SQL查询的执行.</td>
+</tr>
+<tr>
+<td>OSS服务</td>
+<td>除了嵌入式库之后,整个OSS服务都可以采用OpenTracing来与分布式跟踪系统集成,在较大的分布式系统中启动或传播到其它进程.例如:HTTP负载均衡器可以使用OpenTracing包装所有请求,或者在分布式KV存储系统中使用OpenTracing来跟踪读写性能.</td>
+</tr>
+<tr>
+<td>RPC/IPC框架</td>
+<td>任何跨进程边界的任务子系统都可以使用OpenTracing来标准化trace状态,OpenTracing提供了统一的Inject和Extract格式.</td>
+</tr>
+</tbody>
+</table>
+<p>所有上述都可以使用OpenTracing来描述和传播分布式跟踪信息,而不用了解分布式追踪系统的底层实现.</p>
+<p>OpenTracing优先考虑易用性的问题,主要是站在调用者的角度,而不是分布式追踪系统的实现者上.</p>
+<h2 id="举例">举例</h2>
+<h3 id="追踪函数">追踪函数</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">TopLevelFunction</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+	<span class="nx">span1</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;toplevelfunction&#34;</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">span1</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
+	<span class="nx">subctx</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ContextWithSpan</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">span</span><span class="p">)</span>
+
+	<span class="c1">// 业务逻辑.
+</span><span class="c1"></span>	<span class="nf">Function2</span><span class="p">(</span><span class="nx">subctx</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>作为业务逻辑的一部分,调用了<code>Function2</code>方法,也想被追踪.为了让<code>Function2</code>里的追踪和<code>TopLevelFunction</code>里的追踪形成因果关系,必须在<code>Function2</code>里要能访问到<code>span1</code>,通过<code>span1</code>来创建一个子span.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Function2</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">span1</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">ok</span> <span class="p">{</span>
+		<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+		<span class="nx">span2</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;function2&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">span1</span><span class="p">.</span><span class="nf">Context</span><span class="p">()))</span>
+		<span class="k">defer</span> <span class="nx">span2</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>通过<code>context.Context</code>来传递<code>span</code>,可以让整个函数调用过程形成一个完整的调用链.</p>
+<h3 id="服务端追踪">服务端追踪</h3>
+<p>当服务端想要去跟踪每个请求的执行过程,一般需要以下几个步骤.</p>
+<ul>
+<li>试图中从请求中获取<code>SpanContext</code>(客户端已经开启了trace),如果无法获取就开启一个新的trace.</li>
+<li>在上下文中存储最新创建的<code>Span</code>,上下文会通过应用程序代码或RPC框架传播.</li>
+<li>最后当处理完请求时需要调用<code>span.Finish()</code>来关闭<code>Span</code>.</li>
+</ul>
+<p><strong>从请求中获取<code>SpanContext</code></strong></p>
+<p>假设有个HTTP服务器,<code>SpanContext</code>通过http头从客户端传播到服务端,可通过<code>request.headers</code>来访问.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+<span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
+<span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>把<code>headers</code>转换成<code>carrier</code>,<code>tracer</code>对象知道需要<code>headers</code>中的哪些字段,用来重建tracer的状态及Baggage.</p>
+<p><strong>从请求中获取一个已经存在的trace,或者开启一个新的trace</strong></p>
+<p>假设客户端没有发送相应字段的值,在服务端就无法从<code>Header</code>中获取到,上文中的<code>spanContext</code>可能为<code>nil</code>.在这种情况下,服务端需要开启一个新的trace.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+<span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
+<span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">span</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Span</span>
+<span class="k">if</span> <span class="nx">spanContext</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RequestURI</span><span class="p">)</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+	<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RequestURI</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">spanContext</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="nx">ext</span><span class="p">.</span><span class="nx">HTTPMethod</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Method</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>ext.HTTPMethod.Set</code>是给<code>span</code>设置一个附加信息,等同于<code>span.SetTag(&quot;http.method&quot;, r.Method)</code>.</p>
+<p><code>StartSpan</code>的第一个参数是operationName,用来指定新创建的<code>Span</code>的名字.举例,若HTTP请求是<code>POST</code>类型且URI为<code>/save_user/123</code>,这此时<code>Span</code>的名字会被设置为<code>/save_user/123</code>.OpenTracing规范不会强制要求应用程序如何给<code>Span</code>命名.</p>
+<p><strong>进程内请求上下文传播</strong></p>
+<p>请求上下文是指:对于一个请求,所有处理这个请求的层都可以访问到同一个<code>context(上下文)</code>.可以通过特定值,如用户id、token、请求截止时间等来获取这个<code>context</code>,也可以用这个方式来获取当前正在追踪的<code>Span</code>.</p>
+<p>OpenTracing规范中并没有规定请求上下文的传输实现方式,但这点是非常重要的,便于我们理解后面的章节.一般有两种常见的基数:</p>
+<ul>
+<li>隐式传输,<code>context</code>需要被储存在平台特定的位置,允许应用程序在任何地方都能访问到.常用的RPC框架会利用<code>thread-local</code>或<code>continuation-local</code>来存储,或者是全局变量(在单线程程序中).这种方式的缺点是性能低下,并且有些平台如Go是不支持线程本地存储的,隐式传输就几乎不可能实现了.</li>
+<li>显示传输,要求应用程序代码包装和传递一个<code>context</code>对象.这种方式的缺点在于向应用程序暴露了底层的实现,<a href="https://blog.golang.org/context" target="_blank" rel="noopener noreffer">Go blog post</a>这篇文章提供了这种方式的深层次解析.</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">HandleHttp</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span>
+    <span class="o">...</span>
+    <span class="nf">BusinessFunction1</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">arg1</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">BusinessFunction1</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">arg1</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="nf">BusinessFunction2</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">arg1</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">BusinessFunction2</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">arg1</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">parentSpan</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="nx">childSpan</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
+        <span class="s">&#34;...&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">parentSpan</span><span class="p">.</span><span class="nf">Context</span><span class="p">()),</span> <span class="o">...</span><span class="p">)</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="客户端追踪">客户端追踪</h3>
+<p>当一个应用程序扮演RPC客户端的角色时,在调用外部接口前可以开启一个新的<code>Span</code>,在请求期间传播该<code>Span</code>.下面通过一个HTTP请求来展示如何处理.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">tracedPost</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">operation</span><span class="p">,</span> <span class="nx">url</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">body</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="nx">parent_span</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+    <span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+    <span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
+        <span class="nx">operation</span><span class="p">,</span>
+        <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">parent_span</span><span class="p">.</span><span class="nf">Context</span><span class="p">()),</span>
+        <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tag</span><span class="p">{</span><span class="s">&#34;http.url&#34;</span><span class="p">,</span> <span class="nx">url</span><span class="p">},</span>
+        <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tag</span><span class="p">{</span><span class="s">&#34;http.method&#34;</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">MethodPost</span><span class="p">})</span>
+    <span class="k">defer</span> <span class="nx">span</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
+    <span class="nx">reader</span> <span class="o">:=</span> <span class="nx">bytes</span><span class="p">.</span><span class="nf">NewBuffer</span><span class="p">(</span><span class="nx">body</span><span class="p">)</span>
+    <span class="nx">req</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nf">NewRequest</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">MethodPost</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="nx">reader</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">ext</span><span class="p">.</span><span class="nf">LogError</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="s">&#34;Content-Type&#34;</span><span class="p">,</span> <span class="s">&#34;application/json&#34;</span><span class="p">)</span>
+    <span class="nx">err</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Inject</span><span class="p">(</span><span class="nx">span</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">ext</span><span class="p">.</span><span class="nf">LogError</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="nx">cli</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nx">Client</span><span class="p">{</span><span class="nx">Timeout</span><span class="p">:</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span> <span class="o">*</span> <span class="mi">5</span><span class="p">}</span>
+    <span class="nx">rsp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Do</span><span class="p">(</span><span class="nx">req</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">ext</span><span class="p">.</span><span class="nf">LogError</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nx">err</span>
+    <span class="p">}</span>
+
+    <span class="nx">ext</span><span class="p">.</span><span class="nx">HTTPStatusCode</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nb">uint16</span><span class="p">(</span><span class="nx">rsp</span><span class="p">.</span><span class="nx">StatusCode</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>首先从<code>context</code>中获取<code>parent_span</code>,可以跟上游<code>Span</code>构成一个链条.</li>
+<li>针对http请求创建一个新的<code>Span</code>,设置相应的Tag,然后调用<code>Inject</code>把需要传播的信息注入到<code>req.Header</code>中,在服务端就可以利用<code>Header</code>来重组<code>Span</code>.</li>
+<li>当有错误发生的时候,调用<code>ext.LogError</code>把错误信息关联到<code>Span</code>上.</li>
+<li>最后把相应的状态码作为Tag设置到<code>Span</code>上.</li>
+</ul>
+<h3 id="使用baggage分布式上下文传输">使用Baggage/分布式上下文传输</h3>
+<p>上面的例子都是通过网络在客户端和服务端之间传递<code>Span/Tracer</code>,包含任意的<code>Baggage</code>.客户端可以利用<code>Baggage</code>来传播一些附加信息到服务端及任何其下游服务.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 客户端.
+</span><span class="c1"></span><span class="nx">span</span> <span class="p">=</span> <span class="nx">span</span><span class="p">.</span><span class="nf">SetBaggageItem</span><span class="p">(</span><span class="s">&#34;auto_token&#34;</span><span class="p">,</span> <span class="s">&#34;token&#34;</span><span class="p">)</span>
+
+<span class="c1">// 服务端.
+</span><span class="c1"></span><span class="nx">token</span> <span class="o">:=</span> <span class="nx">span</span><span class="p">.</span><span class="nf">BaggageItem</span><span class="p">(</span><span class="s">&#34;auto_token&#34;</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="logging事件">Logging事件</h3>
+<p>在上面<a href="#%e5%ae%a2%e6%88%b7%e7%ab%af%e8%bf%bd%e8%b8%aa" rel="">客户端追踪</a>的例子中已经使用过Log了.可以记录事件而不需要有<code>payload</code>,而不仅在<code>Span</code>被创建和完成时.举个例子,应用程序在执行过程中可能会需要记录<code>cache miss</code>事件,可以通过在请求上下文中来获取当前<code>Span</code>然后把该事件附加到<code>Span</code>中.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<span class="c1">// 不带payload的.
+</span><span class="c1"></span><span class="nx">span</span><span class="p">.</span><span class="nf">LogEvent</span><span class="p">(</span><span class="s">&#34;cache_miss&#34;</span><span class="p">)</span>
+<span class="c1">// 带payload的.
+</span><span class="c1"></span><span class="nx">span</span><span class="p">.</span><span class="nf">LogEventWithPayload</span><span class="p">(</span><span class="s">&#34;cache_miss&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>Tracer</code>会自动记录该事件的时间戳,与应用于整个<code>Span</code>的tags相反.也可以将外部提供的时间戳与事件想关联,可以查看<a href="https://github.com/opentracing/opentracing-go" target="_blank" rel="noopener noreffer">opentracing-go</a>中<code>Span</code>接口的<code>LogFields</code>方法.</p>
+<h3 id="使用外部时间戳记录span">使用外部时间戳记录Span</h3>
+<p>因为各种各样的原因,在有些场景下会将OpenTracing兼容的tracer集成到服务中.比如一个用户有一个日志文件,其中包含大量来自黑盒系统(如HAProxy)产生的Span数据,为了把这些数据导入到OpenTracing兼容的系统中,API必须提供一种方法通过外部自定义时间戳来记录<code>Span</code>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;operationname&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">StartTime</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()))</span>
+<span class="nx">span</span><span class="p">.</span><span class="nf">FinishWithOptions</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">FinishOptions</span><span class="p">{</span><span class="nx">FinishTime</span><span class="p">:</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()})</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="开启tracer之前设置好采样策略">开启tracer之前设置好采样策略</h3>
+<p>大多数分布式追踪系统都会通过应用不同的采样策略来减少需要记录和处理的追踪数据的总量.有时开发人员希望有一种方式来确保一个tracer数据会被系统记录(采样),如在HTTP请求中包含一个特殊的参数(<code>debug=true</code>).OpenTracing API标准化了一些有用的tags,其中一个叫<code>sampling.priority</code>(采样优先级):精确的实现是由追踪系统的实现者决定的,但任何大于0(默认)代表一条tracer的高优先级.为了传递这个属性到追踪系统中,需要在追踪前进行预处理,如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">b</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseBool</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;debug&#34;</span><span class="p">))</span>
+<span class="k">if</span> <span class="nx">b</span> <span class="o">&amp;&amp;</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
+		<span class="s">&#34;operationname&#34;</span><span class="p">,</span> 
+		<span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tag</span><span class="p">{</span><span class="nb">string</span><span class="p">(</span><span class="nx">ext</span><span class="p">.</span><span class="nx">SamplingPriority</span><span class="p">),</span> <span class="mi">1</span><span class="p">},</span> 
+	<span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="追踪消息总线的方案">追踪消息总线的方案</h3>
+<p>有两种类别的消息总线需要处理,包括消息队列和发布/订阅(主题).</p>
+<p>从追踪的视角来看,消息总线的类型并不重要,只是要将生产者关联的<code>SpanContext</code>传播到零个或多个消费者中.然后消费者就有责任创建<code>Span</code>来封装都消息的处理,并建立对传播来的<code>SpanContext</code>的<code>FollowsFrom</code>引用.</p>
+<p>以RPC客户端为例,生产者在发送消息之前开启了一个新<code>Span</code>,并跟随消息传播该<code>Span</code>的<code>Context</code>.在消息成功发布到消息总线上后这个<code>Span</code>就完成了.下面展示代码是如何实现的:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">traced_send</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+    <span class="c1"># retrieve current span from propagated message context</span>
+    <span class="n">parent_span</span> <span class="o">=</span> <span class="n">get_current_span</span><span class="p">()</span>
+
+    <span class="c1"># start a new span to represent the message producer</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">start_span</span><span class="p">(</span>
+        <span class="n">operation_name</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span>
+        <span class="n">child_of</span><span class="o">=</span><span class="n">parent_span</span><span class="o">.</span><span class="n">context</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;message.destination&#39;</span><span class="p">:</span> <span class="n">message</span><span class="o">.</span><span class="n">destination</span><span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="c1"># propagate the Span via message headers</span>
+    <span class="n">tracer</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span>
+        <span class="n">span</span><span class="o">.</span><span class="n">context</span><span class="p">,</span>
+        <span class="n">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
+        <span class="n">carrier</span><span class="o">=</span><span class="n">message</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">span</span><span class="p">:</span>
+        <span class="n">messaging_client</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="n">e</span><span class="p">:</span>
+        <span class="o">...</span>
+        <span class="k">raise</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>接下来消费者会判断消息中是否包含了<code>SpanContext</code>,如果有,就会用它来与生产者的<code>Span</code>建立联系.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="n">extracted_context</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span>
+    <span class="n">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
+    <span class="n">carrier</span><span class="o">=</span><span class="n">message</span><span class="o">.</span><span class="n">headers</span>
+<span class="p">)</span>
+<span class="n">span</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">start_span</span><span class="p">(</span><span class="n">operation_name</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span> <span class="n">references</span><span class="o">=</span><span class="n">follows_from</span><span class="p">(</span><span class="n">extracted_context</span><span class="p">))</span>
+<span class="n">span</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="s1">&#39;message.destination&#39;</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">destination</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="基于队列的同步请求-响应">基于队列的同步请求-响应</h3>
+<p>尽管使用不多,但有些消息平台/标准(如JMS)支持在消息头中提供ReplyTo目标的功能.消费者收到消息后,它会将结果返回到指定的目的地.</p>
+<p>这种模式常用来模拟同步请求/响应,这种情况下消费者和生产者之间是<code>ClildOf</code>的关系.</p>
+<p>但此模式也可以用于委托来指示将结果告知第三方.在这种情况下,它将被视为两个单独的消息交换并具有链接每个阶段的<code>Follows From</code>关系类型(A-&gt;B-&gt;C).</p>
+<p>由于很难区分这两种情况,不建议将面向消息中间件用于同步的请求/响应模式,因此从建议跟踪角度忽略请求/响应方案.</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://opentracing.io/specification/conventions/" target="_blank" rel="noopener noreffer">语义约定</a></li>
+<li><a href="https://opentracing.io/docs/best-practices/" target="_blank" rel="noopener noreffer">Best Practices</a></li>
+<li><a href="https://wu-sheng.gitbooks.io/opentracing-io/content/pages/instrumentation/" target="_blank" rel="noopener noreffer">最佳实践</a></li>
+<li><a href="https://github.com/yurishkuro/opentracing-tutorial" target="_blank" rel="noopener noreffer">opentracing-tutorial</a></li>
+</ul>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-10</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" data-title="OpenTracing最佳实践" data-via="shenbaise9527" data-hashtags="OpenTracing"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" data-hashtag="OpenTracing"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" data-title="OpenTracing最佳实践"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/opentracing/">OpenTracing</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" class="prev" rel="prev" title="OpenTracing分布式链路追踪"><i class="fas fa-angle-left fa-fw"></i>OpenTracing分布式链路追踪</a>
+            <a href="/zipkin%E6%8C%87%E5%8D%97/" class="next" rel="next" title="Zipkin指南">Zipkin指南<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>

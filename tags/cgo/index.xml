@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>cgo - 标签 - 深白色9527</title>
+        <link>https://shenbaise9527.com/tags/cgo/</link>
+        <description>cgo - 标签 - 深白色9527</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 03 Nov 2020 21:35:24 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/cgo/" rel="self" type="application/rss+xml" /><item>
+    <title>记录cgo调用C实现的加解密静态库中遇到的问题</title>
+    <link>https://shenbaise9527.com/cgo/</link>
+    <pubDate>Tue, 03 Nov 2020 21:35:24 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/cgo/</guid>
+    <description><![CDATA[起因 公司有个公共的加解密库,供所有后端C++服务调用的,但最近要使用Go来实现个服务需要用到加解密,而Go并没有提供AES-256-ECB的]]></description>
+</item></channel>
+</rss>

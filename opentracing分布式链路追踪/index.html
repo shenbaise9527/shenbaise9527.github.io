@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>OpenTracing分布式链路追踪 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="OpenTracing分布式链路追踪" />
+<meta property="og:description" content="概述 简介 虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" />
+<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="article:published_time" content="2020-12-10T21:35:19+08:00" />
+<meta property="article:modified_time" content="2020-12-10T21:35:19+08:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="OpenTracing分布式链路追踪"/>
+<meta name="twitter:description" content="概述 简介 虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" /><link rel="prev" href="https://shenbaise9527.com/cmake%E8%AF%AD%E6%B3%95%E8%AF%B4%E6%98%8E/" /><link rel="next" href="https://shenbaise9527.com/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "OpenTracing分布式链路追踪",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "OpenTracing","wordcount":  5873 ,
+        "url": "https:\/\/shenbaise9527.com\/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA\/","datePublished": "2020-12-10T21:35:19+08:00","dateModified": "2020-12-10T21:35:19+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">OpenTracing分布式链路追踪</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-10">2020-12-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5873 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 12 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#概述">概述</a>
+      <ul>
+        <li><a href="#简介">简介</a></li>
+        <li><a href="#分布式追踪系统的模型">分布式追踪系统的模型</a></li>
+        <li><a href="#四个主要的问题">四个主要的问题</a></li>
+        <li><a href="#opentracing是如何解决的">OpenTracing是如何解决的?</a></li>
+      </ul>
+    </li>
+    <li><a href="#什么是分布式追踪">什么是分布式追踪?</a>
+      <ul>
+        <li><a href="#分布式追踪的使用场景">分布式追踪的使用场景</a></li>
+        <li><a href="#什么是opentracing">什么是OpenTracing?</a></li>
+      </ul>
+    </li>
+    <li><a href="#spans">Spans</a>
+      <ul>
+        <li><a href="#tags">Tags</a></li>
+        <li><a href="#logs">Logs</a></li>
+        <li><a href="#spancontext">SpanContext</a></li>
+        <li><a href="#举例">举例</a></li>
+      </ul>
+    </li>
+    <li><a href="#tracers">Tracers</a>
+      <ul>
+        <li><a href="#简介-1">简介</a></li>
+        <li><a href="#tracer接口">Tracer接口</a></li>
+        <li><a href="#设置tracer">设置Tracer</a></li>
+        <li><a href="#开启一个新的trace">开启一个新的Trace</a></li>
+        <li><a href="#传播追踪信息">传播追踪信息</a></li>
+      </ul>
+    </li>
+    <li><a href="#inject和extract">Inject和Extract</a>
+      <ul>
+        <li><a href="#用于追踪传播的全景图">用于追踪传播的全景图</a></li>
+        <li><a href="#opentracing传播方案的要求">OpenTracing传播方案的要求</a></li>
+        <li><a href="#基本元素injectextract和carriers">基本元素:Inject,Extract和Carriers</a></li>
+        <li><a href="#injectextract格式">Inject/Extract格式</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="概述">概述</h2>
+<h3 id="简介">简介</h3>
+<p>虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事务,无法直接在内存或堆栈中来调试或观察.</p>
+<p>在这种情况下,分布式追踪系统进入到视野之中,分布式追踪系统对于描述和分析跨进程事务的问题提供了解决方案.大部分的分布式追踪系统的思想都来源于<a href="https://ai.google/research/pubs/pub36356" target="_blank" rel="noopener noreffer">Google&rsquo;s Dapper paper</a></p>
+<h3 id="分布式追踪系统的模型">分布式追踪系统的模型</h3>
+<p>大多数分布式追踪系统的模型来自于Google&rsquo;s Dapper paper.OpenTracing也是一样的,采用了相同的名词和动词.
+<figure><a class="lightgallery" href="/images/tracing1_0.png" title="模型" data-thumbnail="/images/tracing1_0.png" data-sub-html="<h2>tracing模型</h2><p>模型</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/tracing1_0.png"
+            data-srcset="/images/tracing1_0.png, /images/tracing1_0.png 1.5x, /images/tracing1_0.png 2x"
+            data-sizes="auto"
+            alt="/images/tracing1_0.png" />
+    </a><figcaption class="image-caption">tracing模型</figcaption>
+    </figure></p>
+<ol>
+<li>Trace: 用来描述在分布式系统中一个完整的事务(这里的事务不是指数据库中的事务,而是指一个完整的业务流).</li>
+<li>Span: 可命名的、记录耗时的一个工作流片段,Span上可设置多个key:value的tags,也可以记录某个时间点的结构化的log.</li>
+<li>SpanContext: 追踪信息会伴随着整个分布式事务,会通过网络或者消息总线来传递到下游服务中.包含了trace id、span id和其它需要传播(分布式追踪系统需要传播到下游的)的数据.</li>
+</ol>
+<h3 id="四个主要的问题">四个主要的问题</h3>
+<p>从应用程序层分布式跟踪系统的角度来看，现代软件系统如下图所示：
+<figure><a class="lightgallery" href="/images/tracing2_0.png" title="系统" data-thumbnail="/images/tracing2_0.png" data-sub-html="<h2>系统结构</h2><p>系统</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/tracing2_0.png"
+            data-srcset="/images/tracing2_0.png, /images/tracing2_0.png 1.5x, /images/tracing2_0.png 2x"
+            data-sizes="auto"
+            alt="/images/tracing2_0.png" />
+    </a><figcaption class="image-caption">系统结构</figcaption>
+    </figure></p>
+<p>现代软件系统中的组件可分为三大类:</p>
+<ul>
+<li>应用程序和业务逻辑: 自己的代码.</li>
+<li>广泛使用的共享库: 别人的代码.</li>
+<li>广泛使用的服务: 别人的基础设施.</li>
+</ul>
+<p>这三类组件有不同的需求,并驱动着负责监控应用程序的分布式追踪系统的设计.最终有四个非常重要的设计要点:</p>
+<ul>
+<li>追踪系统的API: 应用程序如何使用?</li>
+<li>传播协议: 在RPC请求中与应用程序一起发送的内容(传递到下游服务中).</li>
+<li>数据协议: 异步(带外)发送到分析系统中的内容.</li>
+<li>分析系统: 用于处理追踪数据的数据库和交互式UI.</li>
+</ul>
+<h3 id="opentracing是如何解决的">OpenTracing是如何解决的?</h3>
+<p>OpenTracing API提供了标准的、与厂商无关的工具框架.当开发人员想尝试不同的分布式追踪系统时,只需要简单的更改Tracer的配置,而不用为了适配新的分布式追踪系统而重复开发整个追踪过程.</p>
+<h2 id="什么是分布式追踪">什么是分布式追踪?</h2>
+<p>分布式追踪是一种用来分析和监控应用程序的方法,特别是使用微服务架构的系统.分布式追踪有助于查明发生故障的位置以及导致性能下降的原因.</p>
+<h3 id="分布式追踪的使用场景">分布式追踪的使用场景</h3>
+<ul>
+<li>IT和DevOps团队可以用分布式追踪来监控整个应用程序.分布式追踪特别适合用来调试和监控现代分布式软件体系结构,如微服务.</li>
+<li>开发人员可以利用分布式追踪来帮助调试和优化代码.</li>
+</ul>
+<h3 id="什么是opentracing">什么是OpenTracing?</h3>
+<p>首先从什么不是OpenTracing开始可能更容易.</p>
+<ul>
+<li>OpenTracing不是一个下载文件或程序.分布式追踪系统要求软件开发人员将追踪代码添加到应用程序的代码中,或者应用程序所使用的框架中.</li>
+<li>OpenTracing不是一个标准,<a href="https://www.cncf.io/" target="_blank" rel="noopener noreffer">CNCF</a>不是一个标准化组织.OpenTracing API项目正在努力为分布式追踪系统创建更加标准的API和工具.</li>
+</ul>
+<p>OpenTracing是由API规范,已实现该规范的框架和库以及该项目的文档组成.OpenTracing允许开发人员使用不会将其受限于任何一种特定的产品或供应商的API来将追踪代码添加到应用程序中.</p>
+<p>关于更多已实现OpenTracing规范的信息,可以查看<a href="https://opentracing.io/docs/supported-languages" target="_blank" rel="noopener noreffer">已支持的语言列表</a>和<a href="https://opentracing.io/docs/supported-tracers/" target="_blank" rel="noopener noreffer">已支持的分布式追踪系统</a></p>
+<h2 id="spans">Spans</h2>
+<p>Span是分布式追踪的主要构建对象,代表分布式系统中已完成的单个工作单元.</p>
+<p>分布式系统中的每个组件都会构建一个Span(命名的、记录耗时的一个工作流片段).</p>
+<p>Spans可以包含对其它Spans的引用,这样就允许多个Span关联到一个已完成的Trace(把一个请求在分布式系统中的生命周期可视化).</p>
+<p>根据OpenTracing规范,每个Span会封装以下内容:</p>
+<ul>
+<li>Operation Name(操作名称).</li>
+<li>开始时间和结束时间.</li>
+<li>Tags,key:value的集合,伴随整个Span.</li>
+<li>Logs,key:value的集合,记录某个时间点的日志.</li>
+<li>SpanContext.</li>
+</ul>
+<h3 id="tags">Tags</h3>
+<p>key:value的集合,对Span的自定义标记,可以用来查询、过滤和理解追踪数据.</p>
+<p>tags是伴随Span的整个生命周期,在文件<a href="https://github.com/opentracing/specification/blob/master/semantic_conventions.md" target="_blank" rel="noopener noreffer">semantic_conventions.md</a>定义了常见场景中Span的常规tags.如<code>db.instance</code>表示数据库主机地址,<code>http.status_code</code>表示HTTP的响应码,<code>error</code>可以设置为<code>True</code>表示Span所代表的操作失败了.</p>
+<h3 id="logs">Logs</h3>
+<p>key:value的集合,可用于抓取Span的特定的日志信息以及应用程序本身的其它调试信息或输出信息.也常用于记录Span某个特定时刻或事件(和tags应用与Span的整个生命周期不同).</p>
+<h3 id="spancontext">SpanContext</h3>
+<p>SpanContext用于跨进程边界时携带数据,主要包含两个方面的数据:</p>
+<ol>
+<li>依赖于实现的状态来引用trace中不同的span.
+<ul>
+<li>Tracer定义的spanID和traceID.</li>
+</ul>
+</li>
+<li>任何Baggage Items.
+<ul>
+<li>需要跨进程边界传播的key:value数据对.</li>
+<li>其它对整个追踪访问有用的数据.</li>
+</ul>
+</li>
+</ol>
+<h3 id="举例">举例</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">    t=0            operation name: db_query               t=x
+
+     +-----------------------------------------------------+
+     | · · · · · · · · · ·    Span     · · · · · · · · · · |
+     +-----------------------------------------------------+
+
+Tags:
+- db.instance:&#34;customers&#34;
+- db.statement:&#34;SELECT * FROM mytable WHERE foo=&#39;bar&#39;&#34;
+- peer.address:&#34;mysql://127.0.0.1:3306/customers&#34;
+
+Logs:
+- message:&#34;Can&#39;t connect to mysql server on &#39;127.0.0.1&#39;(10061)&#34;
+
+SpanContext:
+- trace_id:&#34;abc123&#34;
+- span_id:&#34;xyz789&#34;
+- Baggage Items:
+  - special_id:&#34;vsid1738&#34;
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="tracers">Tracers</h2>
+<h3 id="简介-1">简介</h3>
+<p>OpenTracing提供了一个开放的、与厂商无关的标准API,用来描述分布式事务,尤其是因果关系、语义和时间.它提供了一个通用的分布式上下文传播框架,该框架由以下API原语组成:</p>
+<ul>
+<li>在进程间传播元数据上下文.</li>
+<li>编码和解码元数据上下文之后,通过网络传输它用来进行进程间通信.</li>
+<li>因果关系追踪: 父子关系、分叉和连接.</li>
+</ul>
+<p>OpenTracing消除了众多分布式追踪系统之间的差异.这意味着无论开发人员使用哪个分布式追踪系统,追踪代码都将保持不变.为了在应用程序中使用OpenTracing规范的追踪代码,必须部署兼容OpenTracing的追踪系统,<a href="https://opentracing.io/docs/supported-tracers/" target="_blank" rel="noopener noreffer">已支持OpenTracing规范的追踪系统</a>.</p>
+<h3 id="tracer接口">Tracer接口</h3>
+<p>Tracer接口能创建<code>Spans</code>,还知道如何跨进程边界注入(序列化)和提取(反序列化)元数据,主要包含三个方面的能力:</p>
+<ul>
+<li>开启一个新的<code>Span</code>.</li>
+<li>将<code>SpanContext</code>注入到<code>carrier</code>中.</li>
+<li>从<code>carrier</code>中提取出<code>SpanContext</code>.</li>
+</ul>
+<p>以Golang语言为例:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer is a simple, thin interface for Span creation and SpanContext
+</span><span class="c1">// propagation.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Tracer</span> <span class="kd">interface</span> <span class="p">{</span>
+
+	<span class="c1">// Create, start, and return a new Span with the given `operationName` and
+</span><span class="c1"></span>	<span class="c1">// incorporate the given StartSpanOption `opts`. (Note that `opts` borrows
+</span><span class="c1"></span>	<span class="c1">// from the &#34;functional options&#34; pattern, per
+</span><span class="c1"></span>	<span class="c1">// http://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// A Span with no SpanReference options (e.g., opentracing.ChildOf() or
+</span><span class="c1"></span>	<span class="c1">// opentracing.FollowsFrom()) becomes the root of its own trace.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Examples:
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     var tracer opentracing.Tracer = ...
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // The root-span case:
+</span><span class="c1"></span>	<span class="c1">//     sp := tracer.StartSpan(&#34;GetFeed&#34;)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // The vanilla child span case:
+</span><span class="c1"></span>	<span class="c1">//     sp := tracer.StartSpan(
+</span><span class="c1"></span>	<span class="c1">//         &#34;GetFeed&#34;,
+</span><span class="c1"></span>	<span class="c1">//         opentracing.ChildOf(parentSpan.Context()))
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // All the bells and whistles:
+</span><span class="c1"></span>	<span class="c1">//     sp := tracer.StartSpan(
+</span><span class="c1"></span>	<span class="c1">//         &#34;GetFeed&#34;,
+</span><span class="c1"></span>	<span class="c1">//         opentracing.ChildOf(parentSpan.Context()),
+</span><span class="c1"></span>	<span class="c1">//         opentracing.Tag{&#34;user_agent&#34;, loggedReq.UserAgent},
+</span><span class="c1"></span>	<span class="c1">//         opentracing.StartTime(loggedReq.Timestamp),
+</span><span class="c1"></span>	<span class="c1">//     )
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="nf">StartSpan</span><span class="p">(</span><span class="nx">operationName</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">StartSpanOption</span><span class="p">)</span> <span class="nx">Span</span>
+
+	<span class="c1">// Inject() takes the `sm` SpanContext instance and injects it for
+</span><span class="c1"></span>	<span class="c1">// propagation within `carrier`. The actual type of `carrier` depends on
+</span><span class="c1"></span>	<span class="c1">// the value of `format`.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// OpenTracing defines a common set of `format` values (see BuiltinFormat),
+</span><span class="c1"></span>	<span class="c1">// and each has an expected carrier type.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Other packages may declare their own `format` values, much like the keys
+</span><span class="c1"></span>	<span class="c1">// used by `context.Context` (see https://godoc.org/context#WithValue).
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Example usage (sans error handling):
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
+</span><span class="c1"></span>	<span class="c1">//     err := tracer.Inject(
+</span><span class="c1"></span>	<span class="c1">//         span.Context(),
+</span><span class="c1"></span>	<span class="c1">//         opentracing.HTTPHeaders,
+</span><span class="c1"></span>	<span class="c1">//         carrier)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// NOTE: All opentracing.Tracer implementations MUST support all
+</span><span class="c1"></span>	<span class="c1">// BuiltinFormats.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Implementations may return opentracing.ErrUnsupportedFormat if `format`
+</span><span class="c1"></span>	<span class="c1">// is not supported by (or not known by) the implementation.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Implementations may return opentracing.ErrInvalidCarrier or any other
+</span><span class="c1"></span>	<span class="c1">// implementation-specific error if the format is supported but injection
+</span><span class="c1"></span>	<span class="c1">// fails anyway.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// See Tracer.Extract().
+</span><span class="c1"></span>	<span class="nf">Inject</span><span class="p">(</span><span class="nx">sm</span> <span class="nx">SpanContext</span><span class="p">,</span> <span class="nx">format</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">carrier</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span>
+
+	<span class="c1">// Extract() returns a SpanContext instance given `format` and `carrier`.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// OpenTracing defines a common set of `format` values (see BuiltinFormat),
+</span><span class="c1"></span>	<span class="c1">// and each has an expected carrier type.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Other packages may declare their own `format` values, much like the keys
+</span><span class="c1"></span>	<span class="c1">// used by `context.Context` (see
+</span><span class="c1"></span>	<span class="c1">// https://godoc.org/golang.org/x/net/context#WithValue).
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Example usage (with StartSpan):
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     carrier := opentracing.HTTPHeadersCarrier(httpReq.Header)
+</span><span class="c1"></span>	<span class="c1">//     clientContext, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//     // ... assuming the ultimate goal here is to resume the trace with a
+</span><span class="c1"></span>	<span class="c1">//     // server-side Span:
+</span><span class="c1"></span>	<span class="c1">//     var serverSpan opentracing.Span
+</span><span class="c1"></span>	<span class="c1">//     if err == nil {
+</span><span class="c1"></span>	<span class="c1">//         span = tracer.StartSpan(
+</span><span class="c1"></span>	<span class="c1">//             rpcMethodName, ext.RPCServerOption(clientContext))
+</span><span class="c1"></span>	<span class="c1">//     } else {
+</span><span class="c1"></span>	<span class="c1">//         span = tracer.StartSpan(rpcMethodName)
+</span><span class="c1"></span>	<span class="c1">//     }
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// NOTE: All opentracing.Tracer implementations MUST support all
+</span><span class="c1"></span>	<span class="c1">// BuiltinFormats.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// Return values:
+</span><span class="c1"></span>	<span class="c1">//  - A successful Extract returns a SpanContext instance and a nil error
+</span><span class="c1"></span>	<span class="c1">//  - If there was simply no SpanContext to extract in `carrier`, Extract()
+</span><span class="c1"></span>	<span class="c1">//    returns (nil, opentracing.ErrSpanContextNotFound)
+</span><span class="c1"></span>	<span class="c1">//  - If `format` is unsupported or unrecognized, Extract() returns (nil,
+</span><span class="c1"></span>	<span class="c1">//    opentracing.ErrUnsupportedFormat)
+</span><span class="c1"></span>	<span class="c1">//  - If there are more fundamental problems with the `carrier` object,
+</span><span class="c1"></span>	<span class="c1">//    Extract() may return opentracing.ErrInvalidCarrier,
+</span><span class="c1"></span>	<span class="c1">//    opentracing.ErrSpanContextCorrupted, or implementation-specific
+</span><span class="c1"></span>	<span class="c1">//    errors.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// See Tracer.Inject().
+</span><span class="c1"></span>	<span class="nf">Extract</span><span class="p">(</span><span class="nx">format</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">carrier</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">(</span><span class="nx">SpanContext</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="设置tracer">设置Tracer</h3>
+<p>实现了<code>Tracer</code>接口的对象,主要用来记录<code>Spans</code>并发布到某个位置.应用程序如何处理Tracer对象取决于开发人员:可以直接在整个应用程序中使用它,或将其存储在<code>GlobalTracer</code>中.</p>
+<p>不同的Tracer实现在初始化时接收参数的方式和接收的参数有所不同,如下:</p>
+<ul>
+<li>应用程序的追踪组件名称.</li>
+<li>分布式追踪系统的Endpoint.</li>
+<li>分布式追踪系统的安全连接.</li>
+<li>采样策略.</li>
+</ul>
+<p>一旦Tracer对象实例被创建出来,就可以用来手工创建<code>Span</code>,或传递该对象到框架或库中.</p>
+<p>为了不强制用户传递<code>Tracer</code>对象,提供了一个全局的<code>GlobalTracer</code>实例来存储<code>Tracer</code>对象,在任何地方都可以通过该全局实例来获取<code>Tracer</code>对象.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">registeredTracer</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">tracer</span>       <span class="nx">Tracer</span>
+	<span class="nx">isRegistered</span> <span class="kt">bool</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="p">(</span>
+	<span class="nx">globalTracer</span> <span class="p">=</span> <span class="nx">registeredTracer</span><span class="p">{</span><span class="nx">NoopTracer</span><span class="p">{},</span> <span class="kc">false</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1">// SetGlobalTracer sets the [singleton] opentracing.Tracer returned by
+</span><span class="c1">// GlobalTracer(). Those who use GlobalTracer (rather than directly manage an
+</span><span class="c1">// opentracing.Tracer instance) should call SetGlobalTracer as early as
+</span><span class="c1">// possible in main(), prior to calling the `StartSpan` global func below.
+</span><span class="c1">// Prior to calling `SetGlobalTracer`, any Spans started via the `StartSpan`
+</span><span class="c1">// (etc) globals are noops.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">SetGlobalTracer</span><span class="p">(</span><span class="nx">tracer</span> <span class="nx">Tracer</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">globalTracer</span> <span class="p">=</span> <span class="nx">registeredTracer</span><span class="p">{</span><span class="nx">tracer</span><span class="p">,</span> <span class="kc">true</span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// GlobalTracer returns the global singleton `Tracer` implementation.
+</span><span class="c1">// Before `SetGlobalTracer()` is called, the `GlobalTracer()` is a noop
+</span><span class="c1">// implementation that drops all data handed to it.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">GlobalTracer</span><span class="p">()</span> <span class="nx">Tracer</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">globalTracer</span><span class="p">.</span><span class="nx">tracer</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="开启一个新的trace">开启一个新的Trace</h3>
+<p>当创建一个新的<code>Span</code>且该<code>Span</code>没有关联到一个父<code>Span</code>时,一个新的trace就开启了.当创建一个新的<code>Span</code>时,需要为其定义一个<code>operation name</code>,主要用来帮助确定<code>Span</code>与代码的关联关系.</p>
+<p><code>Span</code>之间的关联关系目前支持<code>ChildOf</code>和<code>FollowsFrom</code>:</p>
+<ul>
+<li><code>ChildOf</code>,表示两个<code>Span</code>之间存在父子关系.子<code>Span</code>是在父<code>Span</code>内执行的一个子流程.</li>
+<li><code>FollowsFrom</code>,表示两个<code>Span</code>之间是独立的,父<code>Span</code>不依赖新的<code>Span</code>的执行结果,主要用于pipiline.</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ChildOfRef refers to a parent Span that caused *and* somehow depends
+</span><span class="c1">// upon the new child Span. Often (but not always), the parent Span cannot
+</span><span class="c1">// finish until the child Span does.
+</span><span class="c1">//
+</span><span class="c1">// An timing diagram for a ChildOfRef that&#39;s blocked on the new Span:
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span---------]
+</span><span class="c1">//          [-Child Span----]
+</span><span class="c1">//
+</span><span class="c1">// See http://opentracing.io/spec/
+</span><span class="c1">//
+</span><span class="c1">// See opentracing.ChildOf()
+</span><span class="c1"></span><span class="nx">ChildOfRef</span> <span class="nx">SpanReferenceType</span> <span class="p">=</span> <span class="kc">iota</span>
+
+<span class="c1">// FollowsFromRef refers to a parent Span that does not depend in any way
+</span><span class="c1">// on the result of the new child Span. For instance, one might use
+</span><span class="c1">// FollowsFromRefs to describe pipeline stages separated by queues,
+</span><span class="c1">// or a fire-and-forget cache insert at the tail end of a web request.
+</span><span class="c1">//
+</span><span class="c1">// A FollowsFromRef Span is part of the same logical trace as the new Span:
+</span><span class="c1">// i.e., the new Span is somehow caused by the work of its FollowsFromRef.
+</span><span class="c1">//
+</span><span class="c1">// All of the following could be valid timing diagrams for children that
+</span><span class="c1">// &#34;FollowFrom&#34; a parent.
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span-]  [-Child Span-]
+</span><span class="c1">//
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span--]
+</span><span class="c1">//      [-Child Span-]
+</span><span class="c1">//
+</span><span class="c1">//
+</span><span class="c1">//     [-Parent Span-]
+</span><span class="c1">//                 [-Child Span-]
+</span><span class="c1">//
+</span><span class="c1">// See http://opentracing.io/spec/
+</span><span class="c1">//
+</span><span class="c1">// See opentracing.FollowsFrom()
+</span><span class="c1"></span><span class="nx">FollowsFromRef</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="传播追踪信息">传播追踪信息</h3>
+<p>为了在分布式系统中跨进程边界进行追踪,服务需要具备继续追踪每个被客户端注入追踪信息的请求.OpenTracing通过提供了<code>Inject</code>和<code>Extract</code>方法来实现此目标,将<code>Span</code>的上下文编码为载体.<code>Inject</code>方法可以将<code>SpanContext</code>传递到<code>carrier</code>中.举例,传递追踪信息到客户端请求中,这样下游服务就能继续进行跟踪了.<code>Extract</code>方法作用是相反的,从<code>carrier</code>中提取出<code>SpanContext</code>.
+<figure><a class="lightgallery" href="/images/tracing_extract.png" title="跨进程追踪" data-thumbnail="/images/tracing_extract.png" data-sub-html="<h2>跨进程边界追踪</h2><p>跨进程追踪</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/tracing_extract.png"
+            data-srcset="/images/tracing_extract.png, /images/tracing_extract.png 1.5x, /images/tracing_extract.png 2x"
+            data-sizes="auto"
+            alt="/images/tracing_extract.png" />
+    </a><figcaption class="image-caption">跨进程边界追踪</figcaption>
+    </figure></p>
+<h2 id="inject和extract">Inject和Extract</h2>
+<p>开发人员在添加跨进程边界的追踪代码时必须懂得OpenTracing规范中定义的<code>Tracer.Inject</code>和<code>Tracer.Extract</code>的能力.它们在概念上很强大,允许开发人员编写正确和通用的跨进程传播代码,而不用绑定到某种特定的OpenTracing实现上.</p>
+<p>无论特定的OpenTracing语言或具体的实现如何,下面会简要介绍Inject和Extract的设计以及正确使用.</p>
+<h3 id="用于追踪传播的全景图">用于追踪传播的全景图</h3>
+<p>对于分布式追踪系统来说最困难的部分是分布式.任何追踪系统都需要一种了解许多不同进程中活动之间的因果关系的方式,不论这些进程是通过RPC框架、订阅/发布系统、通用消息队列、HTTP调用、UDP或其它方式连接的.</p>
+<p>有些分布式追踪系统(2003年的<a href="http://dl.acm.org/citation.cfm?id=945454" target="_blank" rel="noopener noreffer">Project5</a>,或2006年的<a href="http://www.2006.org/programme/item.php?id=2033" target="_blank" rel="noopener noreffer">WAP5</a>或2014年的<a href="https://www.usenix.org/node/186168" target="_blank" rel="noopener noreffer">The Mystery Machine</a>)可以推断出跨进程边界的因果关系.</p>
+<h3 id="opentracing传播方案的要求">OpenTracing传播方案的要求</h3>
+<p>为了使<code>Inject</code>和<code>Extract</code>方案有效,必须满足以下所有条件:</p>
+<ul>
+<li>使用OpenTracing在跨进程传播时必须不能依赖特定分布式追踪系统的代码.</li>
+<li>实现OpenTracing规范的系统必须不能为每种已知的进程间通信机制做特殊处理,否则会有太多的工作,甚至定义不明确.</li>
+<li>传播机制为了优化可扩展.</li>
+</ul>
+<h3 id="基本元素injectextract和carriers">基本元素:Inject,Extract和Carriers</h3>
+<p>trace中的任何<code>SpanContext</code>都可以注入到OpenTracing称为<code>Carriers</code>之中,<code>Carriers</code>可以是接口或者结构,可用于进程间通信(IPC).把trace的状态从一个进程传递到另一个进程.OpenTracing规范包含两种<code>Carriesrs</code>格式,但也可以自定义格式.</p>
+<p>类似的,给定一个被注入了trace的<code>Carriers</code>,可以被提取出来从而生成一个<code>SpanContext</code>实例,该实例在语义上与被注入到<code>Carriers</code>中的保持一致.</p>
+<p><strong>Inject代码</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
+<span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Inject</span><span class="p">(</span><span class="nx">span</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>Extract代码</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
+<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">md</span> <span class="p">{</span>
+    <span class="nx">carrier</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="p">}</span>
+
+<span class="nx">spanctx</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
+<span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">FullMethod</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">spanctx</span><span class="p">))</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="injectextract格式">Inject/Extract格式</h3>
+<p>支持OpenTracing规范的所有追踪系统都必须支持两个格式:<code>text map</code>格式和<code>binary</code>格式.</p>
+<ul>
+<li>text map格式是一个string-&gt;string的映射.</li>
+<li>binary格式是不透明的字节数组(并且可能更紧凑和高效).</li>
+</ul>
+<p>OpenTracing规范并没有规定怎么去存储这些<code>Carriers</code>,但前提是要找到一种方法对传播的SpanContext的trace状态进行编码(例如,在Dapper中定义了<code>trace_id</code>,<code>span_id</code>,还有采样状态掩码)以及任何key:value的Baggage Items.</p>
+<p>不能指望不同的分布式追踪系统(实现了OpenTracing规范的)以兼容的方式注入和提取<code>SpanContext</code>,虽然OpenTracing对于跨整个分布式系统的跟踪的具体实现是不可知的,但对于传播双方的进程都使用相同的实现.</p>
+<p><strong>一个端到端的传播例子</strong></p>
+<ul>
+<li>客户端进程拥有一个<code>SpanContext</code>实例,准备发起一个基于HTTP协议的RPC请求.</li>
+<li>客户端调用<code>Tracer.Inject(...)</code>,传递当前的<code>SpanContext</code>实例,采用<code>text map</code>格式,把其作为参数.</li>
+<li>Inject把<code>text map</code>注入到Carrier中,客户端程序把数据编码写入HTTP协议中(一般是放入headers中).</li>
+<li>发起HTTP请求,数据跨进程边界传输.</li>
+<li>在服务端,应用程序从HTTP协议中提取text map数据,并初始化为一个Carrier.</li>
+<li>服务端程序调用<code>Tracer.Extract(...)</code>,传入text map格式的名称和上面生成的Carrier.</li>
+<li>在没有数据损坏或其它错误的情况下,服务端获取了一个<code>SpanContext</code>实例,和客户端的是同一个.</li>
+</ul>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-10</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" data-title="OpenTracing分布式链路追踪" data-via="shenbaise9527" data-hashtags="OpenTracing"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" data-hashtag="OpenTracing"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/opentracing%E5%88%86%E5%B8%83%E5%BC%8F%E9%93%BE%E8%B7%AF%E8%BF%BD%E8%B8%AA/" data-title="OpenTracing分布式链路追踪"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/opentracing/">OpenTracing</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/cmake%E8%AF%AD%E6%B3%95%E8%AF%B4%E6%98%8E/" class="prev" rel="prev" title="CMake语法说明"><i class="fas fa-angle-left fa-fw"></i>CMake语法说明</a>
+            <a href="/opentracing%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="next" rel="next" title="OpenTracing最佳实践">OpenTracing最佳实践<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>
