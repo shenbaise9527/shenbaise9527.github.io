@@ -4,9 +4,16 @@
         <link>https://shenbaise9527.com/</link>
         <description>深白色9527</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
-            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Thu, 10 Dec 2020 21:35:42 &#43;0800</lastBuildDate>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 14 Dec 2020 21:06:14 &#43;0800</lastBuildDate>
             <atom:link href="https://shenbaise9527.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>Jaeger指南</title>
+    <link>https://shenbaise9527.com/jaeger%E6%8C%87%E5%8D%97/</link>
+    <pubDate>Mon, 14 Dec 2020 21:06:14 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/jaeger%E6%8C%87%E5%8D%97/</guid>
+    <description><![CDATA[系统架构 组件 jaeger即可以作为单体应用来部署(所有jaeger后台组件全部运行在一个进程内),也可以作为一个可扩展的分布式系统来部署.如]]></description>
+</item><item>
     <title>Zipkin指南</title>
     <link>https://shenbaise9527.com/zipkin%E6%8C%87%E5%8D%97/</link>
     <pubDate>Thu, 10 Dec 2020 21:35:42 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://shenbaise9527.com/mysql%E4%B9%8Binnodb%E7%B4%A2%E5%BC%95/</guid>
     <description><![CDATA[B+树 基于N叉树(每个父节点有N个子节点,子节点的值从左到右按照从小到大的顺序排列),非叶子节点只存储索引值,叶子节点储存索引值和数据,所有]]></description>
-</item><item>
-    <title>golang数据类型</title>
-    <link>https://shenbaise9527.com/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</link>
-    <pubDate>Sun, 22 Nov 2020 11:41:27 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://shenbaise9527.com/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</guid>
-    <description><![CDATA[主要包含基本的内建类型(布尔类型、数值类型和字符串类型)和复合类型(array、slice、map、channel、function、str]]></description>
 </item></channel>
 </rss>
