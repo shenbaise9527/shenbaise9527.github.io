@@ -149,14 +149,14 @@ Jaeger库实现了一致性的前端(或基于头部的)采样.举例,假设我�
 主要的Jaeger后端组件已经作为镜像发布在[Docker Hub](https://hub.docker.com)上:
 |组件|仓库地址|
 |:--|:--|
-|jaeger-agent|hub.docker.com/r/jaegertracing/jaeger-agent|
-|jaeger-collector|hub.docker.com/r/jaegertracing/jaeger-collector|
-|jaeger-query|hub.docker.com/r/jaegertracing/jaeger-query|
-|jaeger-ingester|hub.docker.com/r/jaegertracing/jaeger-ingester|
+|jaeger-agent|[hub.docker.com/r/jaegertracing/jaeger-agent](https://hub.docker.com/r/jaegertracing/jaeger-agent)|
+|jaeger-collector|[hub.docker.com/r/jaegertracing/jaeger-collector](https://hub.docker.com/r/jaegertracing/jaeger-collector)|
+|jaeger-query|[hub.docker.com/r/jaegertracing/jaeger-query](https://hub.docker.com/r/jaegertracing/jaeger-query)|
+|jaeger-ingester|[hub.docker.com/r/jaegertracing/jaeger-ingester](https://hub.docker.com/r/jaegertracing/jaeger-ingester)|
 
 下面是为了运行Jaeger而编排的模板:
-* Kubernetes: [jaeger-kubernetes](github.com/jaegertracing/jaeger-kubernetes)
-* OpenShift: [jaeger-openshit](github.com/jaegertracing/jaeger-openshit)
+* Kubernetes: [jaeger-kubernetes](https://github.com/jaegertracing/jaeger-kubernetes)
+* OpenShift: [jaeger-openshit](https://github.com/jaegertracing/jaeger-openshit)
 
 ### 配置选项
 Jaeger二进制文件可以采用下面几种方式来配置(优先级递减):

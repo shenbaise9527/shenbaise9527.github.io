@@ -4,7 +4,14 @@
         <link>https://shenbaise9527.com/tags/opentracing/</link>
         <description>OpenTracing - 标签 - 深白色9527</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
-            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Mon, 14 Dec 2020 21:06:14 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/opentracing/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Thu, 17 Dec 2020 21:29:12 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/opentracing/" rel="self" type="application/rss+xml" /><item>
+    <title>Jaeger实战</title>
+    <link>https://shenbaise9527.com/jaeger%E5%AE%9E%E6%88%98/</link>
+    <pubDate>Thu, 17 Dec 2020 21:29:12 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/jaeger%E5%AE%9E%E6%88%98/</guid>
+    <description><![CDATA[部署 基于Docker 所有组件基于Docker,后端存储采用Elasticsearch.docker-compose.yml文件如下: 1 2 3 4]]></description>
+</item><item>
     <title>Jaeger指南</title>
     <link>https://shenbaise9527.com/jaeger%E6%8C%87%E5%8D%97/</link>
     <pubDate>Mon, 14 Dec 2020 21:06:14 &#43;0800</pubDate>
