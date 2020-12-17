@@ -29,7 +29,7 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/shenbaise9527.com\/jaeger%E5%AE%9E%E6%88%98\/"
-        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "OpenTracing","wordcount":  2549 ,
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "OpenTracing","wordcount":  2421 ,
         "url": "https:\/\/shenbaise9527.com\/jaeger%E5%AE%9E%E6%88%98\/","datePublished": "2020-12-17T21:29:12+08:00","dateModified": "2020-12-17T21:29:12+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
             "@type": "Organization",
             "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
@@ -106,8 +106,8 @@
             <div class="toc-content" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Jaeger实战</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-17">2020-12-17</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2549 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 6 分钟&nbsp;</div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-17">2020-12-17</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2421 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 5 分钟&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
                 <div class="details-summary toc-title">
                     <span>目录</span>
@@ -666,14 +666,6 @@ D:<span class="se">\p</span>roject<span class="se">\j</span>aeger&gt;query.exe -
 </span><span class="lnt">43
 </span><span class="lnt">44
 </span><span class="lnt">45
-</span><span class="lnt">46
-</span><span class="lnt">47
-</span><span class="lnt">48
-</span><span class="lnt">49
-</span><span class="lnt">50
-</span><span class="lnt">51
-</span><span class="lnt">52
-</span><span class="lnt">53
 </span></code></pre></td>
 <td class="lntd">
 <pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 主要记录http的statuscode.
@@ -699,20 +691,12 @@ D:<span class="se">\p</span>roject<span class="se">\j</span>aeger&gt;query.exe -
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">HttpTracing</span><span class="p">(</span><span class="nx">next</span> <span class="nx">http</span><span class="p">.</span><span class="nx">HandlerFunc</span><span class="p">)</span> <span class="nx">http</span><span class="p">.</span><span class="nx">HandlerFunc</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
         <span class="c1">// 获取全局tracer对象.
-</span><span class="c1"></span>        <span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
-        
+</span><span class="c1"></span>		<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
         <span class="c1">// 尝试从http的Header中提取上游的SpanContext.
-</span><span class="c1"></span>		<span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
-		<span class="nx">spanCtx</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
-		<span class="kd">var</span> <span class="nx">span</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Span</span>
-		<span class="k">if</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-            <span class="c1">// 如果提取成功,就在其基础上创建一个子Span.
-</span><span class="c1"></span>			<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RequestURI</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">spanCtx</span><span class="p">))</span>
-		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-            <span class="c1">// 直接新建一个新的Span,表示一个新的Trace的开始.
-</span><span class="c1"></span>			<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RequestURI</span><span class="p">)</span>
-		<span class="p">}</span>
-
+</span><span class="c1"></span>		<span class="nx">spanCtx</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span>
+			<span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span>
+			<span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">))</span>
+		<span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">RequestURI</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">spanCtx</span><span class="p">))</span>
 		<span class="nx">ext</span><span class="p">.</span><span class="nx">HTTPMethod</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nx">Method</span><span class="p">)</span>
 		<span class="k">defer</span> <span class="nx">span</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
 		<span class="nx">cw</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">withHTTPCodeResponse</span><span class="p">{</span><span class="nx">writer</span><span class="p">:</span> <span class="nx">w</span><span class="p">}</span>
@@ -793,13 +777,13 @@ D:<span class="se">\p</span>roject<span class="se">\j</span>aeger&gt;query.exe -
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">OpenTracingClientInterceptor</span><span class="p">()</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">UnaryClientInterceptor</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">method</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">reply</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">cc</span> <span class="o">*</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">invoker</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">UnaryInvoker</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">CallOption</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
         <span class="c1">// 从Context中尝试提取Span对象.
-</span><span class="c1"></span>        <span class="nx">span</span> <span class="o">:=</span> <span class="nf">ChildOfSpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">method</span><span class="p">)</span>
+</span><span class="c1"></span>		<span class="nx">span</span> <span class="o">:=</span> <span class="nf">ChildOfSpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">method</span><span class="p">)</span>
         <span class="c1">// 设置tag.
 </span><span class="c1"></span>		<span class="nx">ext</span><span class="p">.</span><span class="nx">Component</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="s">&#34;grpc&#34;</span><span class="p">)</span>
-		<span class="nx">ext</span><span class="p">.</span><span class="nx">SpanKind</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">ext</span><span class="p">.</span><span class="nx">SpanKindRPCClientEnum</span><span class="p">)</span>
+		<span class="nx">ext</span><span class="p">.</span><span class="nx">SpanKindRPCClient</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">)</span>
 		<span class="k">defer</span> <span class="nx">span</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
 		<span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
-        <span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+		<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
         <span class="c1">// 把SpanContext注入到Carrier中.
 </span><span class="c1"></span>		<span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Inject</span><span class="p">(</span><span class="nx">span</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
 		<span class="k">if</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
@@ -878,20 +862,13 @@ D:<span class="se">\p</span>roject<span class="se">\j</span>aeger&gt;query.exe -
 </span><span class="lnt">29
 </span><span class="lnt">30
 </span><span class="lnt">31
-</span><span class="lnt">32
-</span><span class="lnt">33
-</span><span class="lnt">34
-</span><span class="lnt">35
-</span><span class="lnt">36
-</span><span class="lnt">37
-</span><span class="lnt">38
 </span></code></pre></td>
 <td class="lntd">
 <pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// OpenTracingServerInterceptor grpc unary serverinterceptor.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">OpenTracingServerInterceptor</span><span class="p">()</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">UnaryServerInterceptor</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">req</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">info</span> <span class="o">*</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">UnaryServerInfo</span><span class="p">,</span> <span class="nx">handler</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">UnaryHandler</span><span class="p">)</span> <span class="p">(</span><span class="nx">resp</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 		<span class="nx">md</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">metadata</span><span class="p">.</span><span class="nf">FromIncomingContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
-		<span class="kd">var</span> <span class="nx">span</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Span</span>
+		<span class="kd">var</span> <span class="nx">spanCtx</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">SpanContext</span>
 		<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
 		<span class="k">if</span> <span class="nx">ok</span> <span class="p">{</span>
             <span class="c1">// 从gRPC的元数据中提取SpanContext.
@@ -901,20 +878,13 @@ D:<span class="se">\p</span>roject<span class="se">\j</span>aeger&gt;query.exe -
 			<span class="p">}</span>
 
             <span class="c1">// 提取成功,生成子Span对象.
-</span><span class="c1"></span>			<span class="k">if</span> <span class="nx">spanCtx</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">);</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-				<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">FullMethod</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ChildOf</span><span class="p">(</span><span class="nx">spanCtx</span><span class="p">))</span>
-			<span class="p">}</span>
+</span><span class="c1"></span>			<span class="nx">spanCtx</span><span class="p">,</span> <span class="nx">_</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
 		<span class="p">}</span>
 
-		<span class="k">if</span> <span class="nx">span</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-            <span class="c1">// 创建新的Span,表示一个新的Trace的开始.
-</span><span class="c1"></span>			<span class="nx">span</span> <span class="p">=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">FullMethod</span><span class="p">)</span>
-		<span class="p">}</span>
-
+		<span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">FullMethod</span><span class="p">,</span> <span class="nx">ext</span><span class="p">.</span><span class="nf">RPCServerOption</span><span class="p">(</span><span class="nx">spanCtx</span><span class="p">))</span>
         <span class="c1">// 设置tag.
-</span><span class="c1"></span>        <span class="nx">ext</span><span class="p">.</span><span class="nx">Component</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="s">&#34;grpc&#34;</span><span class="p">)</span>
-		<span class="nx">ext</span><span class="p">.</span><span class="nx">SpanKind</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="nx">ext</span><span class="p">.</span><span class="nx">SpanKindRPCServerEnum</span><span class="p">)</span>
-        <span class="k">defer</span> <span class="nx">span</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
+</span><span class="c1"></span>		<span class="nx">ext</span><span class="p">.</span><span class="nx">Component</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">span</span><span class="p">,</span> <span class="s">&#34;grpc&#34;</span><span class="p">)</span>
+		<span class="k">defer</span> <span class="nx">span</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
         <span class="c1">// 把Span对象放入到Context中,来传递到业务代码中.
 </span><span class="c1"></span>		<span class="nx">ctx</span> <span class="p">=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">ContextWithSpan</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">span</span><span class="p">)</span>
 		<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">handler</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">req</span><span class="p">)</span>

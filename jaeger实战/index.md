@@ -282,20 +282,12 @@ func (w *withHTTPCodeResponse) WriteHeader(code int) {
 func HttpTracing(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
         // 获取全局tracer对象.
-        tracer := opentracing.GlobalTracer()
-        
+		tracer := opentracing.GlobalTracer()
         // 尝试从http的Header中提取上游的SpanContext.
-		carrier := opentracing.HTTPHeadersCarrier(r.Header)
-		spanCtx, err := tracer.Extract(opentracing.HTTPHeaders, carrier)
-		var span opentracing.Span
-		if err == nil {
-            // 如果提取成功,就在其基础上创建一个子Span.
-			span = tracer.StartSpan(r.RequestURI, opentracing.ChildOf(spanCtx))
-		} else {
-            // 直接新建一个新的Span,表示一个新的Trace的开始.
-			span = tracer.StartSpan(r.RequestURI)
-		}
-
+		spanCtx, _ := tracer.Extract(
+			opentracing.HTTPHeaders,
+			opentracing.HTTPHeadersCarrier(r.Header))
+		span := tracer.StartSpan(r.RequestURI, opentracing.ChildOf(spanCtx))
 		ext.HTTPMethod.Set(span, r.Method)
 		defer span.Finish()
 		cw := &withHTTPCodeResponse{writer: w}
@@ -320,13 +312,13 @@ func HttpTracing(next http.HandlerFunc) http.HandlerFunc {
 func OpenTracingClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
         // 从Context中尝试提取Span对象.
-        span := ChildOfSpanFromContext(ctx, method)
+		span := ChildOfSpanFromContext(ctx, method)
         // 设置tag.
 		ext.Component.Set(span, "grpc")
-		ext.SpanKind.Set(span, ext.SpanKindRPCClientEnum)
+		ext.SpanKindRPCClient.Set(span)
 		defer span.Finish()
 		carrier := make(opentracing.TextMapCarrier)
-        tracer := opentracing.GlobalTracer()
+		tracer := opentracing.GlobalTracer()
         // 把SpanContext注入到Carrier中.
 		err := tracer.Inject(span.Context(), opentracing.TextMap, carrier)
 		if err == nil {
@@ -377,7 +369,7 @@ func newSubSpanFromContext(
 func OpenTracingServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		md, ok := metadata.FromIncomingContext(ctx)
-		var span opentracing.Span
+		var spanCtx opentracing.SpanContext
 		tracer := opentracing.GlobalTracer()
 		if ok {
             // 从gRPC的元数据中提取SpanContext.
@@ -387,20 +379,13 @@ func OpenTracingServerInterceptor() grpc.UnaryServerInterceptor {
 			}
 
             // 提取成功,生成子Span对象.
-			if spanCtx, err := tracer.Extract(opentracing.TextMap, carrier); err == nil {
-				span = tracer.StartSpan(info.FullMethod, opentracing.ChildOf(spanCtx))
-			}
+			spanCtx, _ = tracer.Extract(opentracing.TextMap, carrier)
 		}
 
-		if span == nil {
-            // 创建新的Span,表示一个新的Trace的开始.
-			span = tracer.StartSpan(info.FullMethod)
-		}
-
+		span := tracer.StartSpan(info.FullMethod, ext.RPCServerOption(spanCtx))
         // 设置tag.
-        ext.Component.Set(span, "grpc")
-		ext.SpanKind.Set(span, ext.SpanKindRPCServerEnum)
-        defer span.Finish()
+		ext.Component.Set(span, "grpc")
+		defer span.Finish()
         // 把Span对象放入到Context中,来传递到业务代码中.
 		ctx = opentracing.ContextWithSpan(ctx, span)
 		resp, err = handler(ctx, req)
