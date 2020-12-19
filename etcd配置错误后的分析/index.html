@@ -415,9 +415,9 @@
 <p>查看etcd的部署文件<code>docker-compose.yml</code>,发现配置为<code>- &quot;ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379&quot;</code>,把配置修改为<code>http://192.168.20.151:2379</code>,该问题消失.</p>
 <h2 id="总结">总结</h2>
 <h3 id="配置文档">配置文档</h3>
-<p>在<a href="https://etcd.io/docs/v3.4.0/faq/" target="_blank" rel="noopener noreffer">官网文档</a>上其实已经提到了关于配置项的:
-<strong>Configuration</strong>
-What is the difference between <code>listen-&lt;client,peer&gt;-urls</code>, <code>advertise-client-urls</code> or <code>initial-advertise-peer-urls</code>?</p>
+<p>在<a href="https://etcd.io/docs/v3.4.0/faq/" target="_blank" rel="noopener noreffer">官网文档</a>上其实已经提到了关于配置项的:</p>
+<p><strong>Configuration</strong></p>
+<p>What is the difference between <code>listen-&lt;client,peer&gt;-urls</code>, <code>advertise-client-urls</code> or <code>initial-advertise-peer-urls</code>?</p>
 <p><code>listen-client-urls</code> and <code>listen-peer-urls</code> specify the local addresses etcd server binds to for accepting incoming connections. To listen on a port for all interfaces, specify <code>0.0.0.0</code> as the listen IP address.</p>
 <p><code>advertise-client-urls</code> and <code>initial-advertise-peer-urls</code> specify the addresses etcd clients or other etcd members should use to contact the etcd server. The advertise addresses must be reachable from the remote machines. Do not advertise addresses like <code>localhost</code> or <code>0.0.0.0</code> for a production setup since these addresses are unreachable from remote machines.</p>
 <p>明确提到了不要把<code>advertise-client-urls</code>和<code>initial-advertise-peer-urls</code>设置成<code>localhost</code>或<code>0.0.0.0</code>,这些地址从远程机器是不能访问的,应该配置为具体的IP地址.</p>
