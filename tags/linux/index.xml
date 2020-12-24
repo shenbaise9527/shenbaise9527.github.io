@@ -6,10 +6,10 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
             <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 03 Nov 2020 21:35:24 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/linux/" rel="self" type="application/rss+xml" /><item>
     <title>tcp连接过程</title>
-    <link>https://shenbaise9527.com/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</link>
+    <link>https://shenbaise9527.com/tcp-three-way-handshake/</link>
     <pubDate>Tue, 03 Nov 2020 21:35:24 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/tcp%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</guid>
+    <guid>https://shenbaise9527.com/tcp-three-way-handshake/</guid>
     <description><![CDATA[tcp建连接三次握手 客户端发送SYN到服务器发起握手. 服务器收到SYN后回复SYN+ACK给客户端. 客户端收到SYN+ACK后,回复服务器一]]></description>
 </item></channel>
 </rss>

@@ -6,73 +6,73 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
             <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Wed, 23 Dec 2020 20:58:37 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/go/" rel="self" type="application/rss+xml" /><item>
     <title>Etcd操作指南</title>
-    <link>https://shenbaise9527.com/etcd%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/</link>
+    <link>https://shenbaise9527.com/etcd-operation-guide/</link>
     <pubDate>Wed, 23 Dec 2020 20:58:37 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/etcd%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/</guid>
+    <guid>https://shenbaise9527.com/etcd-operation-guide/</guid>
     <description><![CDATA[简介 etcd是强一致性的,分布式KV存储,为分布式系统或集群提供可靠的数据存储.底层基于raft共识算法,可以在网络分区情况下正常进行lea]]></description>
 </item><item>
     <title>服务启动时连接etcd集群的告警分析</title>
-    <link>https://shenbaise9527.com/%E6%9C%8D%E5%8A%A1%E5%90%AF%E5%8A%A8%E6%97%B6%E8%BF%9E%E6%8E%A5etcd%E9%9B%86%E7%BE%A4%E7%9A%84%E5%91%8A%E8%AD%A6%E5%88%86%E6%9E%90/</link>
+    <link>https://shenbaise9527.com/etcd-application-start-warn/</link>
     <pubDate>Mon, 21 Dec 2020 21:18:21 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/%E6%9C%8D%E5%8A%A1%E5%90%AF%E5%8A%A8%E6%97%B6%E8%BF%9E%E6%8E%A5etcd%E9%9B%86%E7%BE%A4%E7%9A%84%E5%91%8A%E8%AD%A6%E5%88%86%E6%9E%90/</guid>
+    <guid>https://shenbaise9527.com/etcd-application-start-warn/</guid>
     <description><![CDATA[问题起因 通过docker-compose部署了3个节点的etcd集群,服务在启动时会随机报0个、1个或2个告警信息,信息如下: 1 2 3 4 5 6 7]]></description>
 </item><item>
     <title>Etcd配置错误后的分析</title>
-    <link>https://shenbaise9527.com/etcd%E9%85%8D%E7%BD%AE%E9%94%99%E8%AF%AF%E5%90%8E%E7%9A%84%E5%88%86%E6%9E%90/</link>
+    <link>https://shenbaise9527.com/etcd-configure-error/</link>
     <pubDate>Sat, 19 Dec 2020 11:09:19 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/etcd%E9%85%8D%E7%BD%AE%E9%94%99%E8%AF%AF%E5%90%8E%E7%9A%84%E5%88%86%E6%9E%90/</guid>
+    <guid>https://shenbaise9527.com/etcd-configure-error/</guid>
     <description><![CDATA[问题起因 在采用开源框架go-zero开发的过程中,服务在启动一段时间后控制台一直在报如下警告信息: 1 2 3 4 5 6 7 8 9 { &#34;level&#34;: &#34;warn&#34;, &#34;ts&#34;: &#34;2020-12-15T16:43:21.709+0800&#34;, &#34;caller&#34;: &#34;clientv3/retry_interceptor.go:62&#34;, &#34;msg&#34;: &#34;retrying of unary invoker]]></description>
 </item><item>
     <title>golang数据类型</title>
-    <link>https://shenbaise9527.com/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</link>
+    <link>https://shenbaise9527.com/golang-data-type/</link>
     <pubDate>Sun, 22 Nov 2020 11:41:27 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/golang%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</guid>
+    <guid>https://shenbaise9527.com/golang-data-type/</guid>
     <description><![CDATA[主要包含基本的内建类型(布尔类型、数值类型和字符串类型)和复合类型(array、slice、map、channel、function、str]]></description>
 </item><item>
     <title>gRPC系列之连接异常机制</title>
-    <link>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</link>
+    <link>https://shenbaise9527.com/grpc-connection-exception/</link>
     <pubDate>Sat, 07 Nov 2020 13:27:24 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E8%BF%9E%E6%8E%A5%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/</guid>
+    <guid>https://shenbaise9527.com/grpc-connection-exception/</guid>
     <description><![CDATA[连接server端失败的处理 重试机制 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52]]></description>
 </item><item>
     <title>gRPC系列之client和server的timetou机制</title>
-    <link>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</link>
+    <link>https://shenbaise9527.com/grpc-client-server-timeout/</link>
     <pubDate>Sat, 07 Nov 2020 13:22:04 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E5%92%8Cserver%E7%9A%84timetou%E6%9C%BA%E5%88%B6/</guid>
+    <guid>https://shenbaise9527.com/grpc-client-server-timeout/</guid>
     <description><![CDATA[客户端超时的处理 客户端在调用rpc接口时带timeout的context是如何传递给服务端的. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23]]></description>
 </item><item>
     <title>gRPC系列之client端调用</title>
-    <link>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+    <link>https://shenbaise9527.com/grpc-client-call/</link>
     <pubDate>Sat, 07 Nov 2020 13:16:47 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bclient%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+    <guid>https://shenbaise9527.com/grpc-client-call/</guid>
     <description><![CDATA[Dail/DailContext与服务端建立连接 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46]]></description>
 </item><item>
     <title>gRPC系列之server端调用</title>
-    <link>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</link>
+    <link>https://shenbaise9527.com/grpc-server-call/</link>
     <pubDate>Sat, 07 Nov 2020 11:47:48 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8Bserver%E7%AB%AF%E8%B0%83%E7%94%A8/</guid>
+    <guid>https://shenbaise9527.com/grpc-server-call/</guid>
     <description><![CDATA[NewServer创建gRPC服务对象 主要是基于grpc-go的1.33.1版本Unary RPC来分析. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18]]></description>
 </item><item>
     <title>gRPC系列之初识</title>
-    <link>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</link>
+    <link>https://shenbaise9527.com/grpc-first-introduction/</link>
     <pubDate>Fri, 06 Nov 2020 22:05:51 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/grpc%E7%B3%BB%E5%88%97%E4%B9%8B%E5%88%9D%E8%AF%86/</guid>
+    <guid>https://shenbaise9527.com/grpc-first-introduction/</guid>
     <description><![CDATA[RPC RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需]]></description>
 </item><item>
     <title>go性能分析</title>
-    <link>https://shenbaise9527.com/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</link>
+    <link>https://shenbaise9527.com/golang-pprof/</link>
     <pubDate>Tue, 03 Nov 2020 21:35:24 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/go%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/</guid>
+    <guid>https://shenbaise9527.com/golang-pprof/</guid>
     <description><![CDATA[性能分析 Go语言项目中的性能分析主要有以下几个方面: CPU profile: CPU使用情况,按照一定频率去采集应用程序在CPU和寄存器上面的数据. Memory profile(Heap profile): 报告程序]]></description>
 </item></channel>
 </rss>

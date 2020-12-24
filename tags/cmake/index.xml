@@ -6,10 +6,10 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
             <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 28 Nov 2020 20:06:39 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/cmake/" rel="self" type="application/rss+xml" /><item>
     <title>CMake语法说明</title>
-    <link>https://shenbaise9527.com/cmake%E8%AF%AD%E6%B3%95%E8%AF%B4%E6%98%8E/</link>
+    <link>https://shenbaise9527.com/cmake-description/</link>
     <pubDate>Sat, 28 Nov 2020 20:06:39 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/cmake%E8%AF%AD%E6%B3%95%E8%AF%B4%E6%98%8E/</guid>
+    <guid>https://shenbaise9527.com/cmake-description/</guid>
     <description><![CDATA[预定义变量 PROJECT_SOURCE_DIR 工程的根目录 PROJECT_BINARY_DIR 运行cmake命令的目录,通常是${PROJECT_SOURCE_DIR}/build CMAKE_INCLUDE_PATH 环境变量,非CMake变量]]></description>
 </item></channel>
 </rss>
