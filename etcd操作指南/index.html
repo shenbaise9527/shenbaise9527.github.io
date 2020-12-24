@@ -11,7 +11,7 @@
 <meta property="og:url" content="https://shenbaise9527.com/etcd%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97/" />
 <meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
 <meta property="article:published_time" content="2020-12-23T20:58:37+08:00" />
-<meta property="article:modified_time" content="2020-12-23T20:58:37+08:00" />
+<meta property="article:modified_time" content="2020-12-24T20:58:37+08:00" />
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -29,8 +29,8 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/shenbaise9527.com\/etcd%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97\/"
-        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go, etcd","wordcount":  7904 ,
-        "url": "https:\/\/shenbaise9527.com\/etcd%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97\/","datePublished": "2020-12-23T20:58:37+08:00","dateModified": "2020-12-23T20:58:37+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go, etcd","wordcount":  9002 ,
+        "url": "https:\/\/shenbaise9527.com\/etcd%E6%93%8D%E4%BD%9C%E6%8C%87%E5%8D%97\/","datePublished": "2020-12-23T20:58:37+08:00","dateModified": "2020-12-24T20:58:37+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
             "@type": "Organization",
             "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
                 "@type": "Person",
@@ -106,8 +106,8 @@
             <div class="toc-content" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Etcd操作指南</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-23">2020-12-23</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 7904 字&nbsp;
-                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 16 分钟&nbsp;</div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-23">2020-12-23</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 9002 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 18 分钟&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
                 <div class="details-summary toc-title">
                     <span>目录</span>
@@ -118,8 +118,22 @@
     <li><a href="#简介">简介</a></li>
     <li><a href="#部署">部署</a>
       <ul>
-        <li><a href="#基于源码">基于源码</a></li>
-        <li><a href="#基于docker">基于Docker</a></li>
+        <li><a href="#基于源码">基于源码</a>
+          <ul>
+            <li><a href="#编译">编译</a></li>
+            <li><a href="#集群方式运行">集群方式运行</a></li>
+            <li><a href="#查看集群状态">查看集群状态</a></li>
+            <li><a href="#集群节点的操作">集群节点的操作</a></li>
+            <li><a href="#基本操作">基本操作</a></li>
+          </ul>
+        </li>
+        <li><a href="#基于docker">基于Docker</a>
+          <ul>
+            <li><a href="#docker-compose文件">docker-compose文件</a></li>
+            <li><a href="#查看集群状态-1">查看集群状态</a></li>
+            <li><a href="#集群节点的操作-1">集群节点的操作</a></li>
+          </ul>
+        </li>
       </ul>
     </li>
     <li><a href="#基于clientv3与etcd交互">基于clientv3与etcd交互</a>
@@ -145,7 +159,7 @@
 <p>etcd是强一致性的,分布式KV存储,为分布式系统或集群提供可靠的数据存储.底层基于<a href="https://raft.github.io/raft.pdf" target="_blank" rel="noopener noreffer">raft</a>共识算法,可以在网络分区情况下正常进行leader选举,即便是leader节点出现故障.满足CAP中的CP.</p>
 <h2 id="部署">部署</h2>
 <h3 id="基于源码">基于源码</h3>
-<p><strong>编译</strong></p>
+<h4 id="编译">编译</h4>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt">1
@@ -164,7 +178,7 @@ git clone git@github.com:etcd-io/etcd.git
 make build
 </code></pre></td></tr></table>
 </div>
-</div><p><strong>集群方式运行</strong></p>
+</div><h4 id="集群方式运行">集群方式运行</h4>
 <p>在本机上起3个etcd实例,放在如下目录:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -283,7 +297,7 @@ nohup ./etcd3/etcd --data-dir<span class="o">=</span>./etcd3/data.etcd --name <s
 </span><span class="se"></span>    --initial-cluster-state <span class="si">${</span><span class="nv">CLUSTER_STATE</span><span class="si">}</span> --initial-cluster-token <span class="si">${</span><span class="nv">TOKEN</span><span class="si">}</span> &gt; etcd3.log 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
 </code></pre></td></tr></table>
 </div>
-</div><p><strong>查看集群状态</strong></p>
+</div><h4 id="查看集群状态">查看集群状态</h4>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt"> 1
@@ -340,7 +354,136 @@ $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span
 +------------------+------------------+-----------+---------+-----------+------------+-----------+------------+--------------------+--------+
 </code></pre></td></tr></table>
 </div>
-</div><p><strong>相关操作</strong></p>
+</div><h4 id="集群节点的操作">集群节点的操作</h4>
+<p>主要涉及移除节点和新增节点.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 查看集群列表.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [11:58:47] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span> started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span> started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b6187cecaa8144c3 <span class="p">|</span> started <span class="p">|</span> etcd-1 <span class="p">|</span> http://192.168.20.151:2380 <span class="p">|</span> http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+
+<span class="c1"># 移除节点etcd-1</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [12:04:08] C:128</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member remove b6187cecaa8144c3
+
+<span class="c1"># 当前集群只有两个节点了.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [12:08:23] </span>
+$ ./etcdctl --endpoints<span class="o">=</span>192.168.20.151:4379 --write-out<span class="o">=</span>table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span> started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span> started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+
+<span class="c1"># 增加节点到集群.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:01:11] C:1</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member add etcd-4 --peer-urls<span class="o">=</span>http://192.168.20.151:5380
+Member 235272797119041c added to cluster fba7dcb05a9bd527
+
+<span class="nv">ETCD_NAME</span><span class="o">=</span><span class="s2">&#34;etcd-4&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER</span><span class="o">=</span><span class="s2">&#34;etcd-4=http://192.168.20.151:5380,etcd-2=http://192.168.20.151:3380,etcd-3=http://192.168.20.151:4380&#34;</span>
+<span class="nv">ETCD_INITIAL_ADVERTISE_PEER_URLS</span><span class="o">=</span><span class="s2">&#34;http://192.168.20.151:5380&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER_STATE</span><span class="o">=</span><span class="s2">&#34;existing&#34;</span>
+
+<span class="c1"># 查看集群状态,新加入的节点为unstarted状态.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:02:52] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span>  STATUS   <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 235272797119041c <span class="p">|</span> unstarted <span class="p">|</span>        <span class="p">|</span> http://192.168.20.151:5380 <span class="p">|</span>                            <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span>   started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span>   started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+
+<span class="c1"># 启动新节点.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:14:00] </span>
+$ nohup ./etcd4/etcd --data-dir<span class="o">=</span>./etcd4/data.etcd --name etcd-4 --initial-advertise-peer-urls http://192.168.20.151:5380 --listen-peer-urls http://192.168.20.151:5380 --advertise-client-urls http://192.168.20.151:5379 --listen-client-urls http://192.168.20.151:5379 --initial-cluster etcd-2<span class="o">=</span>http://192.168.20.151:3380,etcd-3<span class="o">=</span>http://192.168.20.151:4380,etcd-4<span class="o">=</span>http://192.168.20.151:5380 --initial-cluster-state existing &gt; etcd4.log 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+
+<span class="c1"># 查看集群列表,新增节点成功.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:14:16] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 235272797119041c <span class="p">|</span> started <span class="p">|</span> etcd-4 <span class="p">|</span> http://192.168.20.151:5380 <span class="p">|</span> http://192.168.20.151:5379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span> started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span> started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="基本操作">基本操作</h4>
+<p>主要涉及数据的增删改查等操作.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt">  1
@@ -672,6 +815,7 @@ $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="基于docker">基于Docker</h3>
+<h4 id="docker-compose文件">docker-compose文件</h4>
 <p>使用docker-compose来统一部署,基于<code>quay.io/coreos/etcd:v3.4.14</code>镜像.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -835,9 +979,9 @@ $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span
 </span><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">etcdcluster</span><span class="w">
 </span></code></pre></td></tr></table>
 </div>
-</div><p>需要注意环境变量<code>ETCD_ADVERTISE_CLIENT_URLS</code>,被配置成了真实IP+映射后的端口,在客户端获取<code>MemberList</code>时会返回该变量的值,是可在外部访问的地址.</p>
+</div><p>需要注意环境变量<code>ETCD_ADVERTISE_CLIENT_URLS</code>,被配置成了真实IP+映射后的端口,在客户端获取<code>MemberList</code>时会返回该变量的值,客户端会通过该值来访问etcd.</p>
 <p>客户端会定时去同步参数,代码详见<code>etcd/clientv3/client.go:autoSync</code>,是通过定时器触发,调用<code>MemberList</code>方法来获取成员列表,并取其<code>ClientURLs</code>字段,来初始化客户端连接.</p>
-<p>查看集群状态</p>
+<h4 id="查看集群状态-1">查看集群状态</h4>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre class="chroma"><code><span class="lnt"> 1
@@ -858,9 +1002,30 @@ $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span
 </span><span class="lnt">16
 </span><span class="lnt">17
 </span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash">$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table endpoint status
+<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 查看容器运行状态.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:55:36] </span>
+$ docker-compose ps 
+Name          Command         State                        Ports                      
+--------------------------------------------------------------------------------------
+etcd1   /usr/local/bin/etcd   Up      0.0.0.0:2379-&gt;2379/tcp, 0.0.0.0:2380-&gt;2380/tcp  
+etcd2   /usr/local/bin/etcd   Up      0.0.0.0:12379-&gt;2379/tcp, 0.0.0.0:12380-&gt;2380/tcp
+etcd3   /usr/local/bin/etcd   Up      0.0.0.0:22379-&gt;2379/tcp, 0.0.0.0:22380-&gt;2380/tcp
+
+<span class="c1"># 查看节点状态.</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table endpoint status
 +----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
 -+<span class="p">|</span>       ENDPOINT       <span class="p">|</span>        ID        <span class="p">|</span> VERSION <span class="p">|</span> DB SIZE <span class="p">|</span> IS LEADER <span class="p">|</span> IS LEARNER <span class="p">|</span> RAFT TERM <span class="p">|</span> RAFT INDEX <span class="p">|</span> RAFT APPLIED INDEX <span class="p">|</span> ERRORS
  <span class="p">|</span>+----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
@@ -870,6 +1035,7 @@ $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span
  <span class="p">|</span>+----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
 -+
 
+<span class="c1"># 查看集群节点列表.</span>
 $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
 +------------------+---------+-------+-------------------+-----------------------------+------------+
 <span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
@@ -877,6 +1043,134 @@ $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span
 <span class="p">|</span>  c8f871bdf8305be <span class="p">|</span> started <span class="p">|</span> etcd2 <span class="p">|</span> http://etcd2:2380 <span class="p">|</span> http://192.168.20.151:12379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
 <span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
 <span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="集群节点的操作-1">集群节点的操作</h4>
+<p>在以docker方式运行时,如何操作节点的移除和新增?</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 查看集群节点列表.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:55:57] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>  c8f871bdf8305be <span class="p">|</span> started <span class="p">|</span> etcd2 <span class="p">|</span> http://etcd2:2380 <span class="p">|</span> http://192.168.20.151:12379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+
+<span class="c1"># 移除节点etcd2.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:56:03] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member remove c8f871bdf8305be
+Member  c8f871bdf8305be removed from cluster 1c510c68583e30d9
+
+<span class="c1"># 集群只有2个节点了.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:56:38] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+
+<span class="c1"># 容器运行状态,节点etcd2已停止.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:56:49] C:1</span>
+$ docker-compose ps 
+Name          Command         State                         Ports                      
+---------------------------------------------------------------------------------------
+etcd1   /usr/local/bin/etcd   Up       0.0.0.0:2379-&gt;2379/tcp, 0.0.0.0:2380-&gt;2380/tcp  
+etcd2   /usr/local/bin/etcd   Exit <span class="m">0</span>                                                   
+etcd3   /usr/local/bin/etcd   Up       0.0.0.0:22379-&gt;2379/tcp, 0.0.0.0:22380-&gt;2380/tcp
+
+<span class="c1"># 新增节点.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:58:53] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member add etcd4 --peer-urls<span class="o">=</span>http://etcd4:2380
+Member d1ca52e243988d73 added to cluster 1c510c68583e30d9
+
+<span class="nv">ETCD_NAME</span><span class="o">=</span><span class="s2">&#34;etcd4&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER</span><span class="o">=</span><span class="s2">&#34;etcd1=http://etcd1:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380&#34;</span>
+<span class="nv">ETCD_INITIAL_ADVERTISE_PEER_URLS</span><span class="o">=</span><span class="s2">&#34;http://etcd4:2380&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER_STATE</span><span class="o">=</span><span class="s2">&#34;existing&#34;</span>
+
+<span class="c1"># 使用docker run单独启动节点.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [15:05:52] </span>
+$ docker run -d -p 32379:2379 -p 32380:2380 --name<span class="o">=</span>etcd4 --hostname<span class="o">=</span>etcd4 --network<span class="o">=</span>etcdcluster -v <span class="nv">$PWD</span>/etcd4.data:/etcd_data --restart<span class="o">=</span>unless-stopped -e<span class="o">=</span><span class="nv">TZ</span><span class="o">=</span>Asia/Shanghai -e<span class="o">=</span><span class="nv">ETCD_INITIAL_CLUSTER_STATE</span><span class="o">=</span>existing -e<span class="o">=</span><span class="nv">ETCD_NAME</span><span class="o">=</span>etcd4 -e<span class="o">=</span><span class="nv">ETCD_ADVERTISE_CLIENT_URLS</span><span class="o">=</span>http://192.168.20.151:32379 -e<span class="o">=</span><span class="nv">ETCD_LISTEN_CLIENT_URLS</span><span class="o">=</span>http://0.0.0.0:2379 -e<span class="o">=</span><span class="nv">ETCD_LISTEN_PEER_URLS</span><span class="o">=</span>http://0.0.0.0:2380 -e<span class="o">=</span><span class="nv">ETCD_INITIAL_ADVERTISE_PEER_URLS</span><span class="o">=</span>http://etcd4:2380 -e<span class="o">=</span><span class="nv">ETCD_INITIAL_CLUSTER</span><span class="o">=</span><span class="nv">etcd1</span><span class="o">=</span>http://etcd1:2380,etcd3<span class="o">=</span>http://etcd3:2380,etcd4<span class="o">=</span>http://etcd4:2380 -e<span class="o">=</span><span class="nv">ETCD_DATA_DIR</span><span class="o">=</span>/etcd_data quay.io/coreos/etcd:v3.4.14
+6ed21c06395af043c1217d4dbdcc5d8e21d1ef387ec12973f25583d554d6df90
+
+<span class="c1"># 查看最新集群列表.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [15:07:25] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> d1ca52e243988d73 <span class="p">|</span> started <span class="p">|</span> etcd4 <span class="p">|</span> http://etcd4:2380 <span class="p">|</span> http://192.168.20.151:32379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
 +------------------+---------+-------+-------------------+-----------------------------+------------+
 </code></pre></td></tr></table>
 </div>
@@ -1006,7 +1300,7 @@ $ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span
 </span><span class="lnt">83
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">unc</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
 	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
 	<span class="nx">endpoints</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Split</span><span class="p">(</span><span class="o">*</span><span class="nx">addr</span><span class="p">,</span> <span class="s">&#34;,&#34;</span><span class="p">)</span>
 
@@ -2401,7 +2695,7 @@ test_barrier
     <div class="post-info">
         <div class="post-info-line">
             <div class="post-info-mod">
-                <span>更新于 2020-12-23</span>
+                <span>更新于 2020-12-24</span>
             </div>
             <div class="post-info-license"></div>
         </div>

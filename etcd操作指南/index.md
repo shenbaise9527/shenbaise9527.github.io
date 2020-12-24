@@ -7,8 +7,7 @@ etcd是强一致性的,分布式KV存储,为分布式系统或集群提供可靠
 ## 部署
 
 ### 基于源码
-**编译**
-
+#### 编译
 ``` bash
 # 下载源码.
 git clone git@github.com:etcd-io/etcd.git
@@ -18,8 +17,7 @@ cd etcd
 make build
 ```
 
-**集群方式运行**
-
+#### 集群方式运行
 在本机上起3个etcd实例,放在如下目录:
 ``` bash
 # sky @ sky-HP in ~/data/etcdcluster [11:10:09] 
@@ -79,8 +77,7 @@ nohup ./etcd3/etcd --data-dir=./etcd3/data.etcd --name ${NAME_3} \
     --initial-cluster-state ${CLUSTER_STATE} --initial-cluster-token ${TOKEN} > etcd3.log 2>&1 &
 ```
 
-**查看集群状态**
-
+#### 查看集群状态
 ``` bash
 # sky @ sky-HP in ~/data/etcdcluster [11:32:54] 
 $ export ETCDCTL_API=3  
@@ -109,8 +106,73 @@ $ ./etcdctl --endpoints=$ENDPOINTS --write-out=table endpoint status
 +------------------+------------------+-----------+---------+-----------+------------+-----------+------------+--------------------+--------+
 ```
 
-**相关操作**
+#### 集群节点的操作
+主要涉及移除节点和新增节点.
+``` bash
+# 查看集群列表.
+# zhou.yingan @ localhost in ~/docker/etcd/cluster [11:58:47] 
+$ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+|        ID        | STATUS  |  NAME  |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+---------+--------+----------------------------+----------------------------+------------+
+| 6cf77fb8c7e0e397 | started | etcd-2 | http://192.168.20.151:3380 | http://192.168.20.151:3379 |      false |
+| a1e59eed52ece0fb | started | etcd-3 | http://192.168.20.151:4380 | http://192.168.20.151:4379 |      false |
+| b6187cecaa8144c3 | started | etcd-1 | http://192.168.20.151:2380 | http://192.168.20.151:2379 |      false |
++------------------+---------+--------+----------------------------+----------------------------+------------+
 
+# 移除节点etcd-1
+# zhou.yingan @ localhost in ~/docker/etcd/cluster [12:04:08] C:128
+$ ./etcdctl --endpoints=$ENDPOINTS member remove b6187cecaa8144c3
+
+# 当前集群只有两个节点了.
+# zhou.yingan @ localhost in ~/docker/etcd/cluster [12:08:23] 
+$ ./etcdctl --endpoints=192.168.20.151:4379 --write-out=table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+|        ID        | STATUS  |  NAME  |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+---------+--------+----------------------------+----------------------------+------------+
+| 6cf77fb8c7e0e397 | started | etcd-2 | http://192.168.20.151:3380 | http://192.168.20.151:3379 |      false |
+| a1e59eed52ece0fb | started | etcd-3 | http://192.168.20.151:4380 | http://192.168.20.151:4379 |      false |
++------------------+---------+--------+----------------------------+----------------------------+------------+
+
+# 增加节点到集群.
+# zhou.yingan @ localhost in ~/docker/etcd/cluster [14:01:11] C:1
+$ ./etcdctl --endpoints=$ENDPOINTS member add etcd-4 --peer-urls=http://192.168.20.151:5380
+Member 235272797119041c added to cluster fba7dcb05a9bd527
+
+ETCD_NAME="etcd-4"
+ETCD_INITIAL_CLUSTER="etcd-4=http://192.168.20.151:5380,etcd-2=http://192.168.20.151:3380,etcd-3=http://192.168.20.151:4380"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.20.151:5380"
+ETCD_INITIAL_CLUSTER_STATE="existing"
+
+# 查看集群状态,新加入的节点为unstarted状态.
+# zhou.yingan @ localhost in ~/docker/etcd/cluster [14:02:52] 
+$ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+|        ID        |  STATUS   |  NAME  |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+| 235272797119041c | unstarted |        | http://192.168.20.151:5380 |                            |      false |
+| 6cf77fb8c7e0e397 |   started | etcd-2 | http://192.168.20.151:3380 | http://192.168.20.151:3379 |      false |
+| a1e59eed52ece0fb |   started | etcd-3 | http://192.168.20.151:4380 | http://192.168.20.151:4379 |      false |
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+
+# 启动新节点.
+# zhou.yingan @ localhost in ~/docker/etcd/cluster [14:14:00] 
+$ nohup ./etcd4/etcd --data-dir=./etcd4/data.etcd --name etcd-4 --initial-advertise-peer-urls http://192.168.20.151:5380 --listen-peer-urls http://192.168.20.151:5380 --advertise-client-urls http://192.168.20.151:5379 --listen-client-urls http://192.168.20.151:5379 --initial-cluster etcd-2=http://192.168.20.151:3380,etcd-3=http://192.168.20.151:4380,etcd-4=http://192.168.20.151:5380 --initial-cluster-state existing > etcd4.log 2>&1 &
+
+# 查看集群列表,新增节点成功.
+# zhou.yingan @ localhost in ~/docker/etcd/cluster [14:14:16] 
+$ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+|        ID        | STATUS  |  NAME  |         PEER ADDRS         |        CLIENT ADDRS        | IS LEARNER |
++------------------+---------+--------+----------------------------+----------------------------+------------+
+| 235272797119041c | started | etcd-4 | http://192.168.20.151:5380 | http://192.168.20.151:5379 |      false |
+| 6cf77fb8c7e0e397 | started | etcd-2 | http://192.168.20.151:3380 | http://192.168.20.151:3379 |      false |
+| a1e59eed52ece0fb | started | etcd-3 | http://192.168.20.151:4380 | http://192.168.20.151:4379 |      false |
++------------------+---------+--------+----------------------------+----------------------------+------------+
+```
+
+#### 基本操作
+主要涉及数据的增删改查等操作.
 ``` bash
 # sky @ sky-HP in ~/data/etcdcluster [11:36:23] 
 $ ./etcdctl --endpoints=$ENDPOINTS put key1 value1
@@ -277,6 +339,8 @@ $ ./etcdctl --endpoints=$ENDPOINTS --write-out=table snapshot status my.db
 ```
 
 ### 基于Docker
+
+#### docker-compose文件
 使用docker-compose来统一部署,基于`quay.io/coreos/etcd:v3.4.14`镜像.
 ``` yml
 version: "3.5"
@@ -358,12 +422,22 @@ networks:
     etcdcluster:
         name: etcdcluster
 ```
-需要注意环境变量`ETCD_ADVERTISE_CLIENT_URLS`,被配置成了真实IP+映射后的端口,在客户端获取`MemberList`时会返回该变量的值,是可在外部访问的地址.
+需要注意环境变量`ETCD_ADVERTISE_CLIENT_URLS`,被配置成了真实IP+映射后的端口,在客户端获取`MemberList`时会返回该变量的值,客户端会通过该值来访问etcd.
 
 客户端会定时去同步参数,代码详见`etcd/clientv3/client.go:autoSync`,是通过定时器触发,调用`MemberList`方法来获取成员列表,并取其`ClientURLs`字段,来初始化客户端连接.
 
-查看集群状态
+#### 查看集群状态
 ``` bash
+# 查看容器运行状态.
+# zhou.yingan @ localhost in ~/docker/etcd [14:55:36] 
+$ docker-compose ps 
+Name          Command         State                        Ports                      
+--------------------------------------------------------------------------------------
+etcd1   /usr/local/bin/etcd   Up      0.0.0.0:2379->2379/tcp, 0.0.0.0:2380->2380/tcp  
+etcd2   /usr/local/bin/etcd   Up      0.0.0.0:12379->2379/tcp, 0.0.0.0:12380->2380/tcp
+etcd3   /usr/local/bin/etcd   Up      0.0.0.0:22379->2379/tcp, 0.0.0.0:22380->2380/tcp
+
+# 查看节点状态.
 $ ./etcdctl --endpoints=$ENDPOINTS --write-out=table endpoint status
 +----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
 -+|       ENDPOINT       |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERRORS
@@ -374,6 +448,7 @@ $ ./etcdctl --endpoints=$ENDPOINTS --write-out=table endpoint status
  |+----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
 -+
 
+# 查看集群节点列表.
 $ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
 +------------------+---------+-------+-------------------+-----------------------------+------------+
 |        ID        | STATUS  | NAME  |    PEER ADDRS     |        CLIENT ADDRS         | IS LEARNER |
@@ -381,6 +456,71 @@ $ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
 |  c8f871bdf8305be | started | etcd2 | http://etcd2:2380 | http://192.168.20.151:12379 |      false |
 | 7ff9976e030eb51c | started | etcd1 | http://etcd1:2380 |  http://192.168.20.151:2379 |      false |
 | b8dbeeea8e10767d | started | etcd3 | http://etcd3:2380 | http://192.168.20.151:22379 |      false |
++------------------+---------+-------+-------------------+-----------------------------+------------+
+```
+
+#### 集群节点的操作
+在以docker方式运行时,如何操作节点的移除和新增?
+``` bash
+# 查看集群节点列表.
+# zhou.yingan @ localhost in ~/docker/etcd [14:55:57] 
+$ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+|        ID        | STATUS  | NAME  |    PEER ADDRS     |        CLIENT ADDRS         | IS LEARNER |
++------------------+---------+-------+-------------------+-----------------------------+------------+
+|  c8f871bdf8305be | started | etcd2 | http://etcd2:2380 | http://192.168.20.151:12379 |      false |
+| 7ff9976e030eb51c | started | etcd1 | http://etcd1:2380 |  http://192.168.20.151:2379 |      false |
+| b8dbeeea8e10767d | started | etcd3 | http://etcd3:2380 | http://192.168.20.151:22379 |      false |
++------------------+---------+-------+-------------------+-----------------------------+------------+
+
+# 移除节点etcd2.
+# zhou.yingan @ localhost in ~/docker/etcd [14:56:03] 
+$ ./etcdctl --endpoints=$ENDPOINTS member remove c8f871bdf8305be
+Member  c8f871bdf8305be removed from cluster 1c510c68583e30d9
+
+# 集群只有2个节点了.
+# zhou.yingan @ localhost in ~/docker/etcd [14:56:38] 
+$ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+|        ID        | STATUS  | NAME  |    PEER ADDRS     |        CLIENT ADDRS         | IS LEARNER |
++------------------+---------+-------+-------------------+-----------------------------+------------+
+| 7ff9976e030eb51c | started | etcd1 | http://etcd1:2380 |  http://192.168.20.151:2379 |      false |
+| b8dbeeea8e10767d | started | etcd3 | http://etcd3:2380 | http://192.168.20.151:22379 |      false |
++------------------+---------+-------+-------------------+-----------------------------+------------+
+
+# 容器运行状态,节点etcd2已停止.
+# zhou.yingan @ localhost in ~/docker/etcd [14:56:49] C:1
+$ docker-compose ps 
+Name          Command         State                         Ports                      
+---------------------------------------------------------------------------------------
+etcd1   /usr/local/bin/etcd   Up       0.0.0.0:2379->2379/tcp, 0.0.0.0:2380->2380/tcp  
+etcd2   /usr/local/bin/etcd   Exit 0                                                   
+etcd3   /usr/local/bin/etcd   Up       0.0.0.0:22379->2379/tcp, 0.0.0.0:22380->2380/tcp
+
+# 新增节点.
+# zhou.yingan @ localhost in ~/docker/etcd [14:58:53] 
+$ ./etcdctl --endpoints=$ENDPOINTS member add etcd4 --peer-urls=http://etcd4:2380
+Member d1ca52e243988d73 added to cluster 1c510c68583e30d9
+
+ETCD_NAME="etcd4"
+ETCD_INITIAL_CLUSTER="etcd1=http://etcd1:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://etcd4:2380"
+ETCD_INITIAL_CLUSTER_STATE="existing"
+
+# 使用docker run单独启动节点.
+# zhou.yingan @ localhost in ~/docker/etcd [15:05:52] 
+$ docker run -d -p 32379:2379 -p 32380:2380 --name=etcd4 --hostname=etcd4 --network=etcdcluster -v $PWD/etcd4.data:/etcd_data --restart=unless-stopped -e=TZ=Asia/Shanghai -e=ETCD_INITIAL_CLUSTER_STATE=existing -e=ETCD_NAME=etcd4 -e=ETCD_ADVERTISE_CLIENT_URLS=http://192.168.20.151:32379 -e=ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379 -e=ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380 -e=ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd4:2380 -e=ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380 -e=ETCD_DATA_DIR=/etcd_data quay.io/coreos/etcd:v3.4.14
+6ed21c06395af043c1217d4dbdcc5d8e21d1ef387ec12973f25583d554d6df90
+
+# 查看最新集群列表.
+# zhou.yingan @ localhost in ~/docker/etcd [15:07:25] 
+$ ./etcdctl --endpoints=$ENDPOINTS --write-out=table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+|        ID        | STATUS  | NAME  |    PEER ADDRS     |        CLIENT ADDRS         | IS LEARNER |
++------------------+---------+-------+-------------------+-----------------------------+------------+
+| 7ff9976e030eb51c | started | etcd1 | http://etcd1:2380 |  http://192.168.20.151:2379 |      false |
+| b8dbeeea8e10767d | started | etcd3 | http://etcd3:2380 | http://192.168.20.151:22379 |      false |
+| d1ca52e243988d73 | started | etcd4 | http://etcd4:2380 | http://192.168.20.151:32379 |      false |
 +------------------+---------+-------+-------------------+-----------------------------+------------+
 ```
 
@@ -406,7 +546,7 @@ replace google.golang.org/grpc v1.34.0 => google.golang.org/grpc v1.29.1
 
 ### 基本增删查改等操作
 ``` go
-unc main() {
+func main() {
 	flag.Parse()
 	endpoints := strings.Split(*addr, ",")
 
