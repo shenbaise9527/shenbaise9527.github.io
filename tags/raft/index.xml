@@ -1,0 +1,15 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>raft - 标签 - 深白色9527</title>
+        <link>https://shenbaise9527.com/tags/raft/</link>
+        <description>raft - 标签 - 深白色9527</description>
+        <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 05 Jan 2021 21:33:07 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/raft/" rel="self" type="application/rss+xml" /><item>
+    <title>分布式一致性算法:Raft</title>
+    <link>https://shenbaise9527.com/raft-consensus-algorithm/</link>
+    <pubDate>Tue, 05 Jan 2021 21:33:07 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/raft-consensus-algorithm/</guid>
+    <description><![CDATA[简介 一致性算法允许一个集群作为一个整体来工作,并允许集群中的某些节点发生故障,而不影响集群的整体运作.因此一致性算法在构建可靠的大型软件系统]]></description>
+</item></channel>
+</rss>
