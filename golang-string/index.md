@@ -109,7 +109,7 @@ func main() {
 }
 ```
 
-输出结果为：`{0x56f6b2 11}`
+输出结果为：`{0x4bbad0 11}`
 
 `runtime.stringStruct`是非导出的,不能直接在外部使用,所有在代码中定义一个`stringStruct`结构,与`runtime.stringStruct`的字段保持一样.
 
