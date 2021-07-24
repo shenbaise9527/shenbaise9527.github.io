@@ -8,10 +8,10 @@
         <title>OpenTracing最佳实践 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="OpenTracing最佳实践" />
 <meta property="og:description" content="回顾: OpenTracing的目标是什么? OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下: 1 2 3 4" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/opentracing-best-practices/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/opentracing-best-practices/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-12-10T21:35:32+08:00" />
 <meta property="article:modified_time" content="2020-12-10T21:35:32+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -137,7 +137,7 @@
 <p>OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -156,7 +156,7 @@
 </span><span class="lnt">17
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback">   +-------------+  +---------+  +----------+  +------------+
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">   +-------------+  +---------+  +----------+  +------------+
    | Application |  | Library |  |   OSS    |  |  RPC/IPC   |
    |    Code     |  |  Code   |  | Services |  | Frameworks |
    +-------------+  +---------+  +----------+  +------------+
@@ -209,7 +209,7 @@
 <h3 id="追踪函数">追踪函数</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -220,7 +220,7 @@
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">TopLevelFunction</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">TopLevelFunction</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
 	<span class="nx">span1</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;toplevelfunction&#34;</span><span class="p">)</span>
 	<span class="k">defer</span> <span class="nx">span1</span><span class="p">.</span><span class="nf">Finish</span><span class="p">()</span>
@@ -234,7 +234,7 @@
 </div><p>作为业务逻辑的一部分,调用了<code>Function2</code>方法,也想被追踪.为了让<code>Function2</code>里的追踪和<code>TopLevelFunction</code>里的追踪形成因果关系,必须在<code>Function2</code>里要能访问到<code>span1</code>,通过<code>span1</code>来创建一个子span.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -244,7 +244,7 @@
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Function2</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Function2</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">span1</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 	<span class="k">if</span> <span class="nx">ok</span> <span class="p">{</span>
 		<span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
@@ -266,12 +266,12 @@
 <p>假设有个HTTP服务器,<code>SpanContext</code>通过http头从客户端传播到服务端,可通过<code>request.headers</code>来访问.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
 <span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
 <span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
 </code></pre></td></tr></table>
@@ -281,7 +281,7 @@
 <p>假设客户端没有发送相应字段的值,在服务端就无法从<code>Header</code>中获取到,上文中的<code>spanContext</code>可能为<code>nil</code>.在这种情况下,服务端需要开启一个新的trace.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -294,7 +294,7 @@
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
 <span class="nx">carrier</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">HTTPHeadersCarrier</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Header</span><span class="p">)</span>
 <span class="nx">spanContext</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Extract</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">HTTPHeaders</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
 <span class="kd">var</span> <span class="nx">span</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">Span</span>
@@ -318,7 +318,7 @@
 </ul>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -337,7 +337,7 @@
 </span><span class="lnt">17
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">HandleHttp</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">HandleHttp</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">req</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
     <span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span>
     <span class="o">...</span>
     <span class="nf">BusinessFunction1</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">arg1</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
@@ -360,7 +360,7 @@
 <p>当一个应用程序扮演RPC客户端的角色时,在调用外部接口前可以开启一个新的<code>Span</code>,在请求期间传播该<code>Span</code>.下面通过一个HTTP请求来展示如何处理.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -399,7 +399,7 @@
 </span><span class="lnt">37
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">tracedPost</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">operation</span><span class="p">,</span> <span class="nx">url</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">body</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">tracedPost</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">operation</span><span class="p">,</span> <span class="nx">url</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">body</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
     <span class="nx">parent_span</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
     <span class="nx">tracer</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">GlobalTracer</span><span class="p">()</span>
     <span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
@@ -448,14 +448,14 @@
 <p>上面的例子都是通过网络在客户端和服务端之间传递<code>Span/Tracer</code>,包含任意的<code>Baggage</code>.客户端可以利用<code>Baggage</code>来传播一些附加信息到服务端及任何其下游服务.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 客户端.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 客户端.
 </span><span class="c1"></span><span class="nx">span</span> <span class="p">=</span> <span class="nx">span</span><span class="p">.</span><span class="nf">SetBaggageItem</span><span class="p">(</span><span class="s">&#34;auto_token&#34;</span><span class="p">,</span> <span class="s">&#34;token&#34;</span><span class="p">)</span>
 
 <span class="c1">// 服务端.
@@ -466,14 +466,14 @@
 <p>在上面<a href="#%e5%ae%a2%e6%88%b7%e7%ab%af%e8%bf%bd%e8%b8%aa" rel="">客户端追踪</a>的例子中已经使用过Log了.可以记录事件而不需要有<code>payload</code>,而不仅在<code>Span</code>被创建和完成时.举个例子,应用程序在执行过程中可能会需要记录<code>cache miss</code>事件,可以通过在请求上下文中来获取当前<code>Span</code>然后把该事件附加到<code>Span</code>中.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">SpanFromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
 <span class="c1">// 不带payload的.
 </span><span class="c1"></span><span class="nx">span</span><span class="p">.</span><span class="nf">LogEvent</span><span class="p">(</span><span class="s">&#34;cache_miss&#34;</span><span class="p">)</span>
 <span class="c1">// 带payload的.
@@ -485,11 +485,11 @@
 <p>因为各种各样的原因,在有些场景下会将OpenTracing兼容的tracer集成到服务中.比如一个用户有一个日志文件,其中包含大量来自黑盒系统(如HAProxy)产生的Span数据,为了把这些数据导入到OpenTracing兼容的系统中,API必须提供一种方法通过外部自定义时间戳来记录<code>Span</code>.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;operationname&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">StartTime</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()))</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span><span class="s">&#34;operationname&#34;</span><span class="p">,</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nf">StartTime</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()))</span>
 <span class="nx">span</span><span class="p">.</span><span class="nf">FinishWithOptions</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">FinishOptions</span><span class="p">{</span><span class="nx">FinishTime</span><span class="p">:</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()})</span>
 </code></pre></td></tr></table>
 </div>
@@ -497,7 +497,7 @@
 <p>大多数分布式追踪系统都会通过应用不同的采样策略来减少需要记录和处理的追踪数据的总量.有时开发人员希望有一种方式来确保一个tracer数据会被系统记录(采样),如在HTTP请求中包含一个特殊的参数(<code>debug=true</code>).OpenTracing API标准化了一些有用的tags,其中一个叫<code>sampling.priority</code>(采样优先级):精确的实现是由追踪系统的实现者决定的,但任何大于0(默认)代表一条tracer的高优先级.为了传递这个属性到追踪系统中,需要在追踪前进行预处理,如下:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -506,7 +506,7 @@
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">b</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseBool</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;debug&#34;</span><span class="p">))</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">b</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseBool</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;debug&#34;</span><span class="p">))</span>
 <span class="k">if</span> <span class="nx">b</span> <span class="o">&amp;&amp;</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
 	<span class="nx">span</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">StartSpan</span><span class="p">(</span>
 		<span class="s">&#34;operationname&#34;</span><span class="p">,</span> 
@@ -521,7 +521,7 @@
 <p>以RPC客户端为例,生产者在发送消息之前开启了一个新<code>Span</code>,并跟随消息传播该<code>Span</code>的<code>Context</code>.在消息成功发布到消息总线上后这个<code>Span</code>就完成了.下面展示代码是如何实现的:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -545,7 +545,7 @@
 </span><span class="lnt">22
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">traced_send</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">traced_send</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
     <span class="c1"># retrieve current span from propagated message context</span>
     <span class="n">parent_span</span> <span class="o">=</span> <span class="n">get_current_span</span><span class="p">()</span>
 
@@ -559,7 +559,7 @@
     <span class="c1"># propagate the Span via message headers</span>
     <span class="n">tracer</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span>
         <span class="n">span</span><span class="o">.</span><span class="n">context</span><span class="p">,</span>
-        <span class="n">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
+        <span class="nb">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
         <span class="n">carrier</span><span class="o">=</span><span class="n">message</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="n">span</span><span class="p">:</span>
@@ -572,7 +572,7 @@
 </div><p>接下来消费者会判断消息中是否包含了<code>SpanContext</code>,如果有,就会用它来与生产者的<code>Span</code>建立联系.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -580,8 +580,8 @@
 </span><span class="lnt">6
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-python" data-lang="python"><span class="n">extracted_context</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span>
-    <span class="n">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="n">extracted_context</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span>
+    <span class="nb">format</span><span class="o">=</span><span class="n">opentracing</span><span class="o">.</span><span class="n">TEXT_MAP_FORMAT</span><span class="p">,</span>
     <span class="n">carrier</span><span class="o">=</span><span class="n">message</span><span class="o">.</span><span class="n">headers</span>
 <span class="p">)</span>
 <span class="n">span</span> <span class="o">=</span> <span class="n">tracer</span><span class="o">.</span><span class="n">start_span</span><span class="p">(</span><span class="n">operation_name</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span> <span class="n">references</span><span class="o">=</span><span class="n">follows_from</span><span class="p">(</span><span class="n">extracted_context</span><span class="p">))</span>

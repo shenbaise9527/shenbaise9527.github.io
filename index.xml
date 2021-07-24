@@ -4,9 +4,16 @@
         <link>https://shenbaise9527.com/</link>
         <description>深白色9527</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
-            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Tue, 05 Jan 2021 21:33:07 &#43;0800</lastBuildDate>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 16:57:37 &#43;0800</lastBuildDate>
             <atom:link href="https://shenbaise9527.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>golang字符串解析</title>
+    <link>https://shenbaise9527.com/golang-string/</link>
+    <pubDate>Sat, 24 Jul 2021 16:57:37 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/golang-string/</guid>
+    <description><![CDATA[字符编码 计算机世界中只能识别二进制,所有的信息最终都会表示成一个二进制的字符串,每一个二进制位有0和1两种状态. 当在计算机中存储字符&rsq]]></description>
+</item><item>
     <title>分布式一致性算法:Raft</title>
     <link>https://shenbaise9527.com/raft-consensus-algorithm/</link>
     <pubDate>Tue, 05 Jan 2021 21:33:07 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://shenbaise9527.com/opentracing-distributed/</guid>
     <description><![CDATA[概述 简介 虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事]]></description>
-</item><item>
-    <title>CMake语法说明</title>
-    <link>https://shenbaise9527.com/cmake-description/</link>
-    <pubDate>Sat, 28 Nov 2020 20:06:39 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://shenbaise9527.com/cmake-description/</guid>
-    <description><![CDATA[预定义变量 PROJECT_SOURCE_DIR 工程的根目录 PROJECT_BINARY_DIR 运行cmake命令的目录,通常是${PROJECT_SOURCE_DIR}/build CMAKE_INCLUDE_PATH 环境变量,非CMake变量]]></description>
 </item></channel>
 </rss>

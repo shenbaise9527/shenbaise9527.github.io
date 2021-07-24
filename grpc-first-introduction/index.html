@@ -8,10 +8,10 @@
         <title>gRPC系列之初识 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="gRPC系列之初识" />
 <meta property="og:description" content="RPC RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/grpc-first-introduction/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/grpc-first-introduction/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-11-06T22:05:51+08:00" />
 <meta property="article:modified_time" content="2020-11-06T22:05:51+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -167,7 +167,7 @@
 <p>生成<code>hello.proto</code>文件,内容如下:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -184,7 +184,7 @@
 </span><span class="lnt">15
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">syntax</span> <span class="p">=</span> <span class="s">&#34;proto3&#34;</span><span class="p">;</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">syntax</span> <span class="p">=</span> <span class="s">&#34;proto3&#34;</span><span class="p">;</span>
 
 <span class="nx">option</span> <span class="nx">go_package</span><span class="p">=</span><span class="s">&#34;.;pb&#34;</span><span class="p">;</span>
 
@@ -217,7 +217,7 @@
 <p>在目录<code>pb</code>中生成文件<code>hello.pb.go</code>,文件里面包含了grpc相关代码.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -298,7 +298,7 @@
 </span><span class="lnt">79
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Reference imports to suppress errors if they are not otherwise used.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Reference imports to suppress errors if they are not otherwise used.
 </span><span class="c1"></span><span class="kd">var</span> <span class="nx">_</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span>
 <span class="kd">var</span> <span class="nx">_</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">ClientConnInterface</span>
 
@@ -382,7 +382,7 @@
 </div><h2 id="服务端代码">服务端代码</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -403,7 +403,7 @@
 </span><span class="lnt">19
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 监听tcp端口,用于接受客户端请求.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 监听tcp端口,用于接受客户端请求.
 </span><span class="c1"></span><span class="nx">lis</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nf">Listen</span><span class="p">(</span><span class="s">&#34;tcp&#34;</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;:%d&#34;</span><span class="p">,</span> <span class="o">*</span><span class="nx">port</span><span class="p">))</span>
 <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;failed to listen: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
@@ -427,7 +427,7 @@
 </div><h2 id="客户端代码">客户端代码</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -452,7 +452,7 @@
 </span><span class="lnt">23
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建一个连接与服务端进行通信.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建一个连接与服务端进行通信.
 </span><span class="c1"></span><span class="nx">conn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">Dial</span><span class="p">(</span><span class="o">*</span><span class="nx">addr</span><span class="p">,</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">WithInsecure</span><span class="p">())</span>
 <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
 	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;failed to dail: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
@@ -648,7 +648,7 @@ DATA是数据帧,可以看到请求的protobuf结构只有1个字段,该字段�
 <p>流式模式需要用到关键字<code>stream</code>,如下proto文件.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -668,7 +668,7 @@ DATA是数据帧,可以看到请求的protobuf结构只有1个字段,该字段�
 </span><span class="lnt">18
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">syntax</span> <span class="p">=</span> <span class="s">&#34;proto3&#34;</span><span class="p">;</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">syntax</span> <span class="p">=</span> <span class="s">&#34;proto3&#34;</span><span class="p">;</span>
 
 <span class="nx">option</span> <span class="nx">go_package</span><span class="p">=</span><span class="s">&#34;.;pb&#34;</span><span class="p">;</span>
 

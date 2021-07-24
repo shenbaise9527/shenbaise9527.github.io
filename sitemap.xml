@@ -2,16 +2,18 @@
     xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
     xmlns:xhtml="http://www.w3.org/1999/xhtml"
     ><url>
-            <loc>https://shenbaise9527.com/categories/</loc><lastmod>2021-01-05T21:33:07&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
+            <loc>https://shenbaise9527.com/categories/</loc><lastmod>2021-07-24T16:57:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://shenbaise9527.com/tags/go/</loc><lastmod>2021-07-24T16:57:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://shenbaise9527.com/categories/golang/</loc><lastmod>2021-07-24T16:57:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://shenbaise9527.com/golang-string/</loc><lastmod>2021-07-24T16:57:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://shenbaise9527.com/posts/</loc><lastmod>2021-07-24T16:57:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://shenbaise9527.com/tags/</loc><lastmod>2021-07-24T16:57:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
+            <loc>https://shenbaise9527.com/</loc><lastmod>2021-07-24T16:57:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>1</priority></url><url>
             <loc>https://shenbaise9527.com/categories/microservice/</loc><lastmod>2021-01-05T21:33:07&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
-            <loc>https://shenbaise9527.com/posts/</loc><lastmod>2021-01-05T21:33:07&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/tags/raft/</loc><lastmod>2021-01-05T21:33:07&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
-            <loc>https://shenbaise9527.com/tags/</loc><lastmod>2021-01-05T21:33:07&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/raft-consensus-algorithm/</loc><lastmod>2021-01-05T21:33:07&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
-            <loc>https://shenbaise9527.com/</loc><lastmod>2021-01-05T21:33:07&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/tags/etcd/</loc><lastmod>2020-12-24T20:58:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/etcd-operation-guide/</loc><lastmod>2020-12-24T20:58:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
-            <loc>https://shenbaise9527.com/tags/go/</loc><lastmod>2020-12-24T20:58:37&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/tags/grpc/</loc><lastmod>2020-12-21T21:18:21&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/etcd-application-start-warn/</loc><lastmod>2020-12-21T21:18:21&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/etcd-configure-error/</loc><lastmod>2020-11-03T21:35:24&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
@@ -32,7 +34,6 @@
             <loc>https://shenbaise9527.com/mysql-lock/</loc><lastmod>2020-11-24T20:50:10&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/mysql-join/</loc><lastmod>2020-11-24T20:47:44&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/mysql-index/</loc><lastmod>2020-11-24T20:43:33&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
-            <loc>https://shenbaise9527.com/categories/golang/</loc><lastmod>2020-11-22T11:41:27&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/golang-data-type/</loc><lastmod>2020-11-22T11:41:27&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/mysql-gtid/</loc><lastmod>2020-11-09T21:27:12&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>
             <loc>https://shenbaise9527.com/grpc-connection-exception/</loc><lastmod>2020-11-07T13:27:24&#43;08:00</lastmod><changefreq>weekly</changefreq><priority>0.5</priority></url><url>

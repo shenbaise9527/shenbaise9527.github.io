@@ -8,10 +8,10 @@
         <title>tcp连接过程 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="tcp连接过程" />
 <meta property="og:description" content="tcp建连接三次握手 客户端发送SYN到服务器发起握手. 服务器收到SYN后回复SYN&#43;ACK给客户端. 客户端收到SYN&#43;ACK后,回复服务器一" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/tcp-three-way-handshake/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/tcp-three-way-handshake/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-11-03T21:35:24+08:00" />
 <meta property="article:modified_time" content="2020-11-03T21:35:24+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -144,12 +144,12 @@
 <p>客户端作为主动发起连接方,首先要发送SYN(Synchronize Sequence Nubers,同步序列号)包,若客户端长时间收不到服务端的ACK报文,客户端就会重发SYN包,重传次数是受内核参数<code>/proc/sys/net/ipv4/tcp_syn_retries</code>控制.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback"># 系统为centos7.2.1511,默认为6次.
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 系统为centos7.2.1511,默认为6次.
 $ cat /proc/sys/net/ipv4/tcp_syn_retries 
 6
 </code></pre></td></tr></table>
@@ -160,12 +160,12 @@ $ cat /proc/sys/net/ipv4/tcp_syn_retries
 <p>半连接队列的大小为max(64, /proc/sys/net/ipv4/tcp_max_syn_backlog).</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback"># 在ubuntu18.04机器上为128.
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 在ubuntu18.04机器上为128.
 $ cat /proc/sys/net/ipv4/tcp_max_syn_backlog 
 128
 </code></pre></td></tr></table>
@@ -179,12 +179,12 @@ $ cat /proc/sys/net/ipv4/tcp_max_syn_backlog
 </ul>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback"># 在ubuntu18.04机器上为128.
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 在ubuntu18.04机器上为128.
 $ cat /proc/sys/net/core/somaxconn
 128
 </code></pre></td></tr></table>
@@ -193,7 +193,7 @@ $ cat /proc/sys/net/core/somaxconn
 <p><strong>netstat -s</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -203,7 +203,7 @@ $ cat /proc/sys/net/core/somaxconn
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback"># 查看半连接队列溢出.
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 查看半连接队列溢出.
 sky-HP# netstat -s | egrep &#34;SYNs to LISTEN&#34;
 667399 SYNs to LISTEN sockets ignored
 # 上面看到的667399就是半连接队列溢出次数,隔几秒执行下,如果这个数字一直在变大肯定就是半连接队列溢出了.
@@ -216,7 +216,7 @@ sky-HP# netstat -s | grep &#34;overflowed&#34;
 </div><p><strong>ss -lntp</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -227,7 +227,7 @@ sky-HP# netstat -s | grep &#34;overflowed&#34;
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback"># l表示处于LISTEN状态 n表示不反向解析 t表示tcp协议 p表示进程信息.
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># l表示处于LISTEN状态 n表示不反向解析 t表示tcp协议 p表示进程信息.
 sky-HP# ss -lntp
 State       Recv-Q       Send-Q              Local Address:Port              Peer Address:Port                                                        
 LISTEN      0            128                       0.0.0.0:8388                   0.0.0.0:*           users:((&#34;haproxy&#34;,pid=1465,fd=6))               
@@ -263,14 +263,14 @@ syncookies原理:服务器会根据当前的状态计算出一个值,放入己�
 </ul>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback"># 在ubuntu18.04机器上的默认值.
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"># 在ubuntu18.04机器上的默认值.
 sky-HP# cat /proc/sys/net/ipv4/tcp_abort_on_overflow 
 0
 sky-HP# cat /proc/sys/net/ipv4/tcp_synack_retries 
@@ -280,7 +280,7 @@ sky-HP# cat /proc/sys/net/ipv4/tcp_synack_retries
 </div><p>可以通过<code>sysctl -w</code>来修改这些内核参数,重启之后修改无效.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -291,7 +291,7 @@ sky-HP# cat /proc/sys/net/ipv4/tcp_synack_retries
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback">sky-HP# sysctl -w net.ipv4.tcp_synack_retries=2
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">sky-HP# sysctl -w net.ipv4.tcp_synack_retries=2
 net.ipv4.tcp_synack_retries = 2
 sky-HP# cat /proc/sys/net/ipv4/tcp_synack_retries 
 2

@@ -8,10 +8,10 @@
         <title>局部变量在函数栈上的顺序分析 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="局部变量在函数栈上的顺序分析" />
 <meta property="og:description" content="问题来源 源于如下代码: 1 2 3 4 5 6 7 8 9 int main(int argc, char* argv[]){ int i = 0; int arr[3] = {0}; for(; i&lt;=3; i&#43;&#43;){ arr[i] = 0; printf(&#34;hello world\n&#34;); } return 0; } 这段代码的运行结果并非是打印三行“hello wor" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/c-variables-function-stack/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/c-variables-function-stack/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-11-03T21:35:24+08:00" />
 <meta property="article:modified_time" content="2020-11-03T21:35:24+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -125,7 +125,7 @@
 <p>源于如下代码:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -136,7 +136,7 @@
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-C" data-lang="C"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]){</span>
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]){</span>
     <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="kt">int</span> <span class="n">arr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
     <span class="k">for</span><span class="p">(;</span> <span class="n">i</span><span class="o">&lt;=</span><span class="mi">3</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>
@@ -193,7 +193,7 @@
 <p>参考如下代码：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -226,7 +226,7 @@
 </span><span class="lnt">31
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-C" data-lang="C"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
 <span class="p">{</span>
     <span class="kt">char</span> <span class="n">char_a</span><span class="p">;</span>
     <span class="kt">short</span> <span class="n">short_a</span><span class="p">;</span>
@@ -262,7 +262,7 @@
 </div><p>启用堆栈保护选项，结果如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -276,7 +276,7 @@
 </span><span class="lnt">12
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-C" data-lang="C"><span class="o">&amp;</span><span class="nl">char_a</span> <span class="p">:</span> <span class="mh">0x7fff14d57fa5</span>   <span class="o">--</span><span class="err">在最低的低地址位</span>
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="o">&amp;</span><span class="nl">char_a</span> <span class="p">:</span> <span class="mh">0x7fff14d57fa5</span>   <span class="o">--</span><span class="err">在最低的低地址位</span>
 <span class="o">&amp;</span><span class="nl">short_a</span> <span class="p">:</span> <span class="mh">0x7fff14d57fa6</span>
 <span class="o">&amp;</span><span class="nl">int_a</span> <span class="p">:</span> <span class="mh">0x7fff14d57fa8</span>  <span class="o">--</span><span class="n">int_a</span><span class="err">、</span><span class="n">float_a</span><span class="err">、</span><span class="n">uint_a</span><span class="err">、</span><span class="n">i</span> <span class="mi">4</span><span class="err">个同大小的变量地址在一起</span><span class="p">(</span><span class="err">与声明顺序相反</span><span class="p">)</span>
 <span class="o">&amp;</span><span class="nl">float_a</span> <span class="p">:</span> <span class="mh">0x7fff14d57fac</span>
@@ -301,7 +301,7 @@
 <p>如果数组arr的长度是4，如下代码，在64位x86上还能无限打印“hello world”吗？(gcc demo.c -o demo编译)</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -312,7 +312,7 @@
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-C" data-lang="C"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]){</span>
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]){</span>
     <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="kt">int</span> <span class="n">arr</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
     <span class="k">for</span><span class="p">(;</span> <span class="n">i</span><span class="o">&lt;=</span><span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">){</span>

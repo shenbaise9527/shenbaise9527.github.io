@@ -8,10 +8,10 @@
         <title>Zipkin指南 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="Zipkin指南" />
 <meta property="og:description" content="快速启动 可以通过http://your_host:9411去访问zipkin UI. Docker docker run -d -p 9411:9411 openzipkin/zipkin Java 需要Java8或更高版本. 1 2 curl -sSL https://zipkin.io/quickstart.sh | bash -s java -jar" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/opentracing-zipkin-guide/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/opentracing-zipkin-guide/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-12-10T21:35:42+08:00" />
 <meta property="article:modified_time" content="2020-12-10T21:35:42+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -29,7 +29,7 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/shenbaise9527.com\/opentracing-zipkin-guide\/"
-        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "OpenTracing","wordcount":  5373 ,
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "OpenTracing","wordcount":  5499 ,
         "url": "https:\/\/shenbaise9527.com\/opentracing-zipkin-guide\/","datePublished": "2020-12-10T21:35:42+08:00","dateModified": "2020-12-10T21:35:42+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
             "@type": "Organization",
             "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
@@ -106,7 +106,7 @@
             <div class="toc-content" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">Zipkin指南</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-10">2020-12-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5373 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-10">2020-12-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5499 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 11 分钟&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
                 <div class="details-summary toc-title">
@@ -144,11 +144,11 @@
 <p>需要Java8或更高版本.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash">curl -sSL https://zipkin.io/quickstart.sh <span class="p">|</span> bash -s
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">curl -sSL https://zipkin.io/quickstart.sh <span class="p">|</span> bash -s
 java -jar zipkin.jar
 </code></pre></td></tr></table>
 </div>
@@ -156,7 +156,7 @@ java -jar zipkin.jar
 <p>可以通过源码来安装并运行.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -165,7 +165,7 @@ java -jar zipkin.jar
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># get the latest source</span>
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># get the latest source</span>
 git clone https://github.com/openzipkin/zipkin
 <span class="nb">cd</span> zipkin
 <span class="c1"># Build the server and also make its dependencies</span>
@@ -192,7 +192,7 @@ java -jar ./zipkin-server/target/zipkin-server-*exec.jar
 <p>下面是http追踪的示例,其中用户代码调用了资源<code>/foo</code>.这是一个单独的<code>Span</code>,在用户代码收到响应后会被异步发送到zipkin中.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -234,7 +234,7 @@ java -jar ./zipkin-server/target/zipkin-server-*exec.jar
 </span><span class="lnt">40
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback">┌─────────────┐ ┌───────────────────────┐  ┌─────────────┐  ┌──────────────────┐
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">┌─────────────┐ ┌───────────────────────┐  ┌─────────────┐  ┌──────────────────┐
 │ User Code   │ │ Trace Instrumentation │  │ Http Client │  │ Zipkin Collector │
 └─────────────┘ └───────────────────────┘  └─────────────┘  └──────────────────┘
        │                 │                         │                 │
@@ -350,7 +350,7 @@ java -jar ./zipkin-server/target/zipkin-server-*exec.jar
 <p>举例:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -370,7 +370,7 @@ java -jar ./zipkin-server/target/zipkin-server-*exec.jar
 </span><span class="lnt">18
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 容器方式启动kafka</span>
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 容器方式启动kafka</span>
 $ <span class="nb">export</span> <span class="nv">KAFKA_BOOTSTRAP_SERVERS</span><span class="o">=</span><span class="k">$(</span>docker-machine ip <span class="sb">`</span>docker-machine active<span class="sb">`</span><span class="k">)</span>
 <span class="c1"># Run Kafka in the background</span>
 $ docker run -d -p 9092:9092 <span class="se">\
@@ -521,14 +521,14 @@ $ java -Dzipkin.collector.kafka.bootstrap-servers<span class="o">=</span>127.0.0
 启动方式:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 默认启动方式</span>
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 默认启动方式</span>
 java -jar zipkin.jar
 
 <span class="c1"># 指定STORAGE_TYPE为mem</span>
@@ -538,13 +538,13 @@ java -jar zipkin.jar
 </div><p>提供了参数<code>MEM_MAX_SPANS</code>来控制<code>Span</code>占用的内存大小.当碰到<code>out-of-memory</code>错误时,可以增大该参数或者调整堆大小(-Xmx).</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="sb">`</span>MEM_MAX_SPANS<span class="sb">`</span>: Oldest traces <span class="o">(</span>and their spans<span class="o">)</span> will be purged first when this limit is exceeded. Default <span class="m">500000</span>
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="sb">`</span>MEM_MAX_SPANS<span class="sb">`</span>: Oldest traces <span class="o">(</span>and their spans<span class="o">)</span> will be purged first when this limit is exceeded. Default <span class="m">500000</span>
 
 <span class="c1"># 调整内存大小.</span>
 <span class="nv">MEM_MAX_SPANS</span><span class="o">=</span><span class="m">1000000</span> java -Xmx1G -jar zipkin.jar
@@ -554,7 +554,7 @@ java -jar zipkin.jar
 <p>基于MySQL5.7版本,需要先建库建表,<a href="https://github.com/openzipkin/zipkin/tree/master/zipkin-storage/mysql-v1" target="_blank" rel="noopener noreffer">脚本文件地址</a>.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -562,13 +562,13 @@ java -jar zipkin.jar
 </span><span class="lnt">6
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span> <span class="n">install</span> <span class="n">the</span> <span class="k">schema</span> <span class="k">and</span> <span class="n">indexes</span>
-<span class="err">$</span> <span class="n">mysql</span> <span class="o">-</span><span class="n">uroot</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&#34;create database if not exists zipkin&#34;</span>
-<span class="err">$</span> <span class="n">mysql</span> <span class="o">-</span><span class="n">uroot</span> <span class="o">-</span><span class="n">Dzipkin</span> <span class="o">&lt;</span> <span class="n">zipkin</span><span class="o">-</span><span class="k">storage</span><span class="o">/</span><span class="n">mysql</span><span class="o">-</span><span class="n">v1</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">resources</span><span class="o">/</span><span class="n">mysql</span><span class="p">.</span><span class="k">sql</span>
-
-<span class="o">#</span> <span class="err">根据</span><span class="n">trace</span> <span class="n">id来查询</span>
-<span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="n">zipkin_spans</span> <span class="k">where</span> <span class="n">trace_id</span> <span class="o">=</span> <span class="n">x</span><span class="s1">&#39;27960dafb1ea7454&#39;</span>
-</code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span><span class="w"> </span><span class="n">install</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">schema</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">indexes</span><span class="w">
+</span><span class="w"></span><span class="err">$</span><span class="w"> </span><span class="n">mysql</span><span class="w"> </span><span class="o">-</span><span class="n">uroot</span><span class="w"> </span><span class="o">-</span><span class="n">e</span><span class="w"> </span><span class="s2">&#34;create database if not exists zipkin&#34;</span><span class="w">
+</span><span class="w"></span><span class="err">$</span><span class="w"> </span><span class="n">mysql</span><span class="w"> </span><span class="o">-</span><span class="n">uroot</span><span class="w"> </span><span class="o">-</span><span class="n">Dzipkin</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">zipkin</span><span class="o">-</span><span class="k">storage</span><span class="o">/</span><span class="n">mysql</span><span class="o">-</span><span class="n">v1</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">resources</span><span class="o">/</span><span class="n">mysql</span><span class="p">.</span><span class="k">sql</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="w"> </span><span class="err">根据</span><span class="n">trace</span><span class="w"> </span><span class="n">id来查询</span><span class="w">
+</span><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">zipkin_spans</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">trace_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="s1">&#39;27960dafb1ea7454&#39;</span><span class="w">
+</span></code></pre></td></tr></table>
 </div>
 </div><p>启动时可设置的相关参数</p>
 <ul>
@@ -611,14 +611,14 @@ java -jar zipkin.jar
 <p>接口定义:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer依赖该接口来发送Span数据.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer依赖该接口来发送Span数据.
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">Reporter</span> <span class="kd">interface</span> <span class="p">{</span>
     <span class="nf">Send</span><span class="p">(</span><span class="nx">model</span><span class="p">.</span><span class="nx">SpanModel</span><span class="p">)</span>
     <span class="nf">Close</span><span class="p">()</span> <span class="kt">error</span>
@@ -630,11 +630,11 @@ java -jar zipkin.jar
 具体实现都是空的,不做任何处理.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建接口.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建接口.
 </span><span class="c1"></span><span class="nx">reporter</span> <span class="o">:=</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">NewNoopReporter</span><span class="p">()</span>
 </code></pre></td></tr></table>
 </div>
@@ -643,18 +643,18 @@ java -jar zipkin.jar
 <p>函数原型:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// url表示zipkin服务端接收数据的端点,如http://127.0.0.1:9411/api/v2/spans.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// url表示zipkin服务端接收数据的端点,如http://127.0.0.1:9411/api/v2/spans.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">url</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -679,7 +679,7 @@ java -jar zipkin.jar
 </span><span class="lnt">23
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置http的超时时间,默认为5秒.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置http的超时时间,默认为5秒.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">Timeout</span><span class="p">(</span><span class="nx">duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span> <span class="nx">ReporterOption</span>
 
 <span class="c1">// 设置最大的待发送数量,当到达此阈值后就会触发收集操作,默认为100.
@@ -709,18 +709,18 @@ java -jar zipkin.jar
 <p>函数原型:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address表示rabbitmq的地址,如:amqp://guest:guest@localhost:5672/test
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address表示rabbitmq的地址,如:amqp://guest:guest@localhost:5672/test
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">address</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -736,7 +736,7 @@ java -jar zipkin.jar
 </span><span class="lnt">14
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">logger</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
 
 <span class="c1">// 设置rabbitmq中交换器的名字,默认为zipkin.
@@ -758,18 +758,18 @@ java -jar zipkin.jar
 <p>函数原型:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address为broker地址列表.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address为broker地址列表.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">address</span> <span class="p">[]</span><span class="kt">string</span><span class="p">,</span> <span class="nx">options</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -782,7 +782,7 @@ java -jar zipkin.jar
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">logger</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
 
 <span class="c1">// 设置生产者.
@@ -800,10 +800,10 @@ java -jar zipkin.jar
 <p>函数原型:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span>
 </code></pre></td></tr></table>
 </div>
 </div><p>只是把Span数据记录到指定的日志对象中,并不会发送到zipkin中.</p>
@@ -811,11 +811,11 @@ java -jar zipkin.jar
 <p>函数原型:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// rep指定Reporter.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// rep指定Reporter.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewTracer</span><span class="p">(</span><span class="nx">rep</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">TracerOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">Tracer</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
 </code></pre></td></tr></table>
 </div>
@@ -823,14 +823,14 @@ java -jar zipkin.jar
 <p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置被追踪服务的本地endpoint,可调用zipkin.NewEndpoint来生成对应的Endpoint对象,默认为nil.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置被追踪服务的本地endpoint,可调用zipkin.NewEndpoint来生成对应的Endpoint对象,默认为nil.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithLocalEndpoint</span><span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">)</span> <span class="nx">TracerOption</span>
 
 <span class="c1">// 设置采样策略,默认为AlwaysSample.
@@ -841,51 +841,51 @@ java -jar zipkin.jar
 <strong>AlwaysSample</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 所有span都会被发送到zipkin.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 所有span都会被发送到zipkin.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">AlwaysSample</span><span class="p">(</span><span class="nx">_</span> <span class="kt">uint64</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">true</span> <span class="p">}</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><strong>NewModuloSampler</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 当mod小于2时采用AlwaysSmaple.当mod大于2时,若trace id对mod求余为0就会被发送zipkin.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 当mod小于2时采用AlwaysSmaple.当mod大于2时,若trace id对mod求余为0就会被发送zipkin.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewModuloSampler</span><span class="p">(</span><span class="nx">mod</span> <span class="kt">uint64</span><span class="p">)</span> <span class="nx">Sampler</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><strong>NewBoundarySampler</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// BoundarySampler适用于提供随机trace id且仅做出一次采样决定的高流量场景.它可以防止集群中的节点选择完全相同的ID.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// BoundarySampler适用于提供随机trace id且仅做出一次采样决定的高流量场景.它可以防止集群中的节点选择完全相同的ID.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewBoundarySampler</span><span class="p">(</span><span class="nx">rate</span> <span class="kt">float64</span><span class="p">,</span> <span class="nx">salt</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="nx">Sampler</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><strong>NewCountingSampler</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// CountingSampler适用于低流量或不提供随机trace id的场景,由于采样决策不是幂等的(根据traceid一致),因此不适用于收集器.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// CountingSampler适用于低流量或不提供随机trace id的场景,由于采样决策不是幂等的(根据traceid一致),因此不适用于收集器.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewCountingSampler</span><span class="p">(</span><span class="nx">rate</span> <span class="kt">float64</span><span class="p">)</span> <span class="p">(</span><span class="nx">Sampler</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="完整例子">完整例子</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -922,7 +922,7 @@ java -jar zipkin.jar
 </span><span class="lnt">35
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kn">import</span> <span class="p">(</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">import</span> <span class="p">(</span>
 	<span class="s">&#34;io&#34;</span>
 
 	<span class="s">&#34;github.com/opentracing/opentracing-go&#34;</span>

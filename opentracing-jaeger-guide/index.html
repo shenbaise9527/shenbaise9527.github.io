@@ -8,10 +8,10 @@
         <title>Jaeger指南 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="Jaeger指南" />
 <meta property="og:description" content="系统架构 组件 jaeger即可以作为单体应用来部署(所有jaeger后台组件全部运行在一个进程内),也可以作为一个可扩展的分布式系统来部署.如" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/opentracing-jaeger-guide/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/opentracing-jaeger-guide/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-12-14T21:06:14+08:00" />
 <meta property="article:modified_time" content="2020-12-14T21:06:14+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -329,7 +329,7 @@
 <p>举例<code>strategies.json</code>:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -373,7 +373,7 @@
 </span><span class="lnt">42
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
   <span class="nt">&#34;service_strategies&#34;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
       <span class="nt">&#34;service&#34;</span><span class="p">:</span> <span class="s2">&#34;foo&#34;</span><span class="p">,</span>
@@ -526,7 +526,7 @@
 <p>可以在主机上直接运行或采用Docker方式运行:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -536,7 +536,7 @@
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1">## make sure to expose only the ports you use in your deployment scenario!</span>
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1">## make sure to expose only the ports you use in your deployment scenario!</span>
 docker run <span class="se">\
 </span><span class="se"></span>  --rm <span class="se">\
 </span><span class="se"></span>  -p6831:6831/udp <span class="se">\
@@ -551,7 +551,7 @@ docker run <span class="se">\
 <p>采用Docker启动,命令行如下:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -561,7 +561,7 @@ docker run <span class="se">\
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
 </span><span class="se"></span>  --rm <span class="se">\
 </span><span class="se"></span>  -p5775:5775/udp <span class="se">\
 </span><span class="se"></span>  -p6831:6831/udp <span class="se">\
@@ -626,7 +626,7 @@ docker run <span class="se">\
 <p><a href="https://github.com/dgraph-io/badger" target="_blank" rel="noopener noreffer">Badger</a>是嵌入式本地存储器,只适用于<code>all-in-one</code>发行版.默认情况下,它充当临时存储,使用临时文件系统.这些文件可以通过参数<code>--badger.ephemeral=false</code>来重写.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -636,7 +636,7 @@ docker run <span class="se">\
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">SPAN_STORAGE_TYPE</span><span class="o">=</span>badger <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">BADGER_EPHEMERAL</span><span class="o">=</span><span class="nb">false</span> <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">BADGER_DIRECTORY_VALUE</span><span class="o">=</span>/badger/data <span class="se">\
@@ -661,7 +661,7 @@ docker run <span class="se">\
 <p>Jaeger支持在客户端与所配置的Cassandra集群之间采用TLS连接.在例如<code>cqlsh</code>的验证之后,可使用如下命令配置Collector:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -671,7 +671,7 @@ docker run <span class="se">\
 </span><span class="lnt">8
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">CASSANDRA_SERVERS</span><span class="o">=</span>&lt;...&gt; <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">CASSANDRA_TLS</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">CASSANDRA_TLS_SERVER_NAME</span><span class="o">=</span><span class="s2">&#34;CN-in-certificate&#34;</span> <span class="se">\
@@ -684,7 +684,7 @@ docker run <span class="se">\
 </div><p>schema工具也支持TLS,可以使用如下自定义的cqlshrc文件:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -704,7 +704,7 @@ docker run <span class="se">\
 </span><span class="lnt">18
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># Creating schema in a cassandra cluster requiring client TLS certificates.</span>
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># Creating schema in a cassandra cluster requiring client TLS certificates.</span>
 <span class="c1">#</span>
 <span class="c1"># Create a volume for the schema docker container containing four files:</span>
 <span class="c1"># cqlshrc: this file</span>
@@ -757,14 +757,14 @@ docker run <span class="se">\
 <p>使用如下命令:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
 </span><span class="lnt">5
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">docker run <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">SPAN_STORAGE_TYPE</span><span class="o">=</span>grpc-plugin <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">GRPC_STORAGE_PLUGIN_BINARY</span><span class="o">=</span>&lt;...&gt; <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">GRPC_STORAGE_PLUGIN_CONFIGURATION_FILE</span><span class="o">=</span>&lt;...&gt; <span class="se">\
@@ -822,7 +822,7 @@ docker run <span class="se">\
 <p><strong>最小依赖例子(Elasticsearch为后端存储):</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -830,7 +830,7 @@ docker run <span class="se">\
 </span><span class="lnt">6
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-bash" data-lang="bash">docker run -d --rm <span class="se">\
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">docker run -d --rm <span class="se">\
 </span><span class="se"></span>  -p 16686:16686 <span class="se">\
 </span><span class="se"></span>  -p 16687:16687 <span class="se">\
 </span><span class="se"></span>  -e <span class="nv">SPAN_STORAGE_TYPE</span><span class="o">=</span>elasticsearch <span class="se">\

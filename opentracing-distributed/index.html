@@ -8,10 +8,10 @@
         <title>OpenTracing分布式链路追踪 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="OpenTracing分布式链路追踪" />
 <meta property="og:description" content="概述 简介 虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/opentracing-distributed/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/opentracing-distributed/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-12-10T21:35:19+08:00" />
 <meta property="article:modified_time" content="2020-12-10T21:35:19+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -254,7 +254,7 @@
 <h3 id="举例">举例</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -275,7 +275,7 @@
 </span><span class="lnt">19
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-fallback" data-lang="fallback">    t=0            operation name: db_query               t=x
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">    t=0            operation name: db_query               t=x
 
      +-----------------------------------------------------+
      | · · · · · · · · · ·    Span     · · · · · · · · · · |
@@ -315,7 +315,7 @@ SpanContext:
 <p>以Golang语言为例:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -425,7 +425,7 @@ SpanContext:
 </span><span class="lnt">108
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer is a simple, thin interface for Span creation and SpanContext
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer is a simple, thin interface for Span creation and SpanContext
 </span><span class="c1">// propagation.
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">Tracer</span> <span class="kd">interface</span> <span class="p">{</span>
 
@@ -548,7 +548,7 @@ SpanContext:
 <p>为了不强制用户传递<code>Tracer</code>对象,提供了一个全局的<code>GlobalTracer</code>实例来存储<code>Tracer</code>对象,在任何地方都可以通过该全局实例来获取<code>Tracer</code>对象.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -575,7 +575,7 @@ SpanContext:
 </span><span class="lnt">25
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">registeredTracer</span> <span class="kd">struct</span> <span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">registeredTracer</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">tracer</span>       <span class="nx">Tracer</span>
 	<span class="nx">isRegistered</span> <span class="kt">bool</span>
 <span class="p">}</span>
@@ -611,7 +611,7 @@ SpanContext:
 </ul>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -652,7 +652,7 @@ SpanContext:
 </span><span class="lnt">39
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ChildOfRef refers to a parent Span that caused *and* somehow depends
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ChildOfRef refers to a parent Span that caused *and* somehow depends
 </span><span class="c1">// upon the new child Span. Often (but not always), the parent Span cannot
 </span><span class="c1">// finish until the child Span does.
 </span><span class="c1">//
@@ -724,18 +724,18 @@ SpanContext:
 <p><strong>Inject代码</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
 <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tracer</span><span class="p">.</span><span class="nf">Inject</span><span class="p">(</span><span class="nx">span</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMap</span><span class="p">,</span> <span class="nx">carrier</span><span class="p">)</span>
 </code></pre></td></tr></table>
 </div>
 </div><p><strong>Extract代码</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -744,7 +744,7 @@ SpanContext:
 </span><span class="lnt">7
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">carrier</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">TextMapCarrier</span><span class="p">)</span>
 <span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">md</span> <span class="p">{</span>
     <span class="nx">carrier</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <span class="p">}</span>

@@ -8,10 +8,10 @@
         <title>服务启动时连接etcd集群的告警分析 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="服务启动时连接etcd集群的告警分析" />
 <meta property="og:description" content="问题起因 通过docker-compose部署了3个节点的etcd集群,服务在启动时会随机报0个、1个或2个告警信息,信息如下: 1 2 3 4 5 6 7" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/etcd-application-start-warn/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/etcd-application-start-warn/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-12-21T21:18:21+08:00" />
 <meta property="article:modified_time" content="2020-12-21T21:18:21+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -124,7 +124,7 @@
 <p>通过<code>docker-compose</code>部署了3个节点的etcd集群,服务在启动时会随机报0个、1个或2个告警信息,信息如下:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -135,7 +135,7 @@
 </span><span class="lnt">9
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
   <span class="nt">&#34;level&#34;</span><span class="p">:</span> <span class="s2">&#34;warn&#34;</span><span class="p">,</span>
   <span class="nt">&#34;ts&#34;</span><span class="p">:</span> <span class="s2">&#34;2020-12-21T14:43:33.380+0800&#34;</span><span class="p">,</span>
   <span class="nt">&#34;caller&#34;</span><span class="p">:</span> <span class="s2">&#34;clientv3/retry_interceptor.go:62&#34;</span><span class="p">,</span>
@@ -150,7 +150,7 @@
 <p>服务是基于<a href="https://github.com/tal-tech/go-zero" target="_blank" rel="noopener noreffer">go-zero</a>框架的,etcd配置如下:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">1
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
 </span><span class="lnt">3
 </span><span class="lnt">4
@@ -158,7 +158,7 @@
 </span><span class="lnt">6
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-yml" data-lang="yml"><span class="nt">Etcd</span><span class="p">:</span><span class="w">
+<pre tabindex="0" class="chroma"><code class="language-yml" data-lang="yml"><span class="nt">Etcd</span><span class="p">:</span><span class="w">
 </span><span class="w">  </span><span class="nt">Hosts</span><span class="p">:</span><span class="w">
 </span><span class="w">  </span>- <span class="m">192.168.20.151</span><span class="p">:</span><span class="m">2379</span><span class="w">
 </span><span class="w">  </span>- <span class="m">192.168.20.151</span><span class="p">:</span><span class="m">12379</span><span class="w">
@@ -169,7 +169,7 @@
 </div><p>由于是服务启动时报的,追踪服务的启动过程.在启动时会向etcd注册服务的信息.首先是创建etcd客户端:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -182,7 +182,7 @@
 </span><span class="lnt">11
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// go-zero@v1.0.28/core/discov/internal/registry.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// go-zero@v1.0.28/core/discov/internal/registry.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">DialClient</span><span class="p">(</span><span class="nx">endpoints</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">EtcdClient</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Config</span><span class="p">{</span>
 		<span class="nx">Endpoints</span><span class="p">:</span>            <span class="nx">endpoints</span><span class="p">,</span>
@@ -198,7 +198,7 @@
 </div><p>继续追踪<code>clientv3.New</code>方法,最终会调用<code>newClient</code>:</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -278,7 +278,7 @@
 </span><span class="lnt">78
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// etcd/cleintv3/client.go
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// etcd/cleintv3/client.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">newClient</span><span class="p">(</span><span class="nx">cfg</span> <span class="o">*</span><span class="nx">Config</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">Client</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">if</span> <span class="nx">cfg</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
 		<span class="nx">cfg</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">Config</span><span class="p">{}</span>

@@ -8,10 +8,10 @@
         <title>gRPC系列之server端调用 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="gRPC系列之server端调用" />
 <meta property="og:description" content="NewServer创建gRPC服务对象 主要是基于grpc-go的1.33.1版本Unary RPC来分析. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://shenbaise9527.com/grpc-server-call/" />
-<meta property="og:image" content="https://shenbaise9527.com/logo.png"/>
+<meta property="og:url" content="https://shenbaise9527.com/grpc-server-call/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2020-11-07T11:47:48+08:00" />
 <meta property="article:modified_time" content="2020-11-07T11:47:48+08:00" />
+
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
 
@@ -127,7 +127,7 @@
 <p>主要是基于grpc-go的1.33.1版本Unary RPC来分析.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -170,7 +170,7 @@
 </span><span class="lnt">41
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// NewServer creates a gRPC server which has no service registered and has not
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// NewServer creates a gRPC server which has no service registered and has not
 </span><span class="c1">// started to accept requests yet.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewServer</span><span class="p">(</span><span class="nx">opt</span> <span class="o">...</span><span class="nx">ServerOption</span><span class="p">)</span> <span class="o">*</span><span class="nx">Server</span> <span class="p">{</span>
     <span class="c1">// 处理Server对象的一些定制化参数.在Go中推荐采用Option的方式从外部来影响对象内的行为.
@@ -218,7 +218,7 @@
 主要用来设置服务端认证相关的参数.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -238,7 +238,7 @@
 </span><span class="lnt">18
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 用来设置TLS.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 用来设置TLS.
 </span><span class="c1">// Creds returns a ServerOption that sets credentials for server connections.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">Creds</span><span class="p">(</span><span class="nx">c</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">TransportCredentials</span><span class="p">)</span> <span class="nx">ServerOption</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="nf">newFuncServerOption</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">o</span> <span class="o">*</span><span class="nx">serverOptions</span><span class="p">)</span> <span class="p">{</span>
@@ -262,7 +262,7 @@
 主要用来设置服务端的拦截器.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -282,7 +282,7 @@
 </span><span class="lnt">18
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// UnaryInterceptor returns a ServerOption that sets the UnaryServerInterceptor for the
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// UnaryInterceptor returns a ServerOption that sets the UnaryServerInterceptor for the
 </span><span class="c1">// server. Only one unary interceptor can be installed. The construction of multiple
 </span><span class="c1">// interceptors (e.g., chaining) can be implemented at the caller.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">UnaryInterceptor</span><span class="p">(</span><span class="nx">i</span> <span class="nx">UnaryServerInterceptor</span><span class="p">)</span> <span class="nx">ServerOption</span> <span class="p">{</span>
@@ -306,7 +306,7 @@
 主要用来设置服务端的链式拦截器.</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -318,7 +318,7 @@
 </span><span class="lnt">10
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 支持同时设置多个拦截器.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 支持同时设置多个拦截器.
 </span><span class="c1">// ChainUnaryInterceptor returns a ServerOption that specifies the chained interceptor
 </span><span class="c1">// for unary RPCs. The first interceptor will be the outer most,
 </span><span class="c1">// while the last interceptor will be the inner most wrapper around the real call.
@@ -333,7 +333,7 @@
 </div><h2 id="注册rpc对象到server中">注册RPC对象到Server中</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -408,7 +408,7 @@
 </span><span class="lnt">73
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 注册HelloServiceServer对象到gRPC对象中.
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 注册HelloServiceServer对象到gRPC对象中.
 </span><span class="c1"></span><span class="kd">func</span> <span class="nf">RegisterHelloServiceServer</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">Server</span><span class="p">,</span> <span class="nx">srv</span> <span class="nx">HelloServiceServer</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">s</span><span class="p">.</span><span class="nf">RegisterService</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">_HelloService_serviceDesc</span><span class="p">,</span> <span class="nx">srv</span><span class="p">)</span>
 <span class="p">}</span>
@@ -486,7 +486,7 @@
 </div><h2 id="server启动监听等待连接">Server启动监听等待连接</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt"> 1
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
 </span><span class="lnt"> 3
 </span><span class="lnt"> 4
@@ -572,7 +572,7 @@
 </span><span class="lnt">84
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Serve accepts incoming connections on the listener lis, creating a new
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Serve accepts incoming connections on the listener lis, creating a new
 </span><span class="c1">// ServerTransport and service goroutine for each. The service goroutines
 </span><span class="c1">// read gRPC requests and then call the registered handlers to reply to them.
 </span><span class="c1">// Serve returns when lis.Accept fails with fatal errors.  lis will be closed when
@@ -661,7 +661,7 @@
 </div><h2 id="业务处理逻辑">业务处理逻辑</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre class="chroma"><code><span class="lnt">  1
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
 </span><span class="lnt">  2
 </span><span class="lnt">  3
 </span><span class="lnt">  4
@@ -858,7 +858,7 @@
 </span><span class="lnt">195
 </span></code></pre></td>
 <td class="lntd">
-<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// handleRawConn forks a goroutine to handle a just-accepted connection that
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// handleRawConn forks a goroutine to handle a just-accepted connection that
 </span><span class="c1">// has not had any I/O performed on it yet.
 </span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Server</span><span class="p">)</span> <span class="nf">handleRawConn</span><span class="p">(</span><span class="nx">rawConn</span> <span class="nx">net</span><span class="p">.</span><span class="nx">Conn</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">quit</span><span class="p">.</span><span class="nf">HasFired</span><span class="p">()</span> <span class="p">{</span>
