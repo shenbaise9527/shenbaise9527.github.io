@@ -4,9 +4,16 @@
         <link>https://shenbaise9527.com/</link>
         <description>深白色9527</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
-            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 16:57:37 &#43;0800</lastBuildDate>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</lastBuildDate>
             <atom:link href="https://shenbaise9527.com/index.xml" rel="self" type="application/rss+xml" />
         <item>
+    <title>Golang与C语言相互调用</title>
+    <link>https://shenbaise9527.com/golang-c-call/</link>
+    <pubDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/golang-c-call/</guid>
+    <description><![CDATA[主要是描述Go语言调用易盛行情API的动态库过程中，一些需要注意的地方。 类型对应关系 C类型 调用方法 Go类型 字节数 char C.char byte 1 signed char C.schar int8 1 unsigned char C.uchar uint8 1]]></description>
+</item><item>
     <title>golang字符串解析</title>
     <link>https://shenbaise9527.com/golang-string/</link>
     <pubDate>Sat, 24 Jul 2021 16:57:37 &#43;0800</pubDate>
@@ -69,12 +76,5 @@
     <author>作者</author>
     <guid>https://shenbaise9527.com/opentracing-best-practices/</guid>
     <description><![CDATA[回顾: OpenTracing的目标是什么? OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下: 1 2 3 4]]></description>
-</item><item>
-    <title>OpenTracing分布式链路追踪</title>
-    <link>https://shenbaise9527.com/opentracing-distributed/</link>
-    <pubDate>Thu, 10 Dec 2020 21:35:19 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://shenbaise9527.com/opentracing-distributed/</guid>
-    <description><![CDATA[概述 简介 虽然微服务是一种强大的系统架构,但也伴随着新的问题,就是当微服务数量众多且调用链条过长时,在复杂的网络环境下是很难调试和观察分布式事]]></description>
 </item></channel>
 </rss>

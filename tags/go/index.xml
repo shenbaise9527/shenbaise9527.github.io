@@ -4,7 +4,14 @@
         <link>https://shenbaise9527.com/tags/go/</link>
         <description>go - 标签 - 深白色9527</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
-            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 16:57:37 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+    <title>Golang与C语言相互调用</title>
+    <link>https://shenbaise9527.com/golang-c-call/</link>
+    <pubDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/golang-c-call/</guid>
+    <description><![CDATA[主要是描述Go语言调用易盛行情API的动态库过程中，一些需要注意的地方。 类型对应关系 C类型 调用方法 Go类型 字节数 char C.char byte 1 signed char C.schar int8 1 unsigned char C.uchar uint8 1]]></description>
+</item><item>
     <title>golang字符串解析</title>
     <link>https://shenbaise9527.com/golang-string/</link>
     <pubDate>Sat, 24 Jul 2021 16:57:37 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://shenbaise9527.com/grpc-server-call/</guid>
     <description><![CDATA[NewServer创建gRPC服务对象 主要是基于grpc-go的1.33.1版本Unary RPC来分析. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18]]></description>
-</item><item>
-    <title>gRPC系列之初识</title>
-    <link>https://shenbaise9527.com/grpc-first-introduction/</link>
-    <pubDate>Fri, 06 Nov 2020 22:05:51 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://shenbaise9527.com/grpc-first-introduction/</guid>
-    <description><![CDATA[RPC RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需]]></description>
 </item></channel>
 </rss>
