@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>gRPC系列之初识 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="gRPC系列之初识" />
+<meta property="og:description" content="RPC RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/2020/11/06/grpc-first-introduction/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-11-06T22:05:51+08:00" />
+<meta property="article:modified_time" content="2020-11-06T22:05:51+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="gRPC系列之初识"/>
+<meta name="twitter:description" content="RPC RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/2020/11/06/grpc-first-introduction/" /><link rel="prev" href="https://shenbaise9527.com/2020/11/03/golang-pprof/" /><link rel="next" href="https://shenbaise9527.com/2020/11/07/grpc-server-call/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "gRPC系列之初识",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/2020\/11\/06\/grpc-first-introduction\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go, grpc","wordcount":  2780 ,
+        "url": "https:\/\/shenbaise9527.com\/2020\/11\/06\/grpc-first-introduction\/","datePublished": "2020-11-06T22:05:51+08:00","dateModified": "2020-11-06T22:05:51+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">gRPC系列之初识</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/golang/"><i class="far fa-folder fa-fw"></i>Golang</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-11-06">2020-11-06</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 2780 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 6 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#rpc">RPC</a></li>
+    <li><a href="#protoc工具">protoc工具</a></li>
+    <li><a href="#idl文件">IDL文件</a></li>
+    <li><a href="#生成go语言代码">生成go语言代码</a></li>
+    <li><a href="#服务端代码">服务端代码</a></li>
+    <li><a href="#客户端代码">客户端代码</a></li>
+    <li><a href="#调用分析">调用分析</a>
+      <ul>
+        <li><a href="#wireshark抓包">wireshark抓包</a></li>
+        <li><a href="#magic">Magic</a></li>
+        <li><a href="#settings">SETTINGS</a></li>
+        <li><a href="#headers">HEADERS</a></li>
+        <li><a href="#data">DATA</a></li>
+        <li><a href="#window_update">WINDOW_UPDATE</a></li>
+        <li><a href="#headersdataheaders">HEADERS,DATA,HEADERS</a></li>
+        <li><a href="#ping">PING</a></li>
+      </ul>
+    </li>
+    <li><a href="#流式模式">流式模式</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="rpc">RPC</h2>
+<p>RPC指远程过程调用(Remote Procedure Call),让远程服务调用更加简单、透明.服务调用者可以像调用本地接口一样调用远程的服务提供者,而不需要关心底层通信细节和调用过程,RPC框架负责底层的传输方式、序列化方式和通信细节.</p>
+<p>gRPC是一个高性能、开源和通用的RPC框架,面向服务端和移动端,特点如下:</p>
+<ul>
+<li>支持多语言.</li>
+<li>基于IDL文件定义服务,通过protoc工具生成指定语言的数据结构、服务端接口和客户端Stub.</li>
+<li>通信协议基于HTTP/2设计,支持双向流、消息头压缩、单TCP的多路复用、服务端推送等特性.使得在移动端设备上更加省电和节省网络流量.</li>
+<li>序列化支持<a href="https://github.com/protocolbuffers/protobuf" target="_blank" rel="noopener noreffer">Protocol Buffer</a>和JSON.</li>
+</ul>
+<p><figure><a class="lightgallery" href="/images/grpc.png" title="gRPC调用示例" data-thumbnail="/images/grpc.png" data-sub-html="<h2>gRPC调用</h2><p>gRPC调用示例</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc.png"
+            data-srcset="/images/grpc.png, /images/grpc.png 1.5x, /images/grpc.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc.png" />
+    </a><figcaption class="image-caption">gRPC调用</figcaption>
+    </figure></p>
+<h2 id="protoc工具">protoc工具</h2>
+<p>先安装相关工具,可以用来直接生成go和grpc的代码.</p>
+<ol>
+<li>安装<a href="https://github.com/protocolbuffers/protobuf" target="_blank" rel="noopener noreffer">protoc</a></li>
+<li>安装<a href="https://github.com/protocolbuffers/protobuf-go" target="_blank" rel="noopener noreffer">protoc-gen-go</a></li>
+<li>安装<a href="https://github.com/grpc/grpc-go" target="_blank" rel="noopener noreffer">protoc-gen-go-grpc</a></li>
+</ol>
+<h2 id="idl文件">IDL文件</h2>
+<p>生成<code>hello.proto</code>文件,内容如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">syntax</span> <span class="p">=</span> <span class="s">&#34;proto3&#34;</span><span class="p">;</span>
+
+<span class="nx">option</span> <span class="nx">go_package</span><span class="p">=</span><span class="s">&#34;.;pb&#34;</span><span class="p">;</span>
+
+<span class="nx">message</span> <span class="nx">HelloRequest</span> <span class="p">{</span>
+    <span class="kt">string</span> <span class="nx">name</span> <span class="p">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">message</span> <span class="nx">HelloReply</span> <span class="p">{</span>
+    <span class="kt">string</span> <span class="nx">message</span> <span class="p">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">service</span> <span class="nx">HelloService</span> <span class="p">{</span>
+    <span class="nx">rpc</span> <span class="nf">SayHello</span> <span class="p">(</span><span class="nx">HelloRequest</span><span class="p">)</span> <span class="nf">returns</span> <span class="p">(</span><span class="nx">HelloReply</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>syntax,定义proto的版本,支持proto2和proto3,proto3才支持grpc.</li>
+<li>go_package,定义生成的go文件的包名(package name).</li>
+<li>message,定义数据结构.</li>
+<li>service,定义服务,可包含多个rpc函数.</li>
+</ul>
+<h2 id="生成go语言代码">生成go语言代码</h2>
+<p>使用工具<code>protoc</code>来生成对应的go文件,命令<code>protoc -I=./proto --go_out=plugins=grpc:./pb hello.proto</code>.</p>
+<ul>
+<li><code>-I=./proto</code>,表示proto文件所在的目录.</li>
+<li><code>--go_out</code>,表示生成go语言的代码,且存放go文件的目录,默认是不会生成grpc的代码的,需要显式声明<code>plugins=grpc</code>.</li>
+<li><code>hello.proto</code>,表示proto文件的名字.</li>
+</ul>
+<p>在目录<code>pb</code>中生成文件<code>hello.pb.go</code>,文件里面包含了grpc相关代码.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Reference imports to suppress errors if they are not otherwise used.
+</span><span class="c1"></span><span class="kd">var</span> <span class="nx">_</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span>
+<span class="kd">var</span> <span class="nx">_</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">ClientConnInterface</span>
+
+<span class="c1">// This is a compile-time assertion to ensure that this generated file
+</span><span class="c1">// is compatible with the grpc package it is being compiled against.
+</span><span class="c1"></span><span class="kd">const</span> <span class="nx">_</span> <span class="p">=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">SupportPackageIsVersion6</span>
+
+<span class="c1">// HelloServiceClient is the client API for HelloService service.
+</span><span class="c1">//
+</span><span class="c1">// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">HelloServiceClient</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="nf">SayHello</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">in</span> <span class="o">*</span><span class="nx">HelloRequest</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">CallOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">HelloReply</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">type</span> <span class="nx">helloServiceClient</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">cc</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">ClientConnInterface</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">NewHelloServiceClient</span><span class="p">(</span><span class="nx">cc</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">ClientConnInterface</span><span class="p">)</span> <span class="nx">HelloServiceClient</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">helloServiceClient</span><span class="p">{</span><span class="nx">cc</span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">helloServiceClient</span><span class="p">)</span> <span class="nf">SayHello</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">in</span> <span class="o">*</span><span class="nx">HelloRequest</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">CallOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">HelloReply</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">out</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">HelloReply</span><span class="p">)</span>
+	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;/HelloService/SayHello&#34;</span><span class="p">,</span> <span class="nx">in</span><span class="p">,</span> <span class="nx">out</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">out</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// HelloServiceServer is the server API for HelloService service.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">HelloServiceServer</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="nf">SayHello</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="o">*</span><span class="nx">HelloRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">HelloReply</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// UnimplementedHelloServiceServer can be embedded to have forward compatible implementations.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">UnimplementedHelloServiceServer</span> <span class="kd">struct</span> <span class="p">{</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="o">*</span><span class="nx">UnimplementedHelloServiceServer</span><span class="p">)</span> <span class="nf">SayHello</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="o">*</span><span class="nx">HelloRequest</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">HelloReply</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">status</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="nx">codes</span><span class="p">.</span><span class="nx">Unimplemented</span><span class="p">,</span> <span class="s">&#34;method SayHello not implemented&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">RegisterHelloServiceServer</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">Server</span><span class="p">,</span> <span class="nx">srv</span> <span class="nx">HelloServiceServer</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nf">RegisterService</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">_HelloService_serviceDesc</span><span class="p">,</span> <span class="nx">srv</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">_HelloService_SayHello_Handler</span><span class="p">(</span><span class="nx">srv</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">dec</span> <span class="kd">func</span><span class="p">(</span><span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span><span class="p">,</span> <span class="nx">interceptor</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">UnaryServerInterceptor</span><span class="p">)</span> <span class="p">(</span><span class="kd">interface</span><span class="p">{},</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">in</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">HelloRequest</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">dec</span><span class="p">(</span><span class="nx">in</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">interceptor</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">srv</span><span class="p">.(</span><span class="nx">HelloServiceServer</span><span class="p">).</span><span class="nf">SayHello</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">in</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">info</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">UnaryServerInfo</span><span class="p">{</span>
+		<span class="nx">Server</span><span class="p">:</span>     <span class="nx">srv</span><span class="p">,</span>
+		<span class="nx">FullMethod</span><span class="p">:</span> <span class="s">&#34;/HelloService/SayHello&#34;</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="nx">handler</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">req</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">(</span><span class="kd">interface</span><span class="p">{},</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">srv</span><span class="p">.(</span><span class="nx">HelloServiceServer</span><span class="p">).</span><span class="nf">SayHello</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">req</span><span class="p">.(</span><span class="o">*</span><span class="nx">HelloRequest</span><span class="p">))</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nf">interceptor</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">in</span><span class="p">,</span> <span class="nx">info</span><span class="p">,</span> <span class="nx">handler</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">_HelloService_serviceDesc</span> <span class="p">=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">ServiceDesc</span><span class="p">{</span>
+	<span class="nx">ServiceName</span><span class="p">:</span> <span class="s">&#34;HelloService&#34;</span><span class="p">,</span>
+	<span class="nx">HandlerType</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">HelloServiceServer</span><span class="p">)(</span><span class="kc">nil</span><span class="p">),</span>
+	<span class="nx">Methods</span><span class="p">:</span> <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">MethodDesc</span><span class="p">{</span>
+		<span class="p">{</span>
+			<span class="nx">MethodName</span><span class="p">:</span> <span class="s">&#34;SayHello&#34;</span><span class="p">,</span>
+			<span class="nx">Handler</span><span class="p">:</span>    <span class="nx">_HelloService_SayHello_Handler</span><span class="p">,</span>
+		<span class="p">},</span>
+	<span class="p">},</span>
+	<span class="nx">Streams</span><span class="p">:</span>  <span class="p">[]</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">StreamDesc</span><span class="p">{},</span>
+	<span class="nx">Metadata</span><span class="p">:</span> <span class="s">&#34;hello.proto&#34;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="服务端代码">服务端代码</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 监听tcp端口,用于接受客户端请求.
+</span><span class="c1"></span><span class="nx">lis</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">net</span><span class="p">.</span><span class="nf">Listen</span><span class="p">(</span><span class="s">&#34;tcp&#34;</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;:%d&#34;</span><span class="p">,</span> <span class="o">*</span><span class="nx">port</span><span class="p">))</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;failed to listen: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// 创建gRPC服务实例对象.
+</span><span class="c1"></span><span class="nx">grpcserver</span> <span class="o">:=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">NewServer</span><span class="p">()</span>
+
+<span class="c1">// 把server对象注册到gRPC服务中,server对象实现了HelloServiceServer接口.
+</span><span class="c1"></span><span class="nx">pb</span><span class="p">.</span><span class="nf">RegisterHelloServiceServer</span><span class="p">(</span><span class="nx">grpcserver</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">server</span><span class="p">{})</span>
+
+<span class="c1">// 阻塞等待客户端连接,直到进程被终止或Stop函数被调用.
+</span><span class="c1"></span><span class="nx">err</span> <span class="p">=</span> <span class="nx">grpcserver</span><span class="p">.</span><span class="nf">Serve</span><span class="p">(</span><span class="nx">lis</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;failed to server: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="客户端代码">客户端代码</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建一个连接与服务端进行通信.
+</span><span class="c1"></span><span class="nx">conn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">Dial</span><span class="p">(</span><span class="o">*</span><span class="nx">addr</span><span class="p">,</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">WithInsecure</span><span class="p">())</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;failed to dail: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// 关闭连接.
+</span><span class="c1"></span><span class="k">defer</span> <span class="nx">conn</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+
+<span class="c1">// 创建HelloService的Client stub.
+</span><span class="c1"></span><span class="nx">client</span> <span class="o">:=</span> <span class="nx">pb</span><span class="p">.</span><span class="nf">NewHelloServiceClient</span><span class="p">(</span><span class="nx">conn</span><span class="p">)</span>
+
+<span class="c1">// 调用对应的服务方法.
+</span><span class="c1"></span><span class="nx">reply</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">SayHello</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="o">&amp;</span><span class="nx">pb</span><span class="p">.</span><span class="nx">HelloRequest</span><span class="p">{</span><span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;zhou&#34;</span><span class="p">})</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;failed to sayhello: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+
+	<span class="k">return</span>
+<span class="p">}</span>
+
+<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">reply</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="调用分析">调用分析</h2>
+<h3 id="wireshark抓包">wireshark抓包</h3>
+<p>服务端监听在9090端口,用<a href="https://www.wireshark.org/" target="_blank" rel="noopener noreffer">wireshark</a>来进行抓包.
+<figure><a class="lightgallery" href="/images/pcap1.png" title="抓包" data-thumbnail="/images/pcap1.png" data-sub-html="<h2>wireshark抓包</h2><p>抓包</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/pcap1.png"
+            data-srcset="/images/pcap1.png, /images/pcap1.png 1.5x, /images/pcap1.png 2x"
+            data-sizes="auto"
+            alt="/images/pcap1.png" />
+    </a><figcaption class="image-caption">wireshark抓包</figcaption>
+    </figure>
+可以看到前三行是tcp三次握手的报文,后续的全部都解析成了tcp协议,gRPC是基于http/2,需要手工修改Protocol为http/2.
+wireshark菜单栏&ndash;&gt;分析(A)&ndash;&gt;解码为(Decode As),在弹出的界面新增一行,然后修改&quot;当前&quot;列为HTTP2.
+<figure><a class="lightgallery" href="/images/pcap2.png" title="设置http/2" data-thumbnail="/images/pcap2.png" data-sub-html="<h2>设置协议为http2</h2><p>设置http/2</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/pcap2.png"
+            data-srcset="/images/pcap2.png, /images/pcap2.png 1.5x, /images/pcap2.png 2x"
+            data-sizes="auto"
+            alt="/images/pcap2.png" />
+    </a><figcaption class="image-caption">设置协议为http2</figcaption>
+    </figure></p>
+<p>现在能正常解析为HTTP/2协议了,一次gRPC调用总览如下:
+<figure><a class="lightgallery" href="/images/pcap3.png" title="HTTP/2协议" data-thumbnail="/images/pcap3.png" data-sub-html="<h2>gRPC调用总览</h2><p>HTTP/2协议</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/pcap3.png"
+            data-srcset="/images/pcap3.png, /images/pcap3.png 1.5x, /images/pcap3.png 2x"
+            data-sizes="auto"
+            alt="/images/pcap3.png" />
+    </a><figcaption class="image-caption">gRPC调用总览</figcaption>
+    </figure>
+从上图大体可以看出,gRPC调用过程分为:<code>Magic(C-&gt;S) --&gt; SETTINGS(S-&gt;C) --&gt; SETTINGS(C-&gt;S) --&gt; SETTINGS(S-&gt;C) --&gt; SETTINGS,HEADERS,DATA(C-&gt;S) --&gt; WINDOW_UPDATE,PING(S-&gt;C) --&gt; HEADERS,DATA,HEADERS(S-&gt;C) --&gt; PING,WINDOW_UPDATE,PING(C-&gt;S) --&gt; PING(S-&gt;C)</code></p>
+<h3 id="magic">Magic</h3>
+<p><figure><a class="lightgallery" href="/images/grpc-magic.png" title="Magic" data-thumbnail="/images/grpc-magic.png" data-sub-html="<h2>gRPC-Magic</h2><p>Magic</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-magic.png"
+            data-srcset="/images/grpc-magic.png, /images/grpc-magic.png 1.5x, /images/grpc-magic.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-magic.png" />
+    </a><figcaption class="image-caption">gRPC-Magic</figcaption>
+    </figure>
+Magic帧的主要作用是建立HTTP/2请求的前言.在HTTP/2协议中,要求两端都要发送连接前言,来最终确认所使用的协议,并确定HTTP/2连接的初始设置.</p>
+<p>而Magic帧是客户端的前言之一,内容为<code>PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n</code>,以确定启用HTTP/2连接.</p>
+<h3 id="settings">SETTINGS</h3>
+<p><figure><a class="lightgallery" href="/images/grpc-settings1.png" title="SETTINGS1" data-thumbnail="/images/grpc-settings1.png" data-sub-html="<h2>gRPC-SETTINGS</h2><p>SETTINGS1</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-settings1.png"
+            data-srcset="/images/grpc-settings1.png, /images/grpc-settings1.png 1.5x, /images/grpc-settings1.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-settings1.png" />
+    </a><figcaption class="image-caption">gRPC-SETTINGS</figcaption>
+    </figure>
+由服务端发送给客户端,主要设置<code>Max Frame Size</code>为16384字节,作用域是整个连接而非单一的流.也是服务端的连接前言.</p>
+<p><figure><a class="lightgallery" href="/images/grpc-settings2.png" title="SETTINGS2" data-thumbnail="/images/grpc-settings2.png" data-sub-html="<h2>gRPC-SETTINGS</h2><p>SETTINGS2</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-settings2.png"
+            data-srcset="/images/grpc-settings2.png, /images/grpc-settings2.png 1.5x, /images/grpc-settings2.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-settings2.png" />
+    </a><figcaption class="image-caption">gRPC-SETTINGS</figcaption>
+    </figure>
+由客户端发送给服务端,是客户端的连接前言(和Magic一起).</p>
+<p><figure><a class="lightgallery" href="/images/grpc-settings3.png" title="SETTINGS3" data-thumbnail="/images/grpc-settings3.png" data-sub-html="<h2>gRPC-SETTINGS</h2><p>SETTINGS3</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-settings3.png"
+            data-srcset="/images/grpc-settings3.png, /images/grpc-settings3.png 1.5x, /images/grpc-settings3.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-settings3.png" />
+    </a><figcaption class="image-caption">gRPC-SETTINGS</figcaption>
+    </figure>
+由服务端发送给客户端,在发送完前言后,客户端和服务端还需要有一步互相确认的动作,对应的就是带有<code>ACK: True</code>的帧.</p>
+<p><figure><a class="lightgallery" href="/images/grpc-settings4.png" title="SETTINGS4" data-thumbnail="/images/grpc-settings4.png" data-sub-html="<h2>gRPC-SETTINGS</h2><p>SETTINGS4</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-settings4.png"
+            data-srcset="/images/grpc-settings4.png, /images/grpc-settings4.png 1.5x, /images/grpc-settings4.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-settings4.png" />
+    </a><figcaption class="image-caption">gRPC-SETTINGS</figcaption>
+    </figure>
+由客户端发送给服务端,是带有<code>ACK: True</code>的帧.</p>
+<h3 id="headers">HEADERS</h3>
+<p><figure><a class="lightgallery" href="/images/grpc-headers1.png" title="HEADERS1" data-thumbnail="/images/grpc-headers1.png" data-sub-html="<h2>gRPC-HEADERS</h2><p>HEADERS1</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-headers1.png"
+            data-srcset="/images/grpc-headers1.png, /images/grpc-headers1.png 1.5x, /images/grpc-headers1.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-headers1.png" />
+    </a><figcaption class="image-caption">gRPC-HEADERS</figcaption>
+    </figure>
+主要是存储和传播HTTP的表头信息.</p>
+<h3 id="data">DATA</h3>
+<p><figure><a class="lightgallery" href="/images/grpc-data1.png" title="DATA1" data-thumbnail="/images/grpc-data1.png" data-sub-html="<h2>gRPC-DATA</h2><p>DATA1</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-data1.png"
+            data-srcset="/images/grpc-data1.png, /images/grpc-data1.png 1.5x, /images/grpc-data1.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-data1.png" />
+    </a><figcaption class="image-caption">gRPC-DATA</figcaption>
+    </figure>
+DATA是数据帧,可以看到请求的protobuf结构只有1个字段,该字段的值为<code>zhou</code>(可以参见客户端代码).</p>
+<h3 id="window_update">WINDOW_UPDATE</h3>
+<p><figure><a class="lightgallery" href="/images/grpc-win.png" title="WIN" data-thumbnail="/images/grpc-win.png" data-sub-html="<h2>gRPC-WINDOW_UPDATE</h2><p>WIN</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-win.png"
+            data-srcset="/images/grpc-win.png, /images/grpc-win.png 1.5x, /images/grpc-win.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-win.png" />
+    </a><figcaption class="image-caption">gRPC-WINDOW_UPDATE</figcaption>
+    </figure>
+主要是管理流控制窗口的大小.</p>
+<h3 id="headersdataheaders">HEADERS,DATA,HEADERS</h3>
+<p><figure><a class="lightgallery" href="/images/grpc-rsp1.png" title="RSP1" data-thumbnail="/images/grpc-rsp1.png" data-sub-html="<h2>gRPC-DATA</h2><p>RSP1</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-rsp1.png"
+            data-srcset="/images/grpc-rsp1.png, /images/grpc-rsp1.png 1.5x, /images/grpc-rsp1.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-rsp1.png" />
+    </a><figcaption class="image-caption">gRPC-DATA</figcaption>
+    </figure>
+<figure><a class="lightgallery" href="/images/grpc-rsp2.png" title="RSP2" data-thumbnail="/images/grpc-rsp2.png" data-sub-html="<h2>gRPC-DATA</h2><p>RSP2</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/grpc-rsp2.png"
+            data-srcset="/images/grpc-rsp2.png, /images/grpc-rsp2.png 1.5x, /images/grpc-rsp2.png 2x"
+            data-sizes="auto"
+            alt="/images/grpc-rsp2.png" />
+    </a><figcaption class="image-caption">gRPC-DATA</figcaption>
+    </figure>
+服务端发送给客户端的响应,HEADERS frame记录的是HTTP响应状态(<code>200 OK</code>)和响应的内容格式(<code>application/grpc</code>).
+响应的protobuf结构也是只有1个字段,字段的值是<code>zhou</code>.</p>
+<h3 id="ping">PING</h3>
+<p>主要是判断当前连接是否仍然可用,也常用于计算往返时间.</p>
+<h2 id="流式模式">流式模式</h2>
+<p>gRPC支持UnaryRPC(一元PRC)和StreamRPC(流式RPC).</p>
+<ul>
+<li>UnaryRPC,上面介绍的都是基于UnaryRPC的,该模式是一个请求对应一个响应.</li>
+<li>StreamRPC流式模式的请求和响应是多对多的,又分为三种类型:
+<ul>
+<li>Server-side streaming RPC,服务端流式模式,即一个请求对应多个响应.</li>
+<li>Client-side streaming RPC,客户端流式模式,即多个请求对应一个响应.</li>
+<li>Bidirectional streaming RPC,双向流式模式,即多个请求对应多个响应.</li>
+</ul>
+</li>
+</ul>
+<p>流式模式需要用到关键字<code>stream</code>,如下proto文件.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">syntax</span> <span class="p">=</span> <span class="s">&#34;proto3&#34;</span><span class="p">;</span>
+
+<span class="nx">option</span> <span class="nx">go_package</span><span class="p">=</span><span class="s">&#34;.;pb&#34;</span><span class="p">;</span>
+
+<span class="nx">message</span> <span class="nx">HelloRequest</span> <span class="p">{</span>
+    <span class="kt">string</span> <span class="nx">name</span> <span class="p">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">message</span> <span class="nx">HelloReply</span> <span class="p">{</span>
+    <span class="kt">string</span> <span class="nx">message</span> <span class="p">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">service</span> <span class="nx">HelloService</span> <span class="p">{</span>
+    <span class="nx">rpc</span> <span class="nf">SayHello</span> <span class="p">(</span><span class="nx">HelloRequest</span><span class="p">)</span> <span class="nf">returns</span> <span class="p">(</span><span class="nx">HelloReply</span><span class="p">);</span>
+    <span class="nx">rpc</span> <span class="nf">ServerSayHello</span> <span class="p">(</span><span class="nx">HelloRequest</span><span class="p">)</span> <span class="nf">returns</span> <span class="p">(</span><span class="nx">stream</span> <span class="nx">HelloReply</span><span class="p">);</span>
+    <span class="nx">rpc</span> <span class="nf">ClientSayHello</span> <span class="p">(</span><span class="nx">stream</span> <span class="nx">HelloRequest</span><span class="p">)</span> <span class="nf">returns</span> <span class="p">(</span><span class="nx">HelloReply</span><span class="p">);</span>
+    <span class="nx">rpc</span> <span class="nf">BidirSayHello</span> <span class="p">(</span><span class="nx">stream</span> <span class="nx">HelloRequest</span><span class="p">)</span> <span class="nf">returns</span> <span class="p">(</span><span class="nx">stream</span> <span class="nx">HelloReply</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>SayHello</code>是一元RPC模式.
+<code>ServerSayHello</code>是服务端流式模式.
+<code>ClientSayHello</code>是客户端流式模式.
+<code>BidirSayHello</code>是双向流式模式.</p>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://jingwei.link/2018/10/02/grpc-wireshark-analysis.html" target="_blank" rel="noopener noreffer">抓包gRPC的细节与分析</a></li>
+<li><a href="https://httpwg.org/specs/rfc7540.html" target="_blank" rel="noopener noreffer">Hypertext Transfer Protocol Version 2</a></li>
+<li><a href="https://eddycjy.com/posts/go/talk/2019-06-29-talking-grpc/" target="_blank" rel="noopener noreffer">从实践到原理，带你参透 gRPC</a></li>
+</ul>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-11-06</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/2020/11/06/grpc-first-introduction/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/2020/11/06/grpc-first-introduction/" data-title="gRPC系列之初识" data-via="shenbaise9527" data-hashtags="go,grpc"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/2020/11/06/grpc-first-introduction/" data-hashtag="go"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/2020/11/06/grpc-first-introduction/" data-title="gRPC系列之初识"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/go/">go</a>,&nbsp;<a href="/tags/grpc/">grpc</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/2020/11/03/golang-pprof/" class="prev" rel="prev" title="go性能分析"><i class="fas fa-angle-left fa-fw"></i>go性能分析</a>
+            <a href="/2020/11/07/grpc-server-call/" class="next" rel="next" title="gRPC系列之server端调用">gRPC系列之server端调用<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.87.0-DEV">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>

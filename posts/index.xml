@@ -6,73 +6,73 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
             <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/posts/" rel="self" type="application/rss+xml" /><item>
     <title>Golang与C语言相互调用</title>
-    <link>https://shenbaise9527.com/golang-c-call/</link>
+    <link>https://shenbaise9527.com/2021/07/24/golang-c-call/</link>
     <pubDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/golang-c-call/</guid>
+    <guid>https://shenbaise9527.com/2021/07/24/golang-c-call/</guid>
     <description><![CDATA[主要是描述Go语言调用易盛行情API的动态库过程中，一些需要注意的地方。 类型对应关系 C类型 调用方法 Go类型 字节数 char C.char byte 1 signed char C.schar int8 1 unsigned char C.uchar uint8 1]]></description>
 </item><item>
     <title>golang字符串解析</title>
-    <link>https://shenbaise9527.com/golang-string/</link>
+    <link>https://shenbaise9527.com/2021/07/24/golang-string/</link>
     <pubDate>Sat, 24 Jul 2021 16:57:37 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/golang-string/</guid>
+    <guid>https://shenbaise9527.com/2021/07/24/golang-string/</guid>
     <description><![CDATA[字符编码 计算机世界中只能识别二进制,所有的信息最终都会表示成一个二进制的字符串,每一个二进制位有0和1两种状态. 当在计算机中存储字符&rsq]]></description>
 </item><item>
     <title>分布式一致性算法:Raft</title>
-    <link>https://shenbaise9527.com/raft-consensus-algorithm/</link>
+    <link>https://shenbaise9527.com/2021/01/05/raft-consensus-algorithm/</link>
     <pubDate>Tue, 05 Jan 2021 21:33:07 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/raft-consensus-algorithm/</guid>
+    <guid>https://shenbaise9527.com/2021/01/05/raft-consensus-algorithm/</guid>
     <description><![CDATA[简介 一致性算法允许一个集群作为一个整体来工作,并允许集群中的某些节点发生故障,而不影响集群的整体运作.因此一致性算法在构建可靠的大型软件系统]]></description>
 </item><item>
     <title>Etcd操作指南</title>
-    <link>https://shenbaise9527.com/etcd-operation-guide/</link>
+    <link>https://shenbaise9527.com/2020/12/23/etcd-operation-guide/</link>
     <pubDate>Wed, 23 Dec 2020 20:58:37 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/etcd-operation-guide/</guid>
+    <guid>https://shenbaise9527.com/2020/12/23/etcd-operation-guide/</guid>
     <description><![CDATA[简介 etcd是强一致性的,分布式KV存储,为分布式系统或集群提供可靠的数据存储.底层基于raft共识算法,可以在网络分区情况下正常进行lea]]></description>
 </item><item>
     <title>服务启动时连接etcd集群的告警分析</title>
-    <link>https://shenbaise9527.com/etcd-application-start-warn/</link>
+    <link>https://shenbaise9527.com/2020/12/21/etcd-application-start-warn/</link>
     <pubDate>Mon, 21 Dec 2020 21:18:21 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/etcd-application-start-warn/</guid>
+    <guid>https://shenbaise9527.com/2020/12/21/etcd-application-start-warn/</guid>
     <description><![CDATA[问题起因 通过docker-compose部署了3个节点的etcd集群,服务在启动时会随机报0个、1个或2个告警信息,信息如下: 1 2 3 4 5 6 7]]></description>
 </item><item>
     <title>Etcd配置错误后的分析</title>
-    <link>https://shenbaise9527.com/etcd-configure-error/</link>
+    <link>https://shenbaise9527.com/2020/12/19/etcd-configure-error/</link>
     <pubDate>Sat, 19 Dec 2020 11:09:19 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/etcd-configure-error/</guid>
+    <guid>https://shenbaise9527.com/2020/12/19/etcd-configure-error/</guid>
     <description><![CDATA[问题起因 在采用开源框架go-zero开发的过程中,服务在启动一段时间后控制台一直在报如下警告信息: 1 2 3 4 5 6 7 8 9 { &#34;level&#34;: &#34;warn&#34;, &#34;ts&#34;: &#34;2020-12-15T16:43:21.709+0800&#34;, &#34;caller&#34;: &#34;clientv3/retry_interceptor.go:62&#34;, &#34;msg&#34;: &#34;retrying of unary invoker]]></description>
 </item><item>
     <title>Jaeger实战</title>
-    <link>https://shenbaise9527.com/opentracing-jaeger-action/</link>
+    <link>https://shenbaise9527.com/2020/12/17/opentracing-jaeger-action/</link>
     <pubDate>Thu, 17 Dec 2020 21:29:12 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/opentracing-jaeger-action/</guid>
+    <guid>https://shenbaise9527.com/2020/12/17/opentracing-jaeger-action/</guid>
     <description><![CDATA[部署 基于Docker 所有组件基于Docker,后端存储采用Elasticsearch.docker-compose.yml文件如下: 1 2 3 4]]></description>
 </item><item>
     <title>Jaeger指南</title>
-    <link>https://shenbaise9527.com/opentracing-jaeger-guide/</link>
+    <link>https://shenbaise9527.com/2020/12/14/opentracing-jaeger-guide/</link>
     <pubDate>Mon, 14 Dec 2020 21:06:14 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/opentracing-jaeger-guide/</guid>
+    <guid>https://shenbaise9527.com/2020/12/14/opentracing-jaeger-guide/</guid>
     <description><![CDATA[系统架构 组件 jaeger即可以作为单体应用来部署(所有jaeger后台组件全部运行在一个进程内),也可以作为一个可扩展的分布式系统来部署.如]]></description>
 </item><item>
     <title>Zipkin指南</title>
-    <link>https://shenbaise9527.com/opentracing-zipkin-guide/</link>
+    <link>https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/</link>
     <pubDate>Thu, 10 Dec 2020 21:35:42 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/opentracing-zipkin-guide/</guid>
+    <guid>https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/</guid>
     <description><![CDATA[快速启动 可以通过http://your_host:9411去访问zipkin UI. Docker docker run -d -p 9411:9411 openzipkin/zipkin Java 需要Java8或更高版本. 1 2 curl -sSL https://zipkin.io/quickstart.sh | bash -s java -jar]]></description>
 </item><item>
     <title>OpenTracing最佳实践</title>
-    <link>https://shenbaise9527.com/opentracing-best-practices/</link>
+    <link>https://shenbaise9527.com/2020/12/10/opentracing-best-practices/</link>
     <pubDate>Thu, 10 Dec 2020 21:35:32 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/opentracing-best-practices/</guid>
+    <guid>https://shenbaise9527.com/2020/12/10/opentracing-best-practices/</guid>
     <description><![CDATA[回顾: OpenTracing的目标是什么? OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下: 1 2 3 4]]></description>
 </item></channel>
 </rss>

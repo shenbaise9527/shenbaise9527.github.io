@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Zipkin指南 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="Zipkin指南" />
+<meta property="og:description" content="快速启动 可以通过http://your_host:9411去访问zipkin UI. Docker docker run -d -p 9411:9411 openzipkin/zipkin Java 需要Java8或更高版本. 1 2 curl -sSL https://zipkin.io/quickstart.sh | bash -s java -jar" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-12-10T21:35:42+08:00" />
+<meta property="article:modified_time" content="2020-12-10T21:35:42+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="Zipkin指南"/>
+<meta name="twitter:description" content="快速启动 可以通过http://your_host:9411去访问zipkin UI. Docker docker run -d -p 9411:9411 openzipkin/zipkin Java 需要Java8或更高版本. 1 2 curl -sSL https://zipkin.io/quickstart.sh | bash -s java -jar"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/" /><link rel="prev" href="https://shenbaise9527.com/2020/12/10/opentracing-best-practices/" /><link rel="next" href="https://shenbaise9527.com/2020/12/14/opentracing-jaeger-guide/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Zipkin指南",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/2020\/12\/10\/opentracing-zipkin-guide\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "OpenTracing","wordcount":  5499 ,
+        "url": "https:\/\/shenbaise9527.com\/2020\/12\/10\/opentracing-zipkin-guide\/","datePublished": "2020-12-10T21:35:42+08:00","dateModified": "2020-12-10T21:35:42+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Zipkin指南</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-10">2020-12-10</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 5499 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 11 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#快速启动">快速启动</a></li>
+    <li><a href="#架构">架构</a></li>
+    <li><a href="#流程示例">流程示例</a></li>
+    <li><a href="#transport">Transport</a></li>
+    <li><a href="#组件">组件</a>
+      <ul>
+        <li><a href="#collector">Collector</a></li>
+        <li><a href="#storage">Storage</a></li>
+        <li><a href="#query-service">Query Service</a></li>
+        <li><a href="#web-ui">Web UI</a></li>
+      </ul>
+    </li>
+    <li><a href="#客户端代码">客户端代码</a>
+      <ul>
+        <li><a href="#reporter接口">Reporter接口</a></li>
+        <li><a href="#newtracer函数">NewTracer函数</a></li>
+        <li><a href="#完整例子">完整例子</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="快速启动">快速启动</h2>
+<p>可以通过<code>http://your_host:9411</code>去访问zipkin UI.</p>
+<p><strong>Docker</strong></p>
+<p><code>docker run -d -p 9411:9411 openzipkin/zipkin</code></p>
+<p><strong>Java</strong></p>
+<p>需要Java8或更高版本.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">curl -sSL https://zipkin.io/quickstart.sh <span class="p">|</span> bash -s
+java -jar zipkin.jar
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>Source</strong></p>
+<p>可以通过源码来安装并运行.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># get the latest source</span>
+git clone https://github.com/openzipkin/zipkin
+<span class="nb">cd</span> zipkin
+<span class="c1"># Build the server and also make its dependencies</span>
+./mvnw -DskipTests --also-make -pl zipkin-server clean install
+<span class="c1"># Run the server</span>
+java -jar ./zipkin-server/target/zipkin-server-*exec.jar
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="架构">架构</h2>
+<p>整体架构如下图所示(来源于<a href="https://zipkin.io/pages/architecture.html" target="_blank" rel="noopener noreffer">官网</a>):
+<figure><a class="lightgallery" href="/images/zk-architecture-1.png" title="架构" data-thumbnail="/images/zk-architecture-1.png" data-sub-html="<h2>架构图</h2><p>架构</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/zk-architecture-1.png"
+            data-srcset="/images/zk-architecture-1.png, /images/zk-architecture-1.png 1.5x, /images/zk-architecture-1.png 2x"
+            data-sizes="auto"
+            alt="/images/zk-architecture-1.png" />
+    </a><figcaption class="image-caption">架构图</figcaption>
+    </figure></p>
+<p>zipkin已支持的平台和语言<a href="https://zipkin.io/pages/tracers_instrumentation" target="_blank" rel="noopener noreffer">列表</a>.</p>
+<h2 id="流程示例">流程示例</h2>
+<p>标示符会在服务之间传播,而详细信息会被发送到zipkin.在这两种情况下,追踪库都负责创建有效的追踪并呈现它们.追踪库会确保两种数据之间保持奇偶校验一致性.</p>
+<p>下面是http追踪的示例,其中用户代码调用了资源<code>/foo</code>.这是一个单独的<code>Span</code>,在用户代码收到响应后会被异步发送到zipkin中.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback">┌─────────────┐ ┌───────────────────────┐  ┌─────────────┐  ┌──────────────────┐
+│ User Code   │ │ Trace Instrumentation │  │ Http Client │  │ Zipkin Collector │
+└─────────────┘ └───────────────────────┘  └─────────────┘  └──────────────────┘
+       │                 │                         │                 │
+           ┌─────────┐
+       │ ──┤GET /foo ├─▶ │ ────┐                   │                 │
+           └─────────┘         │ record tags
+       │                 │ ◀───┘                   │                 │
+                           ────┐
+       │                 │     │ add trace headers │                 │
+                           ◀───┘
+       │                 │ ────┐                   │                 │
+                               │ record timestamp
+       │                 │ ◀───┘                   │                 │
+                             ┌─────────────────┐
+       │                 │ ──┤GET /foo         ├─▶ │                 │
+                             │X-B3-TraceId: aa │     ────┐
+       │                 │   │X-B3-SpanId: 6b  │   │     │           │
+                             └─────────────────┘         │ invoke
+       │                 │                         │     │ request   │
+                                                         │
+       │                 │                         │     │           │
+                                 ┌────────┐          ◀───┘
+       │                 │ ◀─────┤200 OK  ├─────── │                 │
+                           ────┐ └────────┘
+       │                 │     │ record duration   │                 │
+            ┌────────┐     ◀───┘
+       │ ◀──┤200 OK  ├── │                         │                 │
+            └────────┘       ┌────────────────────────────────┐
+       │                 │ ──┤ asynchronously report span     ├────▶ │
+                             │                                │
+                             │{                               │
+                             │  &#34;traceId&#34;: &#34;aa&#34;,              │
+                             │  &#34;id&#34;: &#34;6b&#34;,                   │
+                             │  &#34;name&#34;: &#34;get&#34;,                │
+                             │  &#34;timestamp&#34;: 1483945573944000,│
+                             │  &#34;duration&#34;: 386000,           │
+                             │  &#34;annotations&#34;: [              │
+                             │--snip--                        │
+                             └────────────────────────────────┘
+</code></pre></td></tr></table>
+</div>
+</div><p>追踪库会异步发送<code>Span</code>,是为了防止与追踪系统有关的延迟或故障导致用户代码的延迟或破坏.</p>
+<h2 id="transport">Transport</h2>
+<p>追踪库发送<code>Span</code>时,必须要从被追踪系统传输到Zipkin的collectors组件.目前主要有三种方式传输:HTTP,kafka和Scribe.</p>
+<h2 id="组件">组件</h2>
+<p>主要包含四个组件:</p>
+<ul>
+<li>collector</li>
+<li>storage</li>
+<li>query service</li>
+<li>web UI</li>
+</ul>
+<h3 id="collector">Collector</h3>
+<p>当数据到达zipkin的收集器守护程序后,将对其进行验证、存储及索引,供zipkin收集器进行查找.</p>
+<p><strong>HTTP</strong></p>
+<p>默认HTTP方式是可用的,URI为<code>POST /api/v1/spans</code>和<code>POST /api/v2/spans</code>,目前主要使用v2版本.支持如下配置项:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">属性</th>
+<th style="text-align:left">环境变量</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">zipkin.collector.http.enabled</td>
+<td style="text-align:left">COLLECTOR_HTTP_ENABLED</td>
+<td style="text-align:left"><code>false</code>禁用HTTP方式,默认为<code>true</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Kafka</strong></p>
+<p>当参数<code>KAFKA_BOOTSTRAP_SERVERS</code>设置为v0.10+版本的Kafka时,该收集器就会启用.支持如下配置项:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">变量</th>
+<th style="text-align:left">新Consumer配置</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">COLLECTOR_KAFKA_ENABLED</td>
+<td style="text-align:left">N/A</td>
+<td style="text-align:left"><code>false</code>禁用Kafka收集器,默认为<code>true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_BOOTSTRAP_SERVERS</td>
+<td style="text-align:left">bootstrap.servers</td>
+<td style="text-align:left">以逗号分隔的broker地址,如127.0.0.1:9092.没有默认值</td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_GROUP_ID</td>
+<td style="text-align:left">group.id</td>
+<td style="text-align:left">此过程代表的消费组.默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_TOPIC</td>
+<td style="text-align:left">N/A</td>
+<td style="text-align:left">以逗号分隔的topic列表,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">KAFKA_STREAMS</td>
+<td style="text-align:left">N/A</td>
+<td style="text-align:left">消费topic的线程数,默认为1</td>
+</tr>
+</tbody>
+</table>
+<p>启动命令:<code>KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092 java -jar zipkin.jar</code></p>
+<p>也可以设置其它<a href="https://kafka.apache.org/documentation/#newconsumerconfigs" target="_blank" rel="noopener noreffer">Kafka的conusmer属性</a></p>
+<p>举例:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 容器方式启动kafka</span>
+$ <span class="nb">export</span> <span class="nv">KAFKA_BOOTSTRAP_SERVERS</span><span class="o">=</span><span class="k">$(</span>docker-machine ip <span class="sb">`</span>docker-machine active<span class="sb">`</span><span class="k">)</span>
+<span class="c1"># Run Kafka in the background</span>
+$ docker run -d -p 9092:9092 <span class="se">\
+</span><span class="se"></span>    --env <span class="nv">ADVERTISED_HOST</span><span class="o">=</span><span class="nv">$KAFKA_BOOTSTRAP_SERVERS</span> <span class="se">\
+</span><span class="se"></span>    --env <span class="nv">AUTO_CREATE_TOPICS</span><span class="o">=</span><span class="nb">true</span> <span class="se">\
+</span><span class="se"></span>    spotify/kafka
+<span class="c1"># Start the zipkin server, which reads $KAFKA_BOOTSTRAP_SERVERS</span>
+$ java -jar zipkin.jar
+
+<span class="c1"># 设置多个broker地址</span>
+$ <span class="nv">KAFKA_BOOTSTRAP_SERVERS</span><span class="o">=</span>broker1.local:9092,broker2.local:9092 java -jar zipkin.jar
+
+<span class="c1"># 备用topic名称</span>
+$ <span class="nv">KAFKA_BOOTSTRAP_SERVERS</span><span class="o">=</span>127.0.0.1:9092 java -Dzipkin.collector.kafka.topic<span class="o">=</span>zapkin,zipken -jar zipkin.jar
+
+<span class="c1"># 使用系统属性取代环境变量KAFKA_BOOTSTRAP_SERVERS.</span>
+$ java -Dzipkin.collector.kafka.bootstrap-servers<span class="o">=</span>127.0.0.1:9092 -jar zipkin.jar
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>RabbitMQ</strong></p>
+<p>支持如下配置项:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">属性</th>
+<th style="text-align:left">环境变量</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.concurrency</td>
+<td style="text-align:left">RABBIT_CONCURRENCY</td>
+<td style="text-align:left">当前消费者数量,默认为1</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.connection-timeout</td>
+<td style="text-align:left">RABBIT_CONNECTION_TIMEOUT</td>
+<td style="text-align:left">等待建立连接的超时时间,单位为毫秒,默认为60000(1分钟)</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.queue</td>
+<td style="text-align:left">RABBIT_QUEUE</td>
+<td style="text-align:left">队列名称,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.uri</td>
+<td style="text-align:left">RABBIT_URI</td>
+<td style="text-align:left">rabbitmq完整的uri,如:<code>amqp://user:pass@host:10000/vhost</code></td>
+</tr>
+<tr>
+<td style="text-align:left">如果uri被设置了,下面的配置项将会被忽略:</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:left">属性</td>
+<td style="text-align:left">环境变量</td>
+<td style="text-align:left">描述</td>
+</tr>
+<tr>
+<td style="text-align:left">:&ndash;</td>
+<td style="text-align:left">:&ndash;</td>
+<td style="text-align:left">:&ndash;</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.addresses</td>
+<td style="text-align:left">RABBIT_ADDRESSES</td>
+<td style="text-align:left">逗号分隔的rabbitmq地址,如:<code>localhost:5672,localhost:5673</code></td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.password</td>
+<td style="text-align:left">RABBIT_PASSWORD</td>
+<td style="text-align:left">连接rabbitmq的密码,默认为guest</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.username</td>
+<td style="text-align:left">RABBIT_USER</td>
+<td style="text-align:left">连接rabbitmq的用户名,默认为guest</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.virtual-host</td>
+<td style="text-align:left">RABBIT_VIRTUAL_HOST</td>
+<td style="text-align:left">rabbitmq的虚拟主机名,默认为<code>/</code></td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.rabbitmq.use-ssl</td>
+<td style="text-align:left">RABBIT_USE_SSL</td>
+<td style="text-align:left">设置为<code>true</code>,表示使用ssl连接到rabbitmq</td>
+</tr>
+</tbody>
+</table>
+<p>队列会被申明为持久化的,收集器使用单个conn连接到rabbitmq,通过配置的<code>concurrency</code>数量的线程(每个线程一个channel)来消费消息.消费消息时<code>autoAck</code>设置为<code>on</code>了,表示消费者收到消息后rabbitmq就会在队列中自动删除该消息,若消费者出现异常是不能再重复消费该消息的.</p>
+<p>启动命令:<code>RABBIT_ADDRESSES=localhost java -jar zipkin.jar</code></p>
+<p><strong>ActiveMQ</strong></p>
+<p>支持ActiveMQ v5.x版本.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">属性</th>
+<th style="text-align:left">环境变量</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.enabled</td>
+<td style="text-align:left">COLLECTOR_ACTIVEMQ_ENABLED</td>
+<td style="text-align:left"><code>false</code>表示禁用该收集器,默认为<code>true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.url</td>
+<td style="text-align:left">ACTIVEMQ_URL</td>
+<td style="text-align:left">ActiveMQ broker地址,如:tcp://localhost:61616或者故障转移:(tcp://localhost:61616,tcp://remotehost:61616)</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.queue</td>
+<td style="text-align:left">ACTIVEMQ_QUEUE</td>
+<td style="text-align:left">队列名,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.client-id-prefix</td>
+<td style="text-align:left">ACTIVEMQ_CLIENT_ID_PREFIX</td>
+<td style="text-align:left">消费者的客户端ID的前缀,默认为zipkin</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.concurrency</td>
+<td style="text-align:left">ACTIVEMQ_CONCURRENCY</td>
+<td style="text-align:left">消费者数量,默认为1</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.username</td>
+<td style="text-align:left">ACTIVEMQ_USERNAME</td>
+<td style="text-align:left">连接到ActiveMQ时的用户名,可选</td>
+</tr>
+<tr>
+<td style="text-align:left">zipkin.collector.activemq.password</td>
+<td style="text-align:left">ACTIVEMQ_PASSWORD</td>
+<td style="text-align:left">连接到ActiveMQ时的密码,可选</td>
+</tr>
+</tbody>
+</table>
+<p>启动命令:<code>ACTIVEMQ_URL=tcp://localhost:61616 java -jar zipkin.jar</code></p>
+<h3 id="storage">Storage</h3>
+<p>存储组件是采用插件化的方式实现,目前支持InMemory、Cassandra、ElasticSearch和MySQL,还有其它第三方实现的.</p>
+<p><strong>InMemory</strong></p>
+<p>默认启动的就是In-Memory方式,所有数据全部保存在内存中,没有持久化功能.
+启动方式:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 默认启动方式</span>
+java -jar zipkin.jar
+
+<span class="c1"># 指定STORAGE_TYPE为mem</span>
+<span class="nv">STORAGE_TYPE</span><span class="o">=</span>mem java -jar zipkin.jar
+</code></pre></td></tr></table>
+</div>
+</div><p>提供了参数<code>MEM_MAX_SPANS</code>来控制<code>Span</code>占用的内存大小.当碰到<code>out-of-memory</code>错误时,可以增大该参数或者调整堆大小(-Xmx).</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="sb">`</span>MEM_MAX_SPANS<span class="sb">`</span>: Oldest traces <span class="o">(</span>and their spans<span class="o">)</span> will be purged first when this limit is exceeded. Default <span class="m">500000</span>
+
+<span class="c1"># 调整内存大小.</span>
+<span class="nv">MEM_MAX_SPANS</span><span class="o">=</span><span class="m">1000000</span> java -Xmx1G -jar zipkin.jar
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>MySQL</strong></p>
+<p>基于MySQL5.7版本,需要先建库建表,<a href="https://github.com/openzipkin/zipkin/tree/master/zipkin-storage/mysql-v1" target="_blank" rel="noopener noreffer">脚本文件地址</a>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="o">#</span><span class="w"> </span><span class="n">install</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">schema</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">indexes</span><span class="w">
+</span><span class="w"></span><span class="err">$</span><span class="w"> </span><span class="n">mysql</span><span class="w"> </span><span class="o">-</span><span class="n">uroot</span><span class="w"> </span><span class="o">-</span><span class="n">e</span><span class="w"> </span><span class="s2">&#34;create database if not exists zipkin&#34;</span><span class="w">
+</span><span class="w"></span><span class="err">$</span><span class="w"> </span><span class="n">mysql</span><span class="w"> </span><span class="o">-</span><span class="n">uroot</span><span class="w"> </span><span class="o">-</span><span class="n">Dzipkin</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">zipkin</span><span class="o">-</span><span class="k">storage</span><span class="o">/</span><span class="n">mysql</span><span class="o">-</span><span class="n">v1</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">resources</span><span class="o">/</span><span class="n">mysql</span><span class="p">.</span><span class="k">sql</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="o">#</span><span class="w"> </span><span class="err">根据</span><span class="n">trace</span><span class="w"> </span><span class="n">id来查询</span><span class="w">
+</span><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">zipkin_spans</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">trace_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="s1">&#39;27960dafb1ea7454&#39;</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>启动时可设置的相关参数</p>
+<ul>
+<li><code>MYSQL_DB</code>: The database to use. Defaults to &ldquo;zipkin&rdquo;.</li>
+<li><code>MYSQL_USER</code> and <code>MYSQL_PASS</code>: MySQL authentication, which defaults to empty string.</li>
+<li><code>MYSQL_HOST</code>: Defaults to localhost</li>
+<li><code>MYSQL_TCP_PORT</code>: Defaults to 3306</li>
+<li><code>MYSQL_MAX_CONNECTIONS</code>: Maximum concurrent connections, defaults to 10</li>
+<li><code>MYSQL_USE_SSL</code>: Requires <code>javax.net.ssl.trustStore</code> and <code>javax.net.ssl.trustStorePassword</code>, defaults to false.</li>
+</ul>
+<p>启动命令:<code>STORAGE_TYPE=mysql MYSQL_USER=root java -jar zipkin.jar</code></p>
+<p><strong>Cassandra</strong></p>
+<p><strong>Elasticsearch</strong></p>
+<p>启动时可设置的相关参数</p>
+<ul>
+<li><code>ES_HOSTS</code>: A comma separated list of elasticsearch base urls to connect to ex. http://host:9200. Defaults to &ldquo;http://localhost:9200&rdquo;.</li>
+<li><code>ES_PIPELINE</code>: Indicates the ingest pipeline used before spans are indexed. No default.</li>
+<li><code>ES_TIMEOUT</code>: Controls the connect, read and write socket timeouts (in milliseconds) for Elasticsearch API. Defaults to 10000 (10 seconds)</li>
+<li><code>ES_INDEX</code>: The index prefix to use when generating daily index names. Defaults to zipkin.</li>
+<li><code>ES_DATE_SEPARATOR</code>: The date separator to use when generating daily index names. Defaults to &lsquo;-&rsquo;.</li>
+<li><code>ES_INDEX_SHARDS</code>: The number of shards to split the index into. Each shard and its replicas are assigned to a machine in the cluster. Increasing the number of shards and machines in the cluster will improve read and write performance. Number of shards cannot be changed for existing indices, but new daily indices will pick up changes to the setting. Defaults to 5.</li>
+<li><code>ES_INDEX_REPLICAS</code>: The number of replica copies of each shard in the index. Each shard and its replicas are assigned to a machine in the cluster. Increasing the number of replicas and machines in the cluster will improve read performance, but not write performance. Number of replicas can be changed for existing indices. Defaults to 1. It is highly discouraged to set this to 0 as it would mean a machine failure results in data loss.</li>
+<li><code>ES_ENSURE_TEMPLATES</code>: Installs Zipkin index templates when missing. Setting this to false can lead to corrupted data when index templates mismatch expectations. If you set this to false, you choose to troubleshoot your own data or migration problems as opposed to relying on the community for this. Defaults to true.</li>
+<li><code>ES_USERNAME</code> and <code>ES_PASSWORD</code>: Elasticsearch basic authentication, which defaults to empty string. Use when X-Pack security (formerly Shield) is in place.</li>
+<li><code>ES_CREDENTIALS_FILE</code>: The location of a file containing Elasticsearch basic authentication credentials, as properties. The username property is <code>zipkin.storage.elasticsearch.username</code>, password <code>zipkin.storage.elasticsearch.password</code>.This file is reloaded periodically, using <code>ES_CREDENTIALS_REFRESH_INTERVAL</code> as the interval. This parameter takes precedence over ES_USERNAME and ES_PASSWORD when specified.</li>
+<li><code>ES_CREDENTIALS_REFRESH_INTERVAL</code>: Credentials refresh interval in seconds, which defaults to 1 second. This is the maximum amount of time spans will drop due to stale credentials. Any errors reading the credentials file occur in logs at this rate.</li>
+<li><code>ES_HTTP_LOGGING</code>: When set, controls the volume of HTTP logging of the Elasticsearch API. Options are BASIC, HEADERS, BODY</li>
+<li><code>ES_SSL_NO_VERIFY</code>: When true, disables the verification of server&rsquo;s key certificate chain. This is not appropriate for production. Defaults to false.</li>
+<li><code>ES_TEMPLATE_PRIORITY</code>: The priority value of the composable index templates. This is only applicable for ES version 7.8 or above. Must be set, even to 0, to use composable template</li>
+</ul>
+<p>启动命令:<code>STORAGE_TYPE=elasticsearch ES_HOSTS=http://myhost:9200 java -jar zipkin.jar</code></p>
+<h3 id="query-service">Query Service</h3>
+<p>查询服务提供简单的<code>JSON API</code>来查询和检索追踪信息,主要是供Web UI使用.</p>
+<h3 id="web-ui">Web UI</h3>
+<p>以网页的形式来展示追踪数据.</p>
+<h2 id="客户端代码">客户端代码</h2>
+<p>基于OpenTracing来使用zipkin,以<a href="https://golang.org" target="_blank" rel="noopener noreffer">Golang</a>为例.
+依赖于<a href="https://github.com/openzipkin/zipkin-go" target="_blank" rel="noopener noreffer">zipkin-go</a>、<a href="https://github.com/openzipkin-contrib/zipkin-go-opentracing" target="_blank" rel="noopener noreffer">zipkin-go-opentracing</a>和<a href="https://github.com/opentracing/opentracing-go" target="_blank" rel="noopener noreffer">opentracing-go</a>这三个库.</p>
+<h3 id="reporter接口">Reporter接口</h3>
+<p>接口定义:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Tracer依赖该接口来发送Span数据.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Reporter</span> <span class="kd">interface</span> <span class="p">{</span>
+    <span class="nf">Send</span><span class="p">(</span><span class="nx">model</span><span class="p">.</span><span class="nx">SpanModel</span><span class="p">)</span>
+    <span class="nf">Close</span><span class="p">()</span> <span class="kt">error</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体实现:
+<strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/reporter.go" target="_blank" rel="noopener noreffer">noopReporter</a></strong>
+具体实现都是空的,不做任何处理.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建接口.
+</span><span class="c1"></span><span class="nx">reporter</span> <span class="o">:=</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">NewNoopReporter</span><span class="p">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/http/http.go" target="_blank" rel="noopener noreffer">httpReporter</a></strong>
+基于HTTP协议来发送Span数据.</p>
+<p>函数原型:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// url表示zipkin服务端接收数据的端点,如http://127.0.0.1:9411/api/v2/spans.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">url</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置http的超时时间,默认为5秒.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Timeout</span><span class="p">(</span><span class="nx">duration</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置最大的待发送数量,当到达此阈值后就会触发收集操作,默认为100.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">BatchSize</span><span class="p">(</span><span class="nx">n</span> <span class="kt">int</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置触发收集操作的时间间隔,默认为1秒.可见触发收集操作有两个因素,当间隔时间达到指定时间或者待发送数量超过batchsize,就会立即触发.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">BatchInterval</span><span class="p">(</span><span class="nx">d</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置最大的缓存数量,当超过此阈值,从队列开头到超出数量的Span将会被丢弃,默认为1000.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">MaxBacklog</span><span class="p">(</span><span class="nx">n</span> <span class="kt">int</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置回调,在发送span到zipkin之前会被调用,默认为nil,回调定义是type RequestCallbackFn func(*http.Request).
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">RequestCallback</span><span class="p">(</span><span class="nx">rc</span> <span class="nx">RequestCallbackFn</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置日志对象,默认为Stderr
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置span的序列化方式,默认实现的是json格式.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Serializer</span><span class="p">(</span><span class="nx">serializer</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">SpanSerializer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置发送请求到zipkin收集器的方式,默认为http.Client.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Client</span><span class="p">(</span><span class="nx">client</span> <span class="nx">HTTPDoer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/amqp/amqp.go" target="_blank" rel="noopener noreffer">rmqReporter</a></strong>
+把Span数据发送到<a href="https://www.rabbitmq.com/" target="_blank" rel="noopener noreffer">rabbitmq</a>消息总线上.</p>
+<p>函数原型:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address表示rabbitmq的地址,如:amqp://guest:guest@localhost:5672/test
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">address</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">logger</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置rabbitmq中交换器的名字,默认为zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Exchange</span><span class="p">(</span><span class="nx">exchange</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置rabbitmq队列的名字,默认为zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Queue</span><span class="p">(</span><span class="nx">queue</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置channel通道对象,默认为nil.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Channel</span><span class="p">(</span><span class="nx">ch</span> <span class="o">*</span><span class="nx">amqp</span><span class="p">.</span><span class="nx">Channel</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置与rabbitmq连接的对象,默认为nil.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Connection</span><span class="p">(</span><span class="nx">conn</span> <span class="o">*</span><span class="nx">amqp</span><span class="p">.</span><span class="nx">Connection</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>rabbitmq的交换器类型默认为<code>direct</code>,交换器和队列默认都是持久化的,非独占的.</p>
+<p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/kafka/kafka.go" target="_blank" rel="noopener noreffer">kafkaReporter</a></strong>
+把Span数据发送到<a href="https://kafka.apache.org/" target="_blank" rel="noopener noreffer">kafka</a>中.</p>
+<p>函数原型:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// address为broker地址列表.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">address</span> <span class="p">[]</span><span class="kt">string</span><span class="p">,</span> <span class="nx">options</span> <span class="o">...</span><span class="nx">ReporterOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置日志对象,默认为Stderr
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Logger</span><span class="p">(</span><span class="nx">logger</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置生产者.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Producer</span><span class="p">(</span><span class="nx">p</span> <span class="nx">sarama</span><span class="p">.</span><span class="nx">AsyncProducer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置topic名字,默认为zipkin
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Topic</span><span class="p">(</span><span class="nx">t</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+
+<span class="c1">// 设置span的序列化方式,默认实现的是json格式.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">Serializer</span><span class="p">(</span><span class="nx">serializer</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">SpanSerializer</span><span class="p">)</span> <span class="nx">ReporterOption</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong><a href="https://github.com/openzipkin/zipkin-go/blob/master/reporter/log/log.go" target="_blank" rel="noopener noreffer">logReporter</a></strong>
+把Span数据发送到日志对象中.</p>
+<p>函数原型:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">NewReporter</span><span class="p">(</span><span class="nx">l</span> <span class="o">*</span><span class="nx">log</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>只是把Span数据记录到指定的日志对象中,并不会发送到zipkin中.</p>
+<h3 id="newtracer函数">NewTracer函数</h3>
+<p>函数原型:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// rep指定Reporter.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewTracer</span><span class="p">(</span><span class="nx">rep</span> <span class="nx">reporter</span><span class="p">.</span><span class="nx">Reporter</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">TracerOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">Tracer</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当指定的rep为nil时,会默认创建为noopRepoerter.</p>
+<p>采用了<code>Option</code>设计方式来对相关参数进行自定义处理.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 设置被追踪服务的本地endpoint,可调用zipkin.NewEndpoint来生成对应的Endpoint对象,默认为nil.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithLocalEndpoint</span><span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">model</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">)</span> <span class="nx">TracerOption</span>
+
+<span class="c1">// 设置采样策略,默认为AlwaysSample.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithSampler</span><span class="p">(</span><span class="nx">sampler</span> <span class="nx">Sampler</span><span class="p">)</span> <span class="nx">TracerOption</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>针对采样策略,<code>Sampler</code>原型为<code>type Sampler func(id uint64) bool</code>,可按照需求来自定义采样策略.官方默认提供了如下几种方式:
+<strong>AlwaysSample</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 所有span都会被发送到zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">AlwaysSample</span><span class="p">(</span><span class="nx">_</span> <span class="kt">uint64</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">true</span> <span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>NewModuloSampler</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 当mod小于2时采用AlwaysSmaple.当mod大于2时,若trace id对mod求余为0就会被发送zipkin.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewModuloSampler</span><span class="p">(</span><span class="nx">mod</span> <span class="kt">uint64</span><span class="p">)</span> <span class="nx">Sampler</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>NewBoundarySampler</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// BoundarySampler适用于提供随机trace id且仅做出一次采样决定的高流量场景.它可以防止集群中的节点选择完全相同的ID.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewBoundarySampler</span><span class="p">(</span><span class="nx">rate</span> <span class="kt">float64</span><span class="p">,</span> <span class="nx">salt</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="nx">Sampler</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>NewCountingSampler</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// CountingSampler适用于低流量或不提供随机trace id的场景,由于采样决策不是幂等的(根据traceid一致),因此不适用于收集器.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewCountingSampler</span><span class="p">(</span><span class="nx">rate</span> <span class="kt">float64</span><span class="p">)</span> <span class="p">(</span><span class="nx">Sampler</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="完整例子">完整例子</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;io&#34;</span>
+
+	<span class="s">&#34;github.com/opentracing/opentracing-go&#34;</span>
+	<span class="nx">zipkinot</span> <span class="s">&#34;github.com/openzipkin-contrib/zipkin-go-opentracing&#34;</span>
+	<span class="s">&#34;github.com/openzipkin/zipkin-go&#34;</span>
+	<span class="nx">zipkinhttp</span> <span class="s">&#34;github.com/openzipkin/zipkin-go/reporter/http&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span> <span class="nx">noopZkCloser</span> <span class="kd">struct</span><span class="p">{}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">noopZkCloser</span><span class="p">)</span> <span class="nf">Close</span><span class="p">()</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// newTracer 创建基于zipkin的tracer对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newTracer</span><span class="p">(</span><span class="nx">tracingURL</span><span class="p">,</span> <span class="nx">serverName</span><span class="p">,</span> <span class="nx">localEndpoint</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">opentracing</span><span class="p">.</span><span class="nx">Tracer</span><span class="p">,</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Closer</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 基于HTTP的Reporter.
+</span><span class="c1"></span>    <span class="nx">zipkinReporter</span> <span class="o">:=</span> <span class="nx">zipkinhttp</span><span class="p">.</span><span class="nf">NewReporter</span><span class="p">(</span><span class="nx">tracingURL</span><span class="p">)</span>
+    
+    <span class="c1">// 创建localendpoint对象.
+</span><span class="c1"></span>	<span class="nx">endpoint</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">NewEndpoint</span><span class="p">(</span><span class="nx">serverName</span><span class="p">,</span> <span class="nx">localEndpoint</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 创建zipkin原生的tracer对象,采样策略使用默认的AlwaysSample.
+</span><span class="c1"></span>	<span class="nx">nativeTracer</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">NewTracer</span><span class="p">(</span><span class="nx">zipkinReporter</span><span class="p">,</span> <span class="nx">zipkin</span><span class="p">.</span><span class="nf">WithLocalEndpoint</span><span class="p">(</span><span class="nx">endpoint</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+
+    <span class="c1">// 把zipkin原生tracer对象包装成OpenTracing的tracer对象.
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nx">zipkinot</span><span class="p">.</span><span class="nf">Wrap</span><span class="p">(</span><span class="nx">nativeTracer</span><span class="p">),</span> <span class="nx">noopZkCloser</span><span class="p">{},</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-10</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/2020/12/10/opentracing-zipkin-guide/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/" data-title="Zipkin指南" data-via="shenbaise9527" data-hashtags="OpenTracing"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/" data-hashtag="OpenTracing"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/" data-title="Zipkin指南"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/opentracing/">OpenTracing</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/2020/12/10/opentracing-best-practices/" class="prev" rel="prev" title="OpenTracing最佳实践"><i class="fas fa-angle-left fa-fw"></i>OpenTracing最佳实践</a>
+            <a href="/2020/12/14/opentracing-jaeger-guide/" class="next" rel="next" title="Jaeger指南">Jaeger指南<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.87.0-DEV">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>

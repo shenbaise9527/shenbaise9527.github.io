@@ -6,10 +6,10 @@
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
             <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 28 Nov 2020 20:06:12 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/makefile/" rel="self" type="application/rss+xml" /><item>
     <title>makefile语法说明</title>
-    <link>https://shenbaise9527.com/makefile-description/</link>
+    <link>https://shenbaise9527.com/2020/11/28/makefile-description/</link>
     <pubDate>Sat, 28 Nov 2020 20:06:12 &#43;0800</pubDate>
     <author>作者</author>
-    <guid>https://shenbaise9527.com/makefile-description/</guid>
+    <guid>https://shenbaise9527.com/2020/11/28/makefile-description/</guid>
     <description><![CDATA[CFLAGS 表示用于C编译器的选项. 指定头文件的路径. 1 2 3 4 5 6 INCLUDES := -I./ INCLUDES += -I/usr/include INCLUDES += -I/usr/local/include INCLUDES += -I../../../3rd/curl-7.65.0/include INCLUDES += -I../../../3rd/mimetic-0.9.8/include CFLAGS := -m64 -std=c++11 -g -Wall -O3 $(INCLUDES) CXXFLAGS 表示用于C++编译器的选项,基本同C]]></description>
 </item></channel>
 </rss>

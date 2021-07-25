@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Etcd操作指南 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="Etcd操作指南" />
+<meta property="og:description" content="简介 etcd是强一致性的,分布式KV存储,为分布式系统或集群提供可靠的数据存储.底层基于raft共识算法,可以在网络分区情况下正常进行lea" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/2020/12/23/etcd-operation-guide/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-12-23T20:58:37+08:00" />
+<meta property="article:modified_time" content="2020-12-24T20:58:37+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="Etcd操作指南"/>
+<meta name="twitter:description" content="简介 etcd是强一致性的,分布式KV存储,为分布式系统或集群提供可靠的数据存储.底层基于raft共识算法,可以在网络分区情况下正常进行lea"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/2020/12/23/etcd-operation-guide/" /><link rel="prev" href="https://shenbaise9527.com/2020/12/21/etcd-application-start-warn/" /><link rel="next" href="https://shenbaise9527.com/2021/01/05/raft-consensus-algorithm/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Etcd操作指南",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/2020\/12\/23\/etcd-operation-guide\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go, etcd","wordcount":  9002 ,
+        "url": "https:\/\/shenbaise9527.com\/2020\/12\/23\/etcd-operation-guide\/","datePublished": "2020-12-23T20:58:37+08:00","dateModified": "2020-12-24T20:58:37+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Etcd操作指南</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-23">2020-12-23</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 9002 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 18 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#简介">简介</a></li>
+    <li><a href="#部署">部署</a>
+      <ul>
+        <li><a href="#基于源码">基于源码</a>
+          <ul>
+            <li><a href="#编译">编译</a></li>
+            <li><a href="#集群方式运行">集群方式运行</a></li>
+            <li><a href="#查看集群状态">查看集群状态</a></li>
+            <li><a href="#集群节点的操作">集群节点的操作</a></li>
+            <li><a href="#基本操作">基本操作</a></li>
+          </ul>
+        </li>
+        <li><a href="#基于docker">基于Docker</a>
+          <ul>
+            <li><a href="#docker-compose文件">docker-compose文件</a></li>
+            <li><a href="#查看集群状态-1">查看集群状态</a></li>
+            <li><a href="#集群节点的操作-1">集群节点的操作</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#基于clientv3与etcd交互">基于clientv3与etcd交互</a>
+      <ul>
+        <li><a href="#基本增删查改等操作">基本增删查改等操作</a></li>
+        <li><a href="#watch操作">Watch操作</a></li>
+        <li><a href="#事务操作">事务操作</a></li>
+        <li><a href="#高级扩展操作">高级扩展操作</a>
+          <ul>
+            <li><a href="#分布式锁">分布式锁</a></li>
+            <li><a href="#mutex">Mutex</a></li>
+            <li><a href="#读写锁">读写锁</a></li>
+            <li><a href="#分布式队列">分布式队列</a></li>
+            <li><a href="#分布式栅栏">分布式栅栏</a></li>
+            <li><a href="#stmsoft-transactional-memory">STM(Soft Transactional Memory)</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="简介">简介</h2>
+<p>etcd是强一致性的,分布式KV存储,为分布式系统或集群提供可靠的数据存储.底层基于<a href="https://raft.github.io/raft.pdf" target="_blank" rel="noopener noreffer">raft</a>共识算法,可以在网络分区情况下正常进行leader选举,即便是leader节点出现故障.满足CAP中的CP.</p>
+<h2 id="部署">部署</h2>
+<h3 id="基于源码">基于源码</h3>
+<h4 id="编译">编译</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 下载源码.</span>
+git clone git@github.com:etcd-io/etcd.git
+
+<span class="c1"># 编译,可执行文件放在bin目录下.</span>
+<span class="nb">cd</span> etcd
+make build
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="集群方式运行">集群方式运行</h4>
+<p>在本机上起3个etcd实例,放在如下目录:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:10:09] </span>
+$ ll
+总用量 23M
+drwxr-xr-x <span class="m">3</span> sky sky 4.0K 12月 <span class="m">20</span> 11:09 etcd1
+drwxr-xr-x <span class="m">3</span> sky sky 4.0K 12月 <span class="m">20</span> 11:09 etcd2
+drwxr-xr-x <span class="m">3</span> sky sky 4.0K 12月 <span class="m">20</span> 11:09 etcd3
+-rwxr-xr-x <span class="m">1</span> sky sky  23M 12月 <span class="m">19</span> 12:51 etcdctl
+-rwxr-xr-x <span class="m">1</span> sky sky 2.0K 12月 <span class="m">20</span> 11:07 start.sh
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:28:14] </span>
+$ <span class="nb">cd</span> etcd1/
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster/etcd1 [11:29:47] </span>
+$ ll
+总用量 29M
+drwxr-xr-x <span class="m">3</span> sky sky 4.0K 12月 <span class="m">20</span> 11:07 data.etcd
+-rwxr-xr-x <span class="m">1</span> sky sky  29M 12月 <span class="m">19</span> 12:51 etcd
+</code></pre></td></tr></table>
+</div>
+</div><p>用脚本<code>start.sh</code>来启动etcd实例.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="cp">#!/bin/bash
+</span><span class="cp"></span>
+<span class="nv">TOKEN</span><span class="o">=</span>token-1
+<span class="nv">CLUSTER_STATE</span><span class="o">=</span>new
+<span class="nv">NAME_1</span><span class="o">=</span>etcd-1
+<span class="nv">NAME_2</span><span class="o">=</span>etcd-2
+<span class="nv">NAME_3</span><span class="o">=</span>etcd-3
+<span class="nv">HOST_1</span><span class="o">=</span>192.168.3.5
+<span class="nv">HOST_2</span><span class="o">=</span>192.168.3.5
+<span class="nv">HOST_3</span><span class="o">=</span>192.168.3.5
+<span class="nv">PEER_PORT_1</span><span class="o">=</span><span class="m">2380</span>
+<span class="nv">PEER_PORT_2</span><span class="o">=</span><span class="m">3380</span>
+<span class="nv">PEER_PORT_3</span><span class="o">=</span><span class="m">4380</span>
+<span class="nv">CLIENT_PORT_1</span><span class="o">=</span><span class="m">2379</span>
+<span class="nv">CLIENT_PORT_2</span><span class="o">=</span><span class="m">3379</span>
+<span class="nv">CLIENT_PORT_3</span><span class="o">=</span><span class="m">4379</span>
+<span class="nv">CLUSTER</span><span class="o">=</span><span class="si">${</span><span class="nv">NAME_1</span><span class="si">}</span><span class="o">=</span>http://<span class="si">${</span><span class="nv">HOST_1</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_1</span><span class="si">}</span>,<span class="si">${</span><span class="nv">NAME_2</span><span class="si">}</span><span class="o">=</span>http://<span class="si">${</span><span class="nv">HOST_2</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_2</span><span class="si">}</span>,<span class="si">${</span><span class="nv">NAME_3</span><span class="si">}</span><span class="o">=</span>http://<span class="si">${</span><span class="nv">HOST_3</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_3</span><span class="si">}</span>
+ 
+nohup ./etcd1/etcd --data-dir<span class="o">=</span>./etcd1/data.etcd --name <span class="si">${</span><span class="nv">NAME_1</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-advertise-peer-urls http://<span class="si">${</span><span class="nv">HOST_1</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_1</span><span class="si">}</span> --listen-peer-urls http://<span class="si">${</span><span class="nv">HOST_1</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_1</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --advertise-client-urls http://<span class="si">${</span><span class="nv">HOST_1</span><span class="si">}</span>:<span class="si">${</span><span class="nv">CLIENT_PORT_1</span><span class="si">}</span> --listen-client-urls http://<span class="si">${</span><span class="nv">HOST_1</span><span class="si">}</span>:<span class="si">${</span><span class="nv">CLIENT_PORT_1</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster <span class="si">${</span><span class="nv">CLUSTER</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster-state <span class="si">${</span><span class="nv">CLUSTER_STATE</span><span class="si">}</span> --initial-cluster-token <span class="si">${</span><span class="nv">TOKEN</span><span class="si">}</span> &gt; etcd1.log 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+
+nohup ./etcd2/etcd --data-dir<span class="o">=</span>./etcd2/data.etcd --name <span class="si">${</span><span class="nv">NAME_2</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-advertise-peer-urls http://<span class="si">${</span><span class="nv">HOST_2</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_2</span><span class="si">}</span> --listen-peer-urls http://<span class="si">${</span><span class="nv">HOST_2</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_2</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --advertise-client-urls http://<span class="si">${</span><span class="nv">HOST_2</span><span class="si">}</span>:<span class="si">${</span><span class="nv">CLIENT_PORT_2</span><span class="si">}</span> --listen-client-urls http://<span class="si">${</span><span class="nv">HOST_2</span><span class="si">}</span>:<span class="si">${</span><span class="nv">CLIENT_PORT_2</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster <span class="si">${</span><span class="nv">CLUSTER</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster-state <span class="si">${</span><span class="nv">CLUSTER_STATE</span><span class="si">}</span> --initial-cluster-token <span class="si">${</span><span class="nv">TOKEN</span><span class="si">}</span> &gt; etcd2.log 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+ 
+nohup ./etcd3/etcd --data-dir<span class="o">=</span>./etcd3/data.etcd --name <span class="si">${</span><span class="nv">NAME_3</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-advertise-peer-urls http://<span class="si">${</span><span class="nv">HOST_3</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_3</span><span class="si">}</span> --listen-peer-urls http://<span class="si">${</span><span class="nv">HOST_3</span><span class="si">}</span>:<span class="si">${</span><span class="nv">PEER_PORT_3</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --advertise-client-urls http://<span class="si">${</span><span class="nv">HOST_3</span><span class="si">}</span>:<span class="si">${</span><span class="nv">CLIENT_PORT_3</span><span class="si">}</span> --listen-client-urls http://<span class="si">${</span><span class="nv">HOST_3</span><span class="si">}</span>:<span class="si">${</span><span class="nv">CLIENT_PORT_3</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster <span class="si">${</span><span class="nv">CLUSTER</span><span class="si">}</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster-state <span class="si">${</span><span class="nv">CLUSTER_STATE</span><span class="si">}</span> --initial-cluster-token <span class="si">${</span><span class="nv">TOKEN</span><span class="si">}</span> &gt; etcd3.log 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="查看集群状态">查看集群状态</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:32:54] </span>
+$ <span class="nb">export</span> <span class="nv">ETCDCTL_API</span><span class="o">=</span><span class="m">3</span>  
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:09:51] </span>
+$ <span class="nv">ENDPOINTS</span><span class="o">=</span>192.168.3.5:2379,192.168.3.5:3379,192.168.3.5:4379
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:10:47] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+--------+-------------------------+-------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span>  NAME  <span class="p">|</span>       PEER ADDRS        <span class="p">|</span>      CLIENT ADDRS       <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+--------+-------------------------+-------------------------+------------+
+<span class="p">|</span> 1dd6eece19e43a7e <span class="p">|</span> started <span class="p">|</span> etcd-1 <span class="p">|</span> http://192.168.3.5:2380 <span class="p">|</span> http://192.168.3.5:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 2be980070f5fd239 <span class="p">|</span> started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.3.5:3380 <span class="p">|</span> http://192.168.3.5:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> e85f82dc23644097 <span class="p">|</span> started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.3.5:4380 <span class="p">|</span> http://192.168.3.5:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+--------+-------------------------+-------------------------+------------+
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:10:57] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table endpoint status
++------------------+------------------+-----------+---------+-----------+------------+-----------+------------+--------------------+--------+
+<span class="p">|</span>     ENDPOINT     <span class="p">|</span>        ID        <span class="p">|</span>  VERSION  <span class="p">|</span> DB SIZE <span class="p">|</span> IS LEADER <span class="p">|</span> IS LEARNER <span class="p">|</span> RAFT TERM <span class="p">|</span> RAFT INDEX <span class="p">|</span> RAFT APPLIED INDEX <span class="p">|</span> ERRORS <span class="p">|</span>
++------------------+------------------+-----------+---------+-----------+------------+-----------+------------+--------------------+--------+
+<span class="p">|</span> 192.168.3.5:2379 <span class="p">|</span> 1dd6eece19e43a7e <span class="p">|</span> 3.5.0-pre <span class="p">|</span>   <span class="m">25</span> kB <span class="p">|</span>     <span class="nb">false</span> <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>         <span class="m">9</span> <span class="p">|</span>         <span class="m">56</span> <span class="p">|</span>                 <span class="m">56</span> <span class="p">|</span>        <span class="p">|</span>
+<span class="p">|</span> 192.168.3.5:3379 <span class="p">|</span> 2be980070f5fd239 <span class="p">|</span> 3.5.0-pre <span class="p">|</span>   <span class="m">25</span> kB <span class="p">|</span>      <span class="nb">true</span> <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>         <span class="m">9</span> <span class="p">|</span>         <span class="m">56</span> <span class="p">|</span>                 <span class="m">56</span> <span class="p">|</span>        <span class="p">|</span>
+<span class="p">|</span> 192.168.3.5:4379 <span class="p">|</span> e85f82dc23644097 <span class="p">|</span> 3.5.0-pre <span class="p">|</span>   <span class="m">25</span> kB <span class="p">|</span>     <span class="nb">false</span> <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>         <span class="m">9</span> <span class="p">|</span>         <span class="m">56</span> <span class="p">|</span>                 <span class="m">56</span> <span class="p">|</span>        <span class="p">|</span>
++------------------+------------------+-----------+---------+-----------+------------+-----------+------------+--------------------+--------+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="集群节点的操作">集群节点的操作</h4>
+<p>主要涉及移除节点和新增节点.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 查看集群列表.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [11:58:47] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span> started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span> started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b6187cecaa8144c3 <span class="p">|</span> started <span class="p">|</span> etcd-1 <span class="p">|</span> http://192.168.20.151:2380 <span class="p">|</span> http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+
+<span class="c1"># 移除节点etcd-1</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [12:04:08] C:128</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member remove b6187cecaa8144c3
+
+<span class="c1"># 当前集群只有两个节点了.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [12:08:23] </span>
+$ ./etcdctl --endpoints<span class="o">=</span>192.168.20.151:4379 --write-out<span class="o">=</span>table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span> started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span> started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+
+<span class="c1"># 增加节点到集群.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:01:11] C:1</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member add etcd-4 --peer-urls<span class="o">=</span>http://192.168.20.151:5380
+Member 235272797119041c added to cluster fba7dcb05a9bd527
+
+<span class="nv">ETCD_NAME</span><span class="o">=</span><span class="s2">&#34;etcd-4&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER</span><span class="o">=</span><span class="s2">&#34;etcd-4=http://192.168.20.151:5380,etcd-2=http://192.168.20.151:3380,etcd-3=http://192.168.20.151:4380&#34;</span>
+<span class="nv">ETCD_INITIAL_ADVERTISE_PEER_URLS</span><span class="o">=</span><span class="s2">&#34;http://192.168.20.151:5380&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER_STATE</span><span class="o">=</span><span class="s2">&#34;existing&#34;</span>
+
+<span class="c1"># 查看集群状态,新加入的节点为unstarted状态.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:02:52] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span>  STATUS   <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 235272797119041c <span class="p">|</span> unstarted <span class="p">|</span>        <span class="p">|</span> http://192.168.20.151:5380 <span class="p">|</span>                            <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span>   started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span>   started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+-----------+--------+----------------------------+----------------------------+------------+
+
+<span class="c1"># 启动新节点.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:14:00] </span>
+$ nohup ./etcd4/etcd --data-dir<span class="o">=</span>./etcd4/data.etcd --name etcd-4 --initial-advertise-peer-urls http://192.168.20.151:5380 --listen-peer-urls http://192.168.20.151:5380 --advertise-client-urls http://192.168.20.151:5379 --listen-client-urls http://192.168.20.151:5379 --initial-cluster etcd-2<span class="o">=</span>http://192.168.20.151:3380,etcd-3<span class="o">=</span>http://192.168.20.151:4380,etcd-4<span class="o">=</span>http://192.168.20.151:5380 --initial-cluster-state existing &gt; etcd4.log 2&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">&amp;</span>
+
+<span class="c1"># 查看集群列表,新增节点成功.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd/cluster [14:14:16] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span>  NAME  <span class="p">|</span>         PEER ADDRS         <span class="p">|</span>        CLIENT ADDRS        <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+<span class="p">|</span> 235272797119041c <span class="p">|</span> started <span class="p">|</span> etcd-4 <span class="p">|</span> http://192.168.20.151:5380 <span class="p">|</span> http://192.168.20.151:5379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 6cf77fb8c7e0e397 <span class="p">|</span> started <span class="p">|</span> etcd-2 <span class="p">|</span> http://192.168.20.151:3380 <span class="p">|</span> http://192.168.20.151:3379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> a1e59eed52ece0fb <span class="p">|</span> started <span class="p">|</span> etcd-3 <span class="p">|</span> http://192.168.20.151:4380 <span class="p">|</span> http://192.168.20.151:4379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+--------+----------------------------+----------------------------+------------+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="基本操作">基本操作</h4>
+<p>主要涉及数据的增删改查等操作.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span><span class="lnt">156
+</span><span class="lnt">157
+</span><span class="lnt">158
+</span><span class="lnt">159
+</span><span class="lnt">160
+</span><span class="lnt">161
+</span><span class="lnt">162
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:36:23] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put key1 value1
+OK
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:36:49] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put key2 value2
+OK
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:36:55] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put key3 value3
+OK
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:36:59] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get key1
+key1
+value1
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:37:09] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get key --prefix
+key1
+value1
+key2
+value2
+key3
+value3
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:37:15] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> del key1
+<span class="m">1</span>
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:38:10] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> del key --prefix
+<span class="m">2</span>
+
+<span class="c1"># 终端１,监听key为stock1的操作,watch会阻塞.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:38:14] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> watch stock1
+
+<span class="c1"># 终端２,put操作</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:19:57] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put stock1 <span class="m">100</span>
+OK
+
+<span class="c1"># 终端１,会实时打印出终端2的操作.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:38:14] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> watch stock1
+PUT
+stock1
+<span class="m">100</span>
+
+<span class="c1"># 终端2,删除stock1</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:22:56] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> del stock1
+<span class="m">1</span>
+
+<span class="c1"># 终端1,实时打印.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [11:38:14] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> watch stock1
+PUT
+stock1
+<span class="m">100</span>
+DELETE
+stock1
+
+<span class="c1"># 终端1,监听前缀为stock的操作.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:24:30] C:130</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> watch stock --prefix
+
+<span class="c1"># 终端2.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:24:32] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put stock1 <span class="m">100</span>
+OK
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:24:42] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put stock2 <span class="m">100</span>      
+OK
+
+<span class="c1"># 终端1,实时打印.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:24:30] C:130</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> watch stock --prefix
+PUT
+stock1
+<span class="m">100</span>
+PUT
+stock2
+<span class="m">100</span>
+
+<span class="c1"># lease相关操作.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:27:11] C:1</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> lease grant <span class="m">300</span>
+lease 4097767e1dfcb207 granted with TTL<span class="o">(</span>300s<span class="o">)</span>
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:27:22] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put sample value --lease<span class="o">=</span>4097767e1dfcb207
+OK
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:27:59] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get sample
+sample
+value
+
+<span class="c1"># 300s之后再次访问,sample已不存在.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:34:26] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get sample
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:36:02] C:1</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> lease grant <span class="m">300</span>                         
+lease 4097767e1dfcb20b granted with TTL<span class="o">(</span>300s<span class="o">)</span>
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:36:13] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> put sample value --lease<span class="o">=</span>4097767e1dfcb20b
+OK
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:37:30] C:130</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> lease keep-alive 4097767e1dfcb20b
+lease 4097767e1dfcb20b keepalived with TTL<span class="o">(</span>300<span class="o">)</span>
+^C
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:37:35] C:130</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> lease revoke 4097767e1dfcb20b
+lease 4097767e1dfcb20b revoked
+
+<span class="c1"># sample已不存在.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:37:46] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get sample
+
+<span class="c1"># Distributed lock操作.</span>
+<span class="c1"># 终端1,执行lock操作.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:38:00] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> lock mutex
+mutex/3a7e767e1dfcbd0e
+
+<span class="c1"># 终端2,会被阻塞.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:26:44] C:130</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> lock mutex
+
+<span class="c1"># 终端1,终止lock操作之后,终端2才能获取.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:26:44] C:130</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> lock mutex
+mutex/3a7e767e1dfcbd11
+
+<span class="c1"># snapshot快照相关操作,只能针对单一节点操作.</span>
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:48:21] </span>
+$ <span class="nv">ENDPOINTS</span><span class="o">=</span>192.168.3.5:2379
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:48:33] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> snapshot save my.db
+<span class="o">{</span><span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;info&#34;</span>,<span class="s2">&#34;ts&#34;</span>:1608443327.4592857,<span class="s2">&#34;caller&#34;</span>:<span class="s2">&#34;snapshot/v3_snapshot.go:67&#34;</span>,<span class="s2">&#34;msg&#34;</span>:<span class="s2">&#34;created temporary db file&#34;</span>,<span class="s2">&#34;path&#34;</span>:<span class="s2">&#34;my.db.part&#34;</span><span class="o">}</span>
+<span class="o">{</span><span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;info&#34;</span>,<span class="s2">&#34;ts&#34;</span>:<span class="s2">&#34;2020-12-20T13:48:47.459+0800&#34;</span>,<span class="s2">&#34;caller&#34;</span>:<span class="s2">&#34;v3/maintenance.go:211&#34;</span>,<span class="s2">&#34;msg&#34;</span>:<span class="s2">&#34;opened snapshot stream; downloading&#34;</span><span class="o">}</span>
+<span class="o">{</span><span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;info&#34;</span>,<span class="s2">&#34;ts&#34;</span>:1608443327.460071,<span class="s2">&#34;caller&#34;</span>:<span class="s2">&#34;snapshot/v3_snapshot.go:75&#34;</span>,<span class="s2">&#34;msg&#34;</span>:<span class="s2">&#34;fetching snapshot&#34;</span>,<span class="s2">&#34;endpoint&#34;</span>:<span class="s2">&#34;192.168.3.5:2379&#34;</span><span class="o">}</span>
+<span class="o">{</span><span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;info&#34;</span>,<span class="s2">&#34;ts&#34;</span>:<span class="s2">&#34;2020-12-20T13:48:47.463+0800&#34;</span>,<span class="s2">&#34;caller&#34;</span>:<span class="s2">&#34;v3/maintenance.go:219&#34;</span>,<span class="s2">&#34;msg&#34;</span>:<span class="s2">&#34;completed snapshot read; closing&#34;</span><span class="o">}</span>
+<span class="o">{</span><span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;info&#34;</span>,<span class="s2">&#34;ts&#34;</span>:1608443327.4667196,<span class="s2">&#34;caller&#34;</span>:<span class="s2">&#34;snapshot/v3_snapshot.go:90&#34;</span>,<span class="s2">&#34;msg&#34;</span>:<span class="s2">&#34;fetched snapshot&#34;</span>,<span class="s2">&#34;endpoint&#34;</span>:<span class="s2">&#34;192.168.3.5:2379&#34;</span>,<span class="s2">&#34;size&#34;</span>:<span class="s2">&#34;25 kB&#34;</span>,<span class="s2">&#34;took&#34;</span>:<span class="s2">&#34;now&#34;</span><span class="o">}</span>
+<span class="o">{</span><span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;info&#34;</span>,<span class="s2">&#34;ts&#34;</span>:1608443327.4670007,<span class="s2">&#34;caller&#34;</span>:<span class="s2">&#34;snapshot/v3_snapshot.go:99&#34;</span>,<span class="s2">&#34;msg&#34;</span>:<span class="s2">&#34;saved&#34;</span>,<span class="s2">&#34;path&#34;</span>:<span class="s2">&#34;my.db&#34;</span><span class="o">}</span>
+Snapshot saved at my.db
+
+<span class="c1"># sky @ sky-HP in ~/data/etcdcluster [13:49:52] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table snapshot status my.db
++----------+----------+------------+------------+
+<span class="p">|</span>   HASH   <span class="p">|</span> REVISION <span class="p">|</span> TOTAL KEYS <span class="p">|</span> TOTAL SIZE <span class="p">|</span>
++----------+----------+------------+------------+
+<span class="p">|</span> 48b52149 <span class="p">|</span>       <span class="m">45</span> <span class="p">|</span>         <span class="m">55</span> <span class="p">|</span>      <span class="m">25</span> kB <span class="p">|</span>
++----------+----------+------------+------------+
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="基于docker">基于Docker</h3>
+<h4 id="docker-compose文件">docker-compose文件</h4>
+<p>使用docker-compose来统一部署,基于<code>quay.io/coreos/etcd:v3.4.14</code>镜像.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-yml" data-lang="yml"><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;3.5&#34;</span><span class="w">
+</span><span class="w"></span><span class="nt">services</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">etcd1</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l">etcd1</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">quay.io/coreos/etcd:v3.4.14</span><span class="w">
+</span><span class="w">        </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l">etcd1</span><span class="w">
+</span><span class="w">        </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">unless-stopped</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;2379:2379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;2380:2380&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;./etcd1.data:/etcd_data&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">environment</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_ADVERTISE_CLIENT_URLS=http://192.168.20.151:2379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd1:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ALLOW_NONE_AUTHENTICATION=yes&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_NAME=etcd1&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_DATA_DIR=/etcd_data&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER_STATE=new&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER_TOKEN=token-1&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;TZ=Asia/Shanghai&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="l">etcdcluster</span><span class="w">
+</span><span class="w">    </span><span class="nt">etcd2</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l">etcd2</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">quay.io/coreos/etcd:v3.4.14</span><span class="w">
+</span><span class="w">        </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l">etcd2</span><span class="w">
+</span><span class="w">        </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">unless-stopped</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;12379:2379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;12380:2380&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;./etcd2.data:/etcd_data&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">environment</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_ADVERTISE_CLIENT_URLS=http://192.168.20.151:12379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd2:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ALLOW_NONE_AUTHENTICATION=yes&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_NAME=etcd2&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_DATA_DIR=/etcd_data&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER_STATE=new&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER_TOKEN=token-1&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;TZ=Asia/Shanghai&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="l">etcdcluster</span><span class="w">
+</span><span class="w">    </span><span class="nt">etcd3</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l">etcd3</span><span class="w">
+</span><span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l">quay.io/coreos/etcd:v3.4.14</span><span class="w">
+</span><span class="w">        </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l">etcd3</span><span class="w">
+</span><span class="w">        </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l">unless-stopped</span><span class="w">
+</span><span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;22379:2379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;22380:2380&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;./etcd3.data:/etcd_data&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">environment</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_ADVERTISE_CLIENT_URLS=http://192.168.20.151:22379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd3:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ALLOW_NONE_AUTHENTICATION=yes&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_NAME=etcd3&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_DATA_DIR=/etcd_data&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER_STATE=new&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;ETCD_INITIAL_CLUSTER_TOKEN=token-1&#34;</span><span class="w">
+</span><span class="w">            </span>- <span class="s2">&#34;TZ=Asia/Shanghai&#34;</span><span class="w">
+</span><span class="w">        </span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span><span class="w">            </span>- <span class="l">etcdcluster</span><span class="w">
+</span><span class="w">
+</span><span class="w"></span><span class="nt">networks</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="nt">etcdcluster</span><span class="p">:</span><span class="w">
+</span><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l">etcdcluster</span><span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>需要注意环境变量<code>ETCD_ADVERTISE_CLIENT_URLS</code>,被配置成了真实IP+映射后的端口,在客户端获取<code>MemberList</code>时会返回该变量的值,客户端会通过该值来访问etcd.</p>
+<p>客户端会定时去同步参数,代码详见<code>etcd/clientv3/client.go:autoSync</code>,是通过定时器触发,调用<code>MemberList</code>方法来获取成员列表,并取其<code>ClientURLs</code>字段,来初始化客户端连接.</p>
+<h4 id="查看集群状态-1">查看集群状态</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 查看容器运行状态.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:55:36] </span>
+$ docker-compose ps 
+Name          Command         State                        Ports                      
+--------------------------------------------------------------------------------------
+etcd1   /usr/local/bin/etcd   Up      0.0.0.0:2379-&gt;2379/tcp, 0.0.0.0:2380-&gt;2380/tcp  
+etcd2   /usr/local/bin/etcd   Up      0.0.0.0:12379-&gt;2379/tcp, 0.0.0.0:12380-&gt;2380/tcp
+etcd3   /usr/local/bin/etcd   Up      0.0.0.0:22379-&gt;2379/tcp, 0.0.0.0:22380-&gt;2380/tcp
+
+<span class="c1"># 查看节点状态.</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table endpoint status
++----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
+-+<span class="p">|</span>       ENDPOINT       <span class="p">|</span>        ID        <span class="p">|</span> VERSION <span class="p">|</span> DB SIZE <span class="p">|</span> IS LEADER <span class="p">|</span> IS LEARNER <span class="p">|</span> RAFT TERM <span class="p">|</span> RAFT INDEX <span class="p">|</span> RAFT APPLIED INDEX <span class="p">|</span> ERRORS
+ <span class="p">|</span>+----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
+-+<span class="p">|</span>  192.168.20.151:2379 <span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span>  3.4.14 <span class="p">|</span>   <span class="m">25</span> kB <span class="p">|</span>     <span class="nb">false</span> <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>         <span class="m">2</span> <span class="p">|</span>         <span class="m">43</span> <span class="p">|</span>                 <span class="m">43</span> <span class="p">|</span>       
+ <span class="o">||</span> 192.168.20.151:12379 <span class="p">|</span>  c8f871bdf8305be <span class="p">|</span>  3.4.14 <span class="p">|</span>   <span class="m">25</span> kB <span class="p">|</span>     <span class="nb">false</span> <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>         <span class="m">2</span> <span class="p">|</span>         <span class="m">43</span> <span class="p">|</span>                 <span class="m">43</span> <span class="p">|</span>       
+ <span class="o">||</span> 192.168.20.151:22379 <span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span>  3.4.14 <span class="p">|</span>   <span class="m">25</span> kB <span class="p">|</span>      <span class="nb">true</span> <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>         <span class="m">2</span> <span class="p">|</span>         <span class="m">43</span> <span class="p">|</span>                 <span class="m">43</span> <span class="p">|</span>       
+ <span class="p">|</span>+----------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------
+-+
+
+<span class="c1"># 查看集群节点列表.</span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>  c8f871bdf8305be <span class="p">|</span> started <span class="p">|</span> etcd2 <span class="p">|</span> http://etcd2:2380 <span class="p">|</span> http://192.168.20.151:12379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="集群节点的操作-1">集群节点的操作</h4>
+<p>在以docker方式运行时,如何操作节点的移除和新增?</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="c1"># 查看集群节点列表.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:55:57] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>  c8f871bdf8305be <span class="p">|</span> started <span class="p">|</span> etcd2 <span class="p">|</span> http://etcd2:2380 <span class="p">|</span> http://192.168.20.151:12379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+
+<span class="c1"># 移除节点etcd2.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:56:03] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member remove c8f871bdf8305be
+Member  c8f871bdf8305be removed from cluster 1c510c68583e30d9
+
+<span class="c1"># 集群只有2个节点了.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:56:38] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+
+<span class="c1"># 容器运行状态,节点etcd2已停止.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:56:49] C:1</span>
+$ docker-compose ps 
+Name          Command         State                         Ports                      
+---------------------------------------------------------------------------------------
+etcd1   /usr/local/bin/etcd   Up       0.0.0.0:2379-&gt;2379/tcp, 0.0.0.0:2380-&gt;2380/tcp  
+etcd2   /usr/local/bin/etcd   Exit <span class="m">0</span>                                                   
+etcd3   /usr/local/bin/etcd   Up       0.0.0.0:22379-&gt;2379/tcp, 0.0.0.0:22380-&gt;2380/tcp
+
+<span class="c1"># 新增节点.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [14:58:53] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> member add etcd4 --peer-urls<span class="o">=</span>http://etcd4:2380
+Member d1ca52e243988d73 added to cluster 1c510c68583e30d9
+
+<span class="nv">ETCD_NAME</span><span class="o">=</span><span class="s2">&#34;etcd4&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER</span><span class="o">=</span><span class="s2">&#34;etcd1=http://etcd1:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380&#34;</span>
+<span class="nv">ETCD_INITIAL_ADVERTISE_PEER_URLS</span><span class="o">=</span><span class="s2">&#34;http://etcd4:2380&#34;</span>
+<span class="nv">ETCD_INITIAL_CLUSTER_STATE</span><span class="o">=</span><span class="s2">&#34;existing&#34;</span>
+
+<span class="c1"># 使用docker run单独启动节点.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [15:05:52] </span>
+$ docker run -d -p 32379:2379 -p 32380:2380 --name<span class="o">=</span>etcd4 --hostname<span class="o">=</span>etcd4 --network<span class="o">=</span>etcdcluster -v <span class="nv">$PWD</span>/etcd4.data:/etcd_data --restart<span class="o">=</span>unless-stopped -e<span class="o">=</span><span class="nv">TZ</span><span class="o">=</span>Asia/Shanghai -e<span class="o">=</span><span class="nv">ETCD_INITIAL_CLUSTER_STATE</span><span class="o">=</span>existing -e<span class="o">=</span><span class="nv">ETCD_NAME</span><span class="o">=</span>etcd4 -e<span class="o">=</span><span class="nv">ETCD_ADVERTISE_CLIENT_URLS</span><span class="o">=</span>http://192.168.20.151:32379 -e<span class="o">=</span><span class="nv">ETCD_LISTEN_CLIENT_URLS</span><span class="o">=</span>http://0.0.0.0:2379 -e<span class="o">=</span><span class="nv">ETCD_LISTEN_PEER_URLS</span><span class="o">=</span>http://0.0.0.0:2380 -e<span class="o">=</span><span class="nv">ETCD_INITIAL_ADVERTISE_PEER_URLS</span><span class="o">=</span>http://etcd4:2380 -e<span class="o">=</span><span class="nv">ETCD_INITIAL_CLUSTER</span><span class="o">=</span><span class="nv">etcd1</span><span class="o">=</span>http://etcd1:2380,etcd3<span class="o">=</span>http://etcd3:2380,etcd4<span class="o">=</span>http://etcd4:2380 -e<span class="o">=</span><span class="nv">ETCD_DATA_DIR</span><span class="o">=</span>/etcd_data quay.io/coreos/etcd:v3.4.14
+6ed21c06395af043c1217d4dbdcc5d8e21d1ef387ec12973f25583d554d6df90
+
+<span class="c1"># 查看最新集群列表.</span>
+<span class="c1"># zhou.yingan @ localhost in ~/docker/etcd [15:07:25] </span>
+$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> --write-out<span class="o">=</span>table member list
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span>        ID        <span class="p">|</span> STATUS  <span class="p">|</span> NAME  <span class="p">|</span>    PEER ADDRS     <span class="p">|</span>        CLIENT ADDRS         <span class="p">|</span> IS LEARNER <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+<span class="p">|</span> 7ff9976e030eb51c <span class="p">|</span> started <span class="p">|</span> etcd1 <span class="p">|</span> http://etcd1:2380 <span class="p">|</span>  http://192.168.20.151:2379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> b8dbeeea8e10767d <span class="p">|</span> started <span class="p">|</span> etcd3 <span class="p">|</span> http://etcd3:2380 <span class="p">|</span> http://192.168.20.151:22379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
+<span class="p">|</span> d1ca52e243988d73 <span class="p">|</span> started <span class="p">|</span> etcd4 <span class="p">|</span> http://etcd4:2380 <span class="p">|</span> http://192.168.20.151:32379 <span class="p">|</span>      <span class="nb">false</span> <span class="p">|</span>
++------------------+---------+-------+-------------------+-----------------------------+------------+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="基于clientv3与etcd交互">基于clientv3与etcd交互</h2>
+<p>需要注意,etcd和grpc版本兼容性可能有问题,当前使用的版本:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">module</span> <span class="nx">etcdexample</span>
+
+<span class="k">go</span> <span class="mf">1.14</span>
+
+<span class="nf">require</span> <span class="p">(</span>
+	<span class="nx">github</span><span class="p">.</span><span class="nx">com</span><span class="o">/</span><span class="nx">gogo</span><span class="o">/</span><span class="nx">protobuf</span> <span class="nx">v1</span><span class="mf">.3.1</span> <span class="c1">// indirect
+</span><span class="c1"></span>	<span class="nx">github</span><span class="p">.</span><span class="nx">com</span><span class="o">/</span><span class="nx">google</span><span class="o">/</span><span class="nx">uuid</span> <span class="nx">v1</span><span class="mf">.1.2</span> <span class="c1">// indirect
+</span><span class="c1"></span>	<span class="k">go</span><span class="p">.</span><span class="nx">etcd</span><span class="p">.</span><span class="nx">io</span><span class="o">/</span><span class="nx">etcd</span> <span class="nx">v3</span><span class="mf">.3.25</span><span class="o">+</span><span class="nx">incompatible</span>
+	<span class="k">go</span><span class="p">.</span><span class="nx">uber</span><span class="p">.</span><span class="nx">org</span><span class="o">/</span><span class="nx">zap</span> <span class="nx">v1</span><span class="mf">.16.0</span> <span class="c1">// indirect
+</span><span class="c1"></span>	<span class="nx">google</span><span class="p">.</span><span class="nx">golang</span><span class="p">.</span><span class="nx">org</span><span class="o">/</span><span class="nx">grpc</span> <span class="nx">v1</span><span class="mf">.34.0</span> <span class="c1">// indirect
+</span><span class="c1"></span><span class="p">)</span>
+
+<span class="nx">replace</span> <span class="k">go</span><span class="p">.</span><span class="nx">etcd</span><span class="p">.</span><span class="nx">io</span><span class="o">/</span><span class="nx">etcd</span> <span class="nx">v3</span><span class="mf">.3.25</span><span class="o">+</span><span class="nx">incompatible</span> <span class="p">=&gt;</span> <span class="k">go</span><span class="p">.</span><span class="nx">etcd</span><span class="p">.</span><span class="nx">io</span><span class="o">/</span><span class="nx">etcd</span> <span class="nx">v0</span><span class="mf">.0.0</span><span class="o">-</span><span class="mi">20200402134248</span><span class="o">-</span><span class="mi">51</span><span class="nx">bdeb39e698</span>
+
+<span class="nx">replace</span> <span class="nx">google</span><span class="p">.</span><span class="nx">golang</span><span class="p">.</span><span class="nx">org</span><span class="o">/</span><span class="nx">grpc</span> <span class="nx">v1</span><span class="mf">.34.0</span> <span class="p">=&gt;</span> <span class="nx">google</span><span class="p">.</span><span class="nx">golang</span><span class="p">.</span><span class="nx">org</span><span class="o">/</span><span class="nx">grpc</span> <span class="nx">v1</span><span class="mf">.29.1</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="基本增删查改等操作">基本增删查改等操作</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">()</span>
+	<span class="nx">endpoints</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Split</span><span class="p">(</span><span class="o">*</span><span class="nx">addr</span><span class="p">,</span> <span class="s">&#34;,&#34;</span><span class="p">)</span>
+
+	<span class="c1">// 创建etcd Client对象.
+</span><span class="c1"></span>	<span class="nx">cli</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span>
+		<span class="nx">clientv3</span><span class="p">.</span><span class="nx">Config</span><span class="p">{</span>
+			<span class="nx">Endpoints</span><span class="p">:</span>        <span class="nx">endpoints</span><span class="p">,</span>
+			<span class="nx">RejectOldCluster</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+		<span class="p">})</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">defer</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+	<span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span>
+
+	<span class="c1">// 设置租约为50秒.
+</span><span class="c1"></span>	<span class="nx">lease</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Grant</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 使用租约来设置key1-value1.
+</span><span class="c1"></span>	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;key1&#34;</span><span class="p">,</span> <span class="s">&#34;value1&#34;</span><span class="p">,</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">WithLease</span><span class="p">(</span><span class="nx">lease</span><span class="p">.</span><span class="nx">ID</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 使用前缀key,来获取数据.
+</span><span class="c1"></span>	<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;key&#34;</span><span class="p">,</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">WithPrefix</span><span class="p">())</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 打印etcd返回的key-value.
+</span><span class="c1"></span>	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Kvs</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;key:&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Kvs</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Key</span><span class="p">),</span> <span class="s">&#34; value:&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Kvs</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Value</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 根据租约ID来查询租约当前详细信息.
+</span><span class="c1"></span>	<span class="nx">tresp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">TimeToLive</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">lease</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 打印设置的ttl值和当前的ttl值.
+</span><span class="c1"></span>	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">tresp</span><span class="p">.</span><span class="nx">GrantedTTL</span><span class="p">,</span> <span class="nx">tresp</span><span class="p">.</span><span class="nx">TTL</span><span class="p">)</span>
+
+	<span class="c1">// 根据租约ID来刷新当前的ttl,更新为所设置的ttl值.
+</span><span class="c1"></span>	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">KeepAliveOnce</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">lease</span><span class="p">.</span><span class="nx">ID</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 修改.
+</span><span class="c1"></span>	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;key1&#34;</span><span class="p">,</span> <span class="s">&#34;value2&#34;</span><span class="p">,</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">WithLease</span><span class="p">(</span><span class="nx">lease</span><span class="p">.</span><span class="nx">ID</span><span class="p">))</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 删除key1,是精确匹配,也可采用前缀模式.
+</span><span class="c1"></span>	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;key1&#34;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="watch操作">Watch操作</h3>
+<p>主要是对感兴趣的Key进行监听,事件包括增删改.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">wchan</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Watch</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;key&#34;</span><span class="p">,</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">WithPrefix</span><span class="p">())</span>
+<span class="k">for</span> <span class="nx">resp</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">wchan</span> <span class="p">{</span>
+    <span class="nx">err</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+        <span class="k">break</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="nx">resp</span><span class="p">.</span><span class="nf">IsProgressNotify</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">continue</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">event</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Events</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="nx">event</span><span class="p">.</span><span class="nf">IsCreate</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;创建:&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Kv</span><span class="p">.</span><span class="nx">Key</span><span class="p">),</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Kv</span><span class="p">.</span><span class="nx">Value</span><span class="p">),</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Type</span><span class="p">.</span><span class="nf">String</span><span class="p">())</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">event</span><span class="p">.</span><span class="nf">IsModify</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="nx">event</span><span class="p">.</span><span class="nx">PrevKv</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+                <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;修改前:&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">PrevKv</span><span class="p">.</span><span class="nx">Key</span><span class="p">),</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">PrevKv</span><span class="p">.</span><span class="nx">Value</span><span class="p">))</span>
+            <span class="p">}</span>
+
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;修改后:&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Kv</span><span class="p">.</span><span class="nx">Key</span><span class="p">),</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Kv</span><span class="p">.</span><span class="nx">Value</span><span class="p">),</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Type</span><span class="p">.</span><span class="nf">String</span><span class="p">())</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;删除:&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Kv</span><span class="p">.</span><span class="nx">Key</span><span class="p">),</span> <span class="nb">string</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">Kv</span><span class="p">.</span><span class="nx">Value</span><span class="p">),</span> <span class="nx">event</span><span class="p">.</span><span class="nx">Type</span><span class="p">.</span><span class="nf">String</span><span class="p">())</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><em><strong>注意:当修改时,<code>Event</code>对象中<code>PrevKv</code>字段的值为<code>nil</code>,而根据字段定义,该字段是保存事件发生之前的KV值,这里实际情况和字段定义不符.</strong></em></p>
+<h3 id="事务操作">事务操作</h3>
+<p>etcd支持事务,提供了在一个事务中对多个key的更新功能,这一组key的操作要么全部成功,要么全部失败.是基于CAS方式来实现的.</p>
+<p>主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 创建一个事务对象.
+</span><span class="c1"></span><span class="nf">Txn</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="nx">Txn</span>
+
+<span class="kd">type</span> <span class="nx">Txn</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="c1">// If takes a list of comparison. If all comparisons passed in succeed,
+</span><span class="c1"></span>	<span class="c1">// the operations passed into Then() will be executed. Or the operations
+</span><span class="c1"></span>    <span class="c1">// passed into Else() will be executed.
+</span><span class="c1"></span>    <span class="c1">// 条件.
+</span><span class="c1"></span>	<span class="nf">If</span><span class="p">(</span><span class="nx">cs</span> <span class="o">...</span><span class="nx">Cmp</span><span class="p">)</span> <span class="nx">Txn</span>
+
+	<span class="c1">// Then takes a list of operations. The Ops list will be executed, if the
+</span><span class="c1"></span>    <span class="c1">// comparisons passed in If() succeed.
+</span><span class="c1"></span>    <span class="c1">// 条件成功会执行.
+</span><span class="c1"></span>	<span class="nf">Then</span><span class="p">(</span><span class="nx">ops</span> <span class="o">...</span><span class="nx">Op</span><span class="p">)</span> <span class="nx">Txn</span>
+
+	<span class="c1">// Else takes a list of operations. The Ops list will be executed, if the
+</span><span class="c1"></span>    <span class="c1">// comparisons passed in If() fail.
+</span><span class="c1"></span>    <span class="c1">// 条件失败会执行.
+</span><span class="c1"></span>	<span class="nf">Else</span><span class="p">(</span><span class="nx">ops</span> <span class="o">...</span><span class="nx">Op</span><span class="p">)</span> <span class="nx">Txn</span>
+
+    <span class="c1">// Commit tries to commit the transaction.
+</span><span class="c1"></span>    <span class="c1">// 提交事务.
+</span><span class="c1"></span>	<span class="nf">Commit</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">TxnResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体调用代码如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">txnTransfer</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">from</span><span class="p">,</span> <span class="nx">to</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">amount</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span>
+	<span class="c1">// 在一个事务中同时获取from和to的数据.
+</span><span class="c1"></span>	<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Txn</span><span class="p">(</span><span class="nx">ctx</span><span class="p">).</span><span class="nf">Then</span><span class="p">(</span><span class="nx">clientv3</span><span class="p">.</span><span class="nf">OpGet</span><span class="p">(</span><span class="nx">from</span><span class="p">),</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">OpGet</span><span class="p">(</span><span class="nx">to</span><span class="p">)).</span><span class="nf">Commit</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 获取键为from的数据.
+</span><span class="c1"></span>	<span class="nx">fromKV</span> <span class="o">:=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+	<span class="c1">// 获取对应的值,转换为int64.
+</span><span class="c1"></span>	<span class="nx">fromAmount</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseInt</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">fromKV</span><span class="p">.</span><span class="nx">Value</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 获取键为to的数据.
+</span><span class="c1"></span>	<span class="nx">toKV</span> <span class="o">:=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+	<span class="c1">// 获取对应的值,转换为int64.
+</span><span class="c1"></span>	<span class="nx">toAmount</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseInt</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">toKV</span><span class="p">.</span><span class="nx">Value</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 判断from账户的钱是否充足.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">fromAmount</span> <span class="p">&lt;</span> <span class="nx">amount</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;money is not enough&#34;</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 开启事务,根据If中的来判断,若满足条件则可以执行Then里的操作,Then里的操作要么全部成功要么全部失败.
+</span><span class="c1"></span>	<span class="nx">putresp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cli</span><span class="p">.</span><span class="nf">Txn</span><span class="p">(</span><span class="nx">ctx</span><span class="p">).</span>
+		<span class="nf">If</span><span class="p">(</span>
+			<span class="c1">// 判断etcd中from的ModRevision是否和之前查询出来的相同.
+</span><span class="c1"></span>			<span class="nx">clientv3</span><span class="p">.</span><span class="nf">Compare</span><span class="p">(</span><span class="nx">clientv3</span><span class="p">.</span><span class="nf">ModRevision</span><span class="p">(</span><span class="nx">from</span><span class="p">),</span> <span class="s">&#34;=&#34;</span><span class="p">,</span> <span class="nx">fromKV</span><span class="p">.</span><span class="nx">ModRevision</span><span class="p">),</span>
+			<span class="c1">// 判断etcd中to的ModRevision是否和之前查询出来的相同.
+</span><span class="c1"></span>			<span class="nx">clientv3</span><span class="p">.</span><span class="nf">Compare</span><span class="p">(</span><span class="nx">clientv3</span><span class="p">.</span><span class="nf">ModRevision</span><span class="p">(</span><span class="nx">to</span><span class="p">),</span> <span class="s">&#34;=&#34;</span><span class="p">,</span> <span class="nx">toKV</span><span class="p">.</span><span class="nx">ModRevision</span><span class="p">)).</span>
+		<span class="nf">Then</span><span class="p">(</span>
+			<span class="c1">// 把from对应的值减去amount.
+</span><span class="c1"></span>			<span class="nx">clientv3</span><span class="p">.</span><span class="nf">OpPut</span><span class="p">(</span><span class="nx">from</span><span class="p">,</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nx">fromAmount</span><span class="o">-</span><span class="nx">amount</span><span class="p">))),</span>
+			<span class="c1">// 把to对应的值加上amount.
+</span><span class="c1"></span>			<span class="nx">clientv3</span><span class="p">.</span><span class="nf">OpPut</span><span class="p">(</span><span class="nx">to</span><span class="p">,</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nx">toAmount</span><span class="o">+</span><span class="nx">amount</span><span class="p">)))).</span>
+		<span class="nf">Commit</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">putresp</span><span class="p">.</span><span class="nx">Succeeded</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;执行成功&#34;</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;执行失败&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="高级扩展操作">高级扩展操作</h3>
+<h4 id="分布式锁">分布式锁</h4>
+<p>主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 初始化sync.Locker对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewLocker</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">Locker</span>
+
+<span class="c1">// 申请锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">lm</span> <span class="o">*</span><span class="nx">lockerMutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">()</span>
+
+<span class="c1">// 释放锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">lm</span> <span class="o">*</span><span class="nx">lockerMutex</span><span class="p">)</span> <span class="nf">Unlock</span><span class="p">()</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体调用代码如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">uselock</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建Session对象.
+</span><span class="c1"></span>	<span class="nx">sess</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewSession</span><span class="p">(</span><span class="nx">cli</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">defer</span> <span class="nx">sess</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+
+	<span class="c1">// 根据Session来创建sync.Locker对象.
+</span><span class="c1"></span>	<span class="nx">locker</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewLocker</span><span class="p">(</span><span class="nx">sess</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 加锁.
+</span><span class="c1"></span>	<span class="nx">locker</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+
+	<span class="c1">// 模拟业务逻辑处理.
+</span><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+
+	<span class="c1">// 释放锁.
+</span><span class="c1"></span>	<span class="nx">locker</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在两个终端上调用该函数时,第一个能顺利申请到锁,第二个会被阻塞直到第一个占用的锁被释放.</p>
+<p>关注etcd中的数据.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get test-lock --prefix
+test-lock/351c76848abb3131
+
+test-lock/5be76848abafc1d
+</code></pre></td></tr></table>
+</div>
+</div><p>在调用<code>concurrency.NewSession</code>时,会设置ttl,默认为60秒,<code>Session</code>对象会持有对应的<code>LeaseID</code>,并会调用<code>KeepAlive</code>来续期,使得锁在<code>Unlock</code>之前一直是有效的,其它想抢占分布式锁的程序只能是等待.假如第一个终端里的程序在调用<code>Unlock</code>之前被提前终止了,所持有的锁实际并不会马上被释放,而是要等到租约到期,之后第二个终端的程序才能正常获取到分布式锁.</p>
+<h4 id="mutex">Mutex</h4>
+<p>主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 初始化Mutex.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewMutex</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Mutex</span>
+
+<span class="c1">// 尝试获取锁,若锁被占用获取失败会立即返回.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">TryLock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span>
+
+<span class="c1">// 申请锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span>
+
+<span class="c1">// 释放锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Unlock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span>
+
+<span class="c1">// 是否是当前持有的锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">IsOwner</span><span class="p">()</span> <span class="nx">v3</span><span class="p">.</span><span class="nx">Cmp</span>
+
+<span class="c1">// 获取锁对应的key.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Key</span><span class="p">()</span> <span class="kt">string</span>
+
+<span class="c1">// 获取从etcd返回的数据的协议头.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Header</span><span class="p">()</span> <span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">ResponseHeader</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体调用代码如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">useMutex</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建Session对象.
+</span><span class="c1"></span>	<span class="nx">sess</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewSession</span><span class="p">(</span><span class="nx">cli</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">defer</span> <span class="nx">sess</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+
+	<span class="c1">// 创建Mutex对象.
+</span><span class="c1"></span>	<span class="nx">m</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewMutex</span><span class="p">(</span><span class="nx">sess</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+	<span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span>
+
+	<span class="c1">// 不是标准的sync.Locker接口,需要传入Context对象,在获取锁时可以设置超时时间,或主动取消请求.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 获取Mutex对象的key.
+</span><span class="c1"></span>	<span class="nx">key</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">Key</span><span class="p">()</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+
+	<span class="c1">// 模拟业务逻辑处理.
+</span><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+
+	<span class="c1">// 释放锁.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>Mutex</code>提供的<code>TryLock</code>方法,会尝试获取锁,如果该锁没有被其它<code>Session</code>获取,则加锁成功;如果已经被占用,则立马返回并报错<code>mutex: Locked by another session</code>.</p>
+<h4 id="读写锁">读写锁</h4>
+<p>主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 初始化读写锁对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewRWMutex</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">concurrency</span><span class="p">.</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">prefix</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">RWMutex</span>
+
+<span class="c1">// 申请读锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rwm</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">RLock</span><span class="p">()</span> <span class="kt">error</span>
+
+<span class="c1">// 申请写锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rwm</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">()</span>
+
+<span class="c1">// 释放读锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rwm</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">RUnlock</span><span class="p">()</span> <span class="kt">error</span>
+
+<span class="c1">// 释放写锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rwm</span> <span class="o">*</span><span class="nx">RWMutex</span><span class="p">)</span> <span class="nf">Unlock</span><span class="p">()</span> <span class="kt">error</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体调用代码如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 加读锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">useRWMutex</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">sess</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewSession</span><span class="p">(</span><span class="nx">cli</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">defer</span> <span class="nx">sess</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+
+	<span class="c1">// 生成RWMutex读写锁对象.
+</span><span class="c1"></span>	<span class="nx">rw</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewRWMutex</span><span class="p">(</span><span class="nx">sess</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 加读锁.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">rw</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;加读锁成功&#34;</span><span class="p">)</span>
+
+	<span class="c1">// 模拟业务逻辑处理.
+</span><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+
+	<span class="c1">// 释放锁.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">rw</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 加写锁.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">useRWMutexW</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+	<span class="nx">sess</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewSession</span><span class="p">(</span><span class="nx">cli</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">defer</span> <span class="nx">sess</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+
+	<span class="c1">// 生成RWMutex读写锁对象.
+</span><span class="c1"></span>	<span class="nx">rw</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewRWMutex</span><span class="p">(</span><span class="nx">sess</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 加写锁.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">rw</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;加写锁成功&#34;</span><span class="p">)</span>
+
+	<span class="c1">// 模拟业务逻辑处理.
+</span><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+
+	<span class="c1">// 释放锁.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">rw</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>同时启动3个goroutine,2个执行<code>useRWMutex</code>加读锁,1个执行<code>useRWMutexW</code>加写锁(先阻塞10秒,使读锁先加成功).</p>
+<p>观察etcd的数据,总共有三个锁,两个读一个写,写被读阻塞.当读锁都被释放后,加写锁成功.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get test-lock --prefix
+test-lock/read/1608689345032840000
+
+test-lock/read/1608689345033840100
+
+test-lock/write/1608689355033412000
+</code></pre></td></tr></table>
+</div>
+</div><p><em><strong>分布式读写锁在加锁时是写锁优先还是读锁优先?</strong></em></p>
+<p>在等待锁的过程中是按照先进先出的原则来依次获取锁的.当前第一个Session获取到了读锁,第二个Session申请获取写锁被阻塞,第三个Session申请获取读锁也会被阻塞,第四个Session申请获取写锁也被阻塞.当第一个Session释放了读锁后,第二个Session获取到写锁,第三个和第四个Session仍然处于被阻塞状态.当第二个Session释放了写锁后,第三个Session获取到读锁,第四个Session仍然处于被阻塞状态.当第三个Session释放读锁后,第四个Session获取到写锁.</p>
+<h4 id="分布式队列">分布式队列</h4>
+<p><strong>分布式队列(支持多读多写)</strong></p>
+<p>先进先出,主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 初始化队列对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewQueue</span><span class="p">(</span><span class="nx">client</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">keyPrefix</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Queue</span>
+
+<span class="c1">// 入队.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">q</span> <span class="o">*</span><span class="nx">Queue</span><span class="p">)</span> <span class="nf">Enqueue</span><span class="p">(</span><span class="nx">val</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">error</span>
+
+<span class="c1">// 出队.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">q</span> <span class="o">*</span><span class="nx">Queue</span><span class="p">)</span> <span class="nf">Dequeue</span><span class="p">()</span> <span class="p">(</span><span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体调用代码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 入队.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">useQueueEn</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建分布式队列.
+</span><span class="c1"></span>	<span class="nx">q</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewQueue</span><span class="p">(</span><span class="nx">cli</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 入队.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">q</span><span class="p">.</span><span class="nf">Enqueue</span><span class="p">(</span><span class="s">&#34;key1&#34;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 入队.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">q</span><span class="p">.</span><span class="nf">Enqueue</span><span class="p">(</span><span class="s">&#34;en2&#34;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 出队.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">useQueueDe</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建队列.
+</span><span class="c1"></span>	<span class="nx">q</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewQueue</span><span class="p">(</span><span class="nx">cli</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 出队,注意当队列为空时,该操作会被阻塞.
+</span><span class="c1"></span>	<span class="nx">key</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">q</span><span class="p">.</span><span class="nf">Dequeue</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当执行完入队操作之后,观察etcd中的数据如下,也是采用的KV方式存储的,key的前缀为队列名,后缀为当前的时间戳(纳秒级,<code>time.Now().UnixNano()</code>),注意队列中的数据并没有设置租约.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get test_queue --prefix
+test_queue/1608692476200480900
+key1
+test_queue/1608692476203481100
+en2
+</code></pre></td></tr></table>
+</div>
+</div><p>当执行出队操作之后,etcd中数据如下,第一个key被删除.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get test_queue --prefix
+test_queue/1608692476203481100
+en2
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>优先级队列(支持多读多写)</strong></p>
+<p>按照优先级先进先出,主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 初始化优先级队列对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewPriorityQueue</span><span class="p">(</span><span class="nx">client</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">PriorityQueue</span>
+
+<span class="c1">// 入队,并设置优先级.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">q</span> <span class="o">*</span><span class="nx">PriorityQueue</span><span class="p">)</span> <span class="nf">Enqueue</span><span class="p">(</span><span class="nx">val</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">pr</span> <span class="kt">uint16</span><span class="p">)</span> <span class="kt">error</span>
+
+<span class="c1">// 出队.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">q</span> <span class="o">*</span><span class="nx">PriorityQueue</span><span class="p">)</span> <span class="nf">Dequeue</span><span class="p">()</span> <span class="p">(</span><span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体调用代码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">usePriorityQueueEn</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建优先级队列.
+</span><span class="c1"></span>	<span class="nx">q</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewPriorityQueue</span><span class="p">(</span><span class="nx">cli</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 入队.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">q</span><span class="p">.</span><span class="nf">Enqueue</span><span class="p">(</span><span class="s">&#34;key1&#34;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 入队.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">q</span><span class="p">.</span><span class="nf">Enqueue</span><span class="p">(</span><span class="s">&#34;other1&#34;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 入队.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">q</span><span class="p">.</span><span class="nf">Enqueue</span><span class="p">(</span><span class="s">&#34;en2&#34;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">usePriorityQueueDe</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建优先级队列.
+</span><span class="c1"></span>	<span class="nx">q</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewPriorityQueue</span><span class="p">(</span><span class="nx">cli</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 出队,注意:当队列为空时,出队操作会被阻塞.
+</span><span class="c1"></span>	<span class="nx">value</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">q</span><span class="p">.</span><span class="nf">Dequeue</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在执行入队操作之后,观察etcd数据如下,key的规则是:队列名称+优先级(5位)+序列号(16位),当优先级相同时序列号会从0开始递增.数字越小优先级越高.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get test_queue --prefix
+test_queue/00005/0000000000000000
+en2
+test_queue/00010/0000000000000000
+key1
+test_queue/00010/0000000000000001
+other1
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="分布式栅栏">分布式栅栏</h4>
+<p><strong>Barrier:分布式栅栏</strong></p>
+<p>主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 初始化Barrier对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewBarrier</span><span class="p">(</span><span class="nx">client</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Barrier</span>
+
+<span class="c1">// 在etcd中创建键为key值为&#34;&#34;的数据对,会导致其它节点阻塞在Wait操作上.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">Barrier</span><span class="p">)</span> <span class="nf">Hold</span><span class="p">()</span> <span class="kt">error</span>
+
+<span class="c1">// 在etcd中删除数据对,会导致其它节点解除阻塞状态.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">Barrier</span><span class="p">)</span> <span class="nf">Release</span><span class="p">()</span> <span class="kt">error</span>
+
+<span class="c1">// key已被创建,则会阻塞直到key被删除;若key未创建,立即返回.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">Barrier</span><span class="p">)</span> <span class="nf">Wait</span><span class="p">()</span> <span class="kt">error</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>适用场景:一组节点协同工作,等待同一个信号,在信号未出现前,该组节点会被阻塞,而一旦信号出现,该组节点就会同时开始继续执行下一步的任务.如果持有Barrier的节点释放了它,所有等待这个Barrier的节点就不会被阻塞,而是继续执行.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">useBarrier</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建Barrier对象.
+</span><span class="c1"></span>	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewBarrier</span><span class="p">(</span><span class="nx">cli</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+
+	<span class="c1">// 创建以name为key,其值为&#34;&#34;的KV对保存在etcd中,其上并没有设置租约.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">b</span><span class="p">.</span><span class="nf">Hold</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 模拟业务逻辑.
+</span><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">15</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+
+	<span class="c1">// 删除key为name的KV对.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">b</span><span class="p">.</span><span class="nf">Release</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">useBarrierWait</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+	<span class="c1">// 创建Barrier对象.
+</span><span class="c1"></span>	<span class="nx">b</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewBarrier</span><span class="p">(</span><span class="nx">cli</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;开启wait&#34;</span><span class="p">)</span>
+
+	<span class="c1">// 若etcd中存在key为name的KV对,则会阻塞,并针对该key进行watch,当key被删除时会解除阻塞,继续往下执行.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">b</span><span class="p">.</span><span class="nf">Wait</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;结束wait&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>注意:当调用<code>Hold</code>的节点在<code>Release</code>之前由于异常原因挂掉,会导致<code>Wait</code>的节点一直会处于阻塞状态.这是由于KV对上并没有设置租约,如果没有主动调用<code>Release</code>,该KV对会一直存在.</p>
+<p>在调用<code>Hold</code>之后且调用<code>Release</code>之前,观察etcd数据.在调用<code>Release</code>之后会被删除.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ ./etcdctl --endpoints<span class="o">=</span><span class="nv">$ENDPOINTS</span> get test_barrier --prefix
+test_barrier
+
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>DoubleBarrier:计数型栅栏</strong></p>
+<p>主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 初始化DoubleBarrier对象.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewDoubleBarrier</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">concurrency</span><span class="p">.</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">count</span> <span class="kt">int</span><span class="p">)</span> <span class="o">*</span><span class="nx">DoubleBarrier</span>
+
+<span class="c1">// 阻塞,直到有count个进程或goroutine持有该barrier时,才会返回.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">DoubleBarrier</span><span class="p">)</span> <span class="nf">Enter</span><span class="p">()</span> <span class="kt">error</span>
+
+<span class="c1">// 阻塞,直到有count个进程或goroutine释放该barrier时,才会返回.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">DoubleBarrier</span><span class="p">)</span> <span class="nf">Leave</span><span class="p">()</span> <span class="kt">error</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在初始化计数型栅栏时,必须提供参与节点的数量,当这些数量的节点都Enter或Leave时,这个栅栏就会放开.</p>
+<p>适用场景:需要一组N个节点同时开始执行某些任务(等待N个节点都调用<code>Enter</code>后,同时开始执行任务),并且这些任务要同时完成(等待N个节点都调用<code>Leave</code>后,同时结束任务),然后再继续往下执行.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">useDoubleBarrier</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">name</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 创建Session.
+</span><span class="c1"></span>	<span class="nx">sess</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewSession</span><span class="p">(</span><span class="nx">cli</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">defer</span> <span class="nx">sess</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+	<span class="c1">// 初始化DoubleBarrier对象.
+</span><span class="c1"></span>	<span class="nx">db</span> <span class="o">:=</span> <span class="nx">recipe</span><span class="p">.</span><span class="nf">NewDoubleBarrier</span><span class="p">(</span><span class="nx">sess</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+	<span class="c1">// 模拟不同goroutine在不同的时间点调用Enter.
+</span><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nf">Intn</span><span class="p">(</span><span class="mi">60</span><span class="p">))</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+	<span class="c1">// 等待,直到有3个goroutine调用Enter为止.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">db</span><span class="p">.</span><span class="nf">Enter</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 同时开始执行任务.
+</span><span class="c1"></span>	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;开始工作&#34;</span><span class="p">)</span>
+
+	<span class="c1">// 模拟任务的执行,所耗时各不相同.
+</span><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nf">Intn</span><span class="p">(</span><span class="mi">60</span><span class="p">))</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+
+	<span class="c1">// 等待,直到有3个goroutine调用Leave为止.
+</span><span class="c1"></span>	<span class="nx">err</span> <span class="p">=</span> <span class="nx">db</span><span class="p">.</span><span class="nf">Leave</span><span class="p">()</span>
+	<span class="c1">// 任务同时执行完成,继续往下.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;工作结束&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="stmsoft-transactional-memory">STM(Soft Transactional Memory)</h4>
+<p>主要提供的方法为:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 开启一个事务,执行apply定义的操作.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewSTM</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">apply</span> <span class="kd">func</span><span class="p">(</span><span class="nx">STM</span><span class="p">)</span> <span class="kt">error</span><span class="p">,</span> <span class="nx">so</span> <span class="o">...</span><span class="nx">stmOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">TxnResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+
+<span class="c1">// STM is an interface for software transactional memory.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">STM</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="c1">// Get returns the value for a key and inserts the key in the txn&#39;s read set.
+</span><span class="c1"></span>	<span class="c1">// If Get fails, it aborts the transaction with an error, never returning.
+</span><span class="c1"></span>	<span class="nf">Get</span><span class="p">(</span><span class="nx">key</span> <span class="o">...</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span>
+	<span class="c1">// Put adds a value for a key to the write set.
+</span><span class="c1"></span>	<span class="nf">Put</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">v3</span><span class="p">.</span><span class="nx">OpOption</span><span class="p">)</span>
+	<span class="c1">// Rev returns the revision of a key in the read set.
+</span><span class="c1"></span>	<span class="nf">Rev</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">int64</span>
+	<span class="c1">// Del deletes a key.
+</span><span class="c1"></span>	<span class="nf">Del</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">)</span>
+
+	<span class="c1">// commit attempts to apply the txn&#39;s changes to the server.
+</span><span class="c1"></span>	<span class="nf">commit</span><span class="p">()</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">TxnResponse</span>
+	<span class="nf">reset</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>具体调用代码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">useSTM</span><span class="p">(</span><span class="nx">cli</span> <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">from</span><span class="p">,</span> <span class="nx">to</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">amount</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 定义操作函数,里面逻辑相当于是原子执行.
+</span><span class="c1"></span>	<span class="nx">apply</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">stm</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nx">STM</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+		<span class="nx">fromV</span><span class="p">,</span> <span class="nx">toV</span> <span class="o">:=</span> <span class="nx">stm</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">from</span><span class="p">),</span> <span class="nx">stm</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">to</span><span class="p">)</span>
+		<span class="nx">fromInt</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseInt</span><span class="p">(</span><span class="nx">fromV</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+		<span class="nx">toInt</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">ParseInt</span><span class="p">(</span><span class="nx">toV</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">fromInt</span> <span class="p">&lt;</span> <span class="nx">amount</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;money is not enough&#34;</span><span class="p">)</span>
+		<span class="p">}</span>
+
+		<span class="nx">fromInt</span><span class="p">,</span> <span class="nx">toInt</span> <span class="p">=</span> <span class="nx">fromInt</span><span class="o">-</span><span class="nx">amount</span><span class="p">,</span> <span class="nx">toInt</span><span class="o">+</span><span class="nx">amount</span>
+
+		<span class="nx">stm</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="nx">from</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%d&#34;</span><span class="p">,</span> <span class="nx">fromInt</span><span class="p">))</span>
+		<span class="nx">stm</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="nx">to</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%d&#34;</span><span class="p">,</span> <span class="nx">toInt</span><span class="p">))</span>
+
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 开启事务,执行transfer中定义的业务逻辑.
+</span><span class="c1"></span>	<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">concurrency</span><span class="p">.</span><span class="nf">NewSTM</span><span class="p">(</span><span class="nx">cli</span><span class="p">,</span> <span class="nx">apply</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Succeeded</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;操作成功&#34;</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;操作失败&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div></div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-12-24</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/2020/12/23/etcd-operation-guide/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/2020/12/23/etcd-operation-guide/" data-title="Etcd操作指南" data-via="shenbaise9527" data-hashtags="go,etcd"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/2020/12/23/etcd-operation-guide/" data-hashtag="go"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/2020/12/23/etcd-operation-guide/" data-title="Etcd操作指南"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/go/">go</a>,&nbsp;<a href="/tags/etcd/">etcd</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/2020/12/21/etcd-application-start-warn/" class="prev" rel="prev" title="服务启动时连接etcd集群的告警分析"><i class="fas fa-angle-left fa-fw"></i>服务启动时连接etcd集群的告警分析</a>
+            <a href="/2021/01/05/raft-consensus-algorithm/" class="next" rel="next" title="分布式一致性算法:Raft">分布式一致性算法:Raft<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.87.0-DEV">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>

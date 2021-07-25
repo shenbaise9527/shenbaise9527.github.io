@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Etcd配置错误后的分析 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="Etcd配置错误后的分析" />
+<meta property="og:description" content="问题起因 在采用开源框架go-zero开发的过程中,服务在启动一段时间后控制台一直在报如下警告信息: 1 2 3 4 5 6 7 8 9 { &#34;level&#34;: &#34;warn&#34;, &#34;ts&#34;: &#34;2020-12-15T16:43:21.709&#43;0800&#34;, &#34;caller&#34;: &#34;clientv3/retry_interceptor.go:62&#34;, &#34;msg&#34;: &#34;retrying of unary invoker" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/2020/12/19/etcd-configure-error/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2020-12-19T11:09:19+08:00" />
+<meta property="article:modified_time" content="2020-11-03T21:35:24+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="Etcd配置错误后的分析"/>
+<meta name="twitter:description" content="问题起因 在采用开源框架go-zero开发的过程中,服务在启动一段时间后控制台一直在报如下警告信息: 1 2 3 4 5 6 7 8 9 { &#34;level&#34;: &#34;warn&#34;, &#34;ts&#34;: &#34;2020-12-15T16:43:21.709&#43;0800&#34;, &#34;caller&#34;: &#34;clientv3/retry_interceptor.go:62&#34;, &#34;msg&#34;: &#34;retrying of unary invoker"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/2020/12/19/etcd-configure-error/" /><link rel="prev" href="https://shenbaise9527.com/2020/12/17/opentracing-jaeger-action/" /><link rel="next" href="https://shenbaise9527.com/2020/12/21/etcd-application-start-warn/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Etcd配置错误后的分析",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/2020\/12\/19\/etcd-configure-error\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go, etcd, grpc","wordcount":  1921 ,
+        "url": "https:\/\/shenbaise9527.com\/2020\/12\/19\/etcd-configure-error\/","datePublished": "2020-12-19T11:09:19+08:00","dateModified": "2020-11-03T21:35:24+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Etcd配置错误后的分析</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/microservice/"><i class="far fa-folder fa-fw"></i>Microservice</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2020-12-19">2020-12-19</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1921 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 4 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#问题起因">问题起因</a></li>
+    <li><a href="#问题分析">问题分析</a></li>
+    <li><a href="#总结">总结</a>
+      <ul>
+        <li><a href="#配置文档">配置文档</a></li>
+        <li><a href="#流程">流程</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="问题起因">问题起因</h2>
+<p>在采用开源框架<a href="https://github.com/tal-tech/go-zero" target="_blank" rel="noopener noreffer">go-zero</a>开发的过程中,服务在启动一段时间后控制台一直在报如下警告信息:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&#34;level&#34;</span><span class="p">:</span> <span class="s2">&#34;warn&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;ts&#34;</span><span class="p">:</span> <span class="s2">&#34;2020-12-15T16:43:21.709+0800&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;caller&#34;</span><span class="p">:</span> <span class="s2">&#34;clientv3/retry_interceptor.go:62&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;msg&#34;</span><span class="p">:</span> <span class="s2">&#34;retrying of unary invoker failed&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;target&#34;</span><span class="p">:</span> <span class="s2">&#34;endpoint://client-478bc374-adc9-4cec-9dcb-1c8245b9ad36/192.168.20.151:2379&#34;</span><span class="p">,</span>
+  <span class="nt">&#34;attempt&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="nt">&#34;error&#34;</span><span class="p">:</span> <span class="s2">&#34;rpc error: code = DeadlineExceeded desc = latest balancer error: all SubConns are in TransientFailure, latest connection error: c
+</span><span class="s2">onnection error: desc = \&#34;transport: Error while dialing dial tcp 0.0.0.0:2379: connectex: No connection could be made because the target machine actively refused it.\&#34;&#34;</span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>看信息是在连接<code>0.0.0.0:2379</code>的时候失败了,但target明明是<code>192.168.20.151:2379</code>,怎么会变成<code>0.0.0.0</code>的列?</p>
+<h2 id="问题分析">问题分析</h2>
+<p>根据报错信息,有定位到是<code>clientv3/retry_interceptor.go:62</code>,那就在该文件打个断点看看到底是怎么回事?
+<figure><a class="lightgallery" href="/images/etcd_errpicker.png" title="error" data-thumbnail="/images/etcd_errpicker.png" data-sub-html="<h2>定位错误产生的位置</h2><p>error</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/etcd_errpicker.png"
+            data-srcset="/images/etcd_errpicker.png, /images/etcd_errpicker.png 1.5x, /images/etcd_errpicker.png 2x"
+            data-sizes="auto"
+            alt="/images/etcd_errpicker.png" />
+    </a><figcaption class="image-caption">定位错误产生的位置</figcaption>
+    </figure>
+可以看到在调用gRPC接口时,<code>Picker</code>接口实际指向了<code>errPicker</code>,导致错误的发生.</p>
+<p>回头再去分析调用链上的<code>pickerWrapper.pick</code>函数(来自文件<code>grpc@v1.29.1/picker_wrapper.go</code>),有如下代码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">ch</span> <span class="p">=</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">blockingCh</span>
+<span class="nx">p</span> <span class="o">:=</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">picker</span>
+<span class="nx">pw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+
+<span class="nx">pickResult</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">.</span><span class="nf">Pick</span><span class="p">(</span><span class="nx">info</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>Picker</code>来自于<code>pw.picker</code>字段,而该字段的变更只在如下代码中:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// updatePicker is called by UpdateBalancerState. It unblocks all blocked pick.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">pw</span> <span class="o">*</span><span class="nx">pickerWrapper</span><span class="p">)</span> <span class="nf">updatePicker</span><span class="p">(</span><span class="nx">p</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">Picker</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">pw</span><span class="p">.</span><span class="nf">updatePickerV2</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">v2PickerWrapper</span><span class="p">{</span><span class="nx">picker</span><span class="p">:</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">connErr</span><span class="p">:</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">connErr</span><span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// updatePicker is called by UpdateBalancerState. It unblocks all blocked pick.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">pw</span> <span class="o">*</span><span class="nx">pickerWrapper</span><span class="p">)</span> <span class="nf">updatePickerV2</span><span class="p">(</span><span class="nx">p</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">V2Picker</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">pw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">pw</span><span class="p">.</span><span class="nx">done</span> <span class="p">{</span>
+		<span class="nx">pw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">pw</span><span class="p">.</span><span class="nx">picker</span> <span class="p">=</span> <span class="nx">p</span>
+	<span class="c1">// pw.blockingCh should never be nil.
+</span><span class="c1"></span>	<span class="nb">close</span><span class="p">(</span><span class="nx">pw</span><span class="p">.</span><span class="nx">blockingCh</span><span class="p">)</span>
+	<span class="nx">pw</span><span class="p">.</span><span class="nx">blockingCh</span> <span class="p">=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span>
+	<span class="nx">pw</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>继续在<code>updatePicker</code>函数断点,看是什么导致的变更?
+<figure><a class="lightgallery" href="/images/etcd_updatepicker.png" title="updatePicker" data-thumbnail="/images/etcd_updatepicker.png" data-sub-html="<h2>跟踪updatePicker</h2><p>updatePicker</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/etcd_updatepicker.png"
+            data-srcset="/images/etcd_updatepicker.png, /images/etcd_updatepicker.png 1.5x, /images/etcd_updatepicker.png 2x"
+            data-sizes="auto"
+            alt="/images/etcd_updatepicker.png" />
+    </a><figcaption class="image-caption">跟踪updatePicker</figcaption>
+    </figure>
+调用链源头为<code>ccBalancerWrapper.watcher</code>函数(来自文件<code>grpc@v1.29.1/balancer_conn_wrappers.go</code>)</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// watcher balancer functions sequentially, so the balancer can be implemented
+</span><span class="c1">// lock-free.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">ccb</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span><span class="p">)</span> <span class="nf">watcher</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="k">select</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="nx">t</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">ccb</span><span class="p">.</span><span class="nx">scBuffer</span><span class="p">.</span><span class="nf">Get</span><span class="p">():</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">scBuffer</span><span class="p">.</span><span class="nf">Load</span><span class="p">()</span>
+			<span class="k">if</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">done</span><span class="p">.</span><span class="nf">HasFired</span><span class="p">()</span> <span class="p">{</span>
+				<span class="k">break</span>
+			<span class="p">}</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancerMu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+			<span class="nx">su</span> <span class="o">:=</span> <span class="nx">t</span><span class="p">.(</span><span class="o">*</span><span class="nx">scStateUpdate</span><span class="p">)</span>
+			<span class="k">if</span> <span class="nx">ub</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span><span class="p">.(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">V2Balancer</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+				<span class="nx">ub</span><span class="p">.</span><span class="nf">UpdateSubConnState</span><span class="p">(</span><span class="nx">su</span><span class="p">.</span><span class="nx">sc</span><span class="p">,</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConnState</span><span class="p">{</span><span class="nx">ConnectivityState</span><span class="p">:</span> <span class="nx">su</span><span class="p">.</span><span class="nx">state</span><span class="p">,</span> <span class="nx">ConnectionError</span><span class="p">:</span> <span class="nx">su</span><span class="p">.</span><span class="nx">err</span><span class="p">})</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+				<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span><span class="p">.</span><span class="nf">HandleSubConnStateChange</span><span class="p">(</span><span class="nx">su</span><span class="p">.</span><span class="nx">sc</span><span class="p">,</span> <span class="nx">su</span><span class="p">.</span><span class="nx">state</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancerMu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ccb</span><span class="p">.</span><span class="nx">done</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+		<span class="p">}</span>
+
+		<span class="k">if</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">done</span><span class="p">.</span><span class="nf">HasFired</span><span class="p">()</span> <span class="p">{</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+			<span class="nx">scs</span> <span class="o">:=</span> <span class="nx">ccb</span><span class="p">.</span><span class="nx">subConns</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">subConns</span> <span class="p">=</span> <span class="kc">nil</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+			<span class="k">for</span> <span class="nx">acbw</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">scs</span> <span class="p">{</span>
+				<span class="nx">ccb</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">removeAddrConn</span><span class="p">(</span><span class="nx">acbw</span><span class="p">.</span><span class="nf">getAddrConn</span><span class="p">(),</span> <span class="nx">errConnDrain</span><span class="p">)</span>
+			<span class="p">}</span>
+			<span class="nx">ccb</span><span class="p">.</span><span class="nf">UpdateState</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">State</span><span class="p">{</span><span class="nx">ConnectivityState</span><span class="p">:</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">Connecting</span><span class="p">,</span> <span class="nx">Picker</span><span class="p">:</span> <span class="kc">nil</span><span class="p">})</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>变化来自channel对象<code>ccb.scBuffer</code>,搜索该对象只在<code>ccBalancerWrapper.handleSubConnStateChange</code>函数中有<code>Put</code>操作.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">ccb</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span><span class="p">)</span> <span class="nf">handleSubConnStateChange</span><span class="p">(</span><span class="nx">sc</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">,</span> <span class="nx">s</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// When updating addresses for a SubConn, if the address in use is not in
+</span><span class="c1"></span>	<span class="c1">// the new addresses, the old ac will be tearDown() and a new ac will be
+</span><span class="c1"></span>	<span class="c1">// created. tearDown() generates a state change with Shutdown state, we
+</span><span class="c1"></span>	<span class="c1">// don&#39;t want the balancer to receive this state change. So before
+</span><span class="c1"></span>	<span class="c1">// tearDown() on the old ac, ac.acbw (acWrapper) will be set to nil, and
+</span><span class="c1"></span>	<span class="c1">// this function will be called with (nil, Shutdown). We don&#39;t need to call
+</span><span class="c1"></span>	<span class="c1">// balancer method in this case.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">sc</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">ccb</span><span class="p">.</span><span class="nx">scBuffer</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">scStateUpdate</span><span class="p">{</span>
+		<span class="nx">sc</span><span class="p">:</span>    <span class="nx">sc</span><span class="p">,</span>
+		<span class="nx">state</span><span class="p">:</span> <span class="nx">s</span><span class="p">,</span>
+		<span class="nx">err</span><span class="p">:</span>   <span class="nx">err</span><span class="p">,</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在<code>Put</code>地方打上断点继续追踪
+<figure><a class="lightgallery" href="/images/etcd_reset.png" title="resetTransport" data-thumbnail="/images/etcd_reset.png" data-sub-html="<h2>Put消息</h2><p>resetTransport</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/etcd_reset.png"
+            data-srcset="/images/etcd_reset.png, /images/etcd_reset.png 1.5x, /images/etcd_reset.png 2x"
+            data-sizes="auto"
+            alt="/images/etcd_reset.png" />
+    </a><figcaption class="image-caption">Put消息</figcaption>
+    </figure>
+在调用链入口查看变量:
+<figure><a class="lightgallery" href="/images/etcd_addrs.png" title="addrs" data-thumbnail="/images/etcd_addrs.png" data-sub-html="<h2>addrs的值</h2><p>addrs</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/etcd_addrs.png"
+            data-srcset="/images/etcd_addrs.png, /images/etcd_addrs.png 1.5x, /images/etcd_addrs.png 2x"
+            data-sizes="auto"
+            alt="/images/etcd_addrs.png" />
+    </a><figcaption class="image-caption">addrs的值</figcaption>
+    </figure>
+可以看到地址为<code>0.0.0.0:2379</code>,找到地址来源了,与错误信息中的可以匹配.</p>
+<p>继续追踪<code>resetTransport</code>,只会在<code>addrConn.connect</code>函数被调用,在此断点:
+<figure><a class="lightgallery" href="/images/etcd_sync.png" title="connect" data-thumbnail="/images/etcd_sync.png" data-sub-html="<h2>追踪connect</h2><p>connect</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/etcd_sync.png"
+            data-srcset="/images/etcd_sync.png, /images/etcd_sync.png 1.5x, /images/etcd_sync.png 2x"
+            data-sizes="auto"
+            alt="/images/etcd_sync.png" />
+    </a><figcaption class="image-caption">追踪connect</figcaption>
+    </figure>
+可以看到在<code>Sync</code>函数(在文件<code>etcd/clientv3/client.go</code>)中获取的地址就是<code>0.0.0.0:2379</code>(来自<code>Members</code>的<code>ClientURLs</code>字段),而<code>c.MemberList</code>最终调用到如下:(来自文件<code>etcd/etcdserver/etcdserverpb/rpc.pb.go</code>,<strong>etcd当前最新版3.4.14的文件位置已发生变化</strong>)</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">clusterClient</span><span class="p">)</span> <span class="nf">MemberList</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">in</span> <span class="o">*</span><span class="nx">MemberListRequest</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">grpc</span><span class="p">.</span><span class="nx">CallOption</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">MemberListResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">out</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">MemberListResponse</span><span class="p">)</span>
+	<span class="nx">err</span> <span class="o">:=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="s">&#34;/etcdserverpb.Cluster/MemberList&#34;</span><span class="p">,</span> <span class="nx">in</span><span class="p">,</span> <span class="nx">out</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">cc</span><span class="p">,</span> <span class="nx">opts</span><span class="o">...</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">out</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>调用gRPC接口<code>/etcdserverpb.Cluster/MemberList</code>获取etcd集群的成员列表.而etcd集群的成员列表是由环境变量<code>ETCD_ADVERTISE_CLIENT_URLS</code>或参数<code>--advertise-client-urls</code>来控制的.</p>
+<p>查看etcd的部署文件<code>docker-compose.yml</code>,发现配置为<code>- &quot;ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379&quot;</code>,把配置修改为<code>http://192.168.20.151:2379</code>,该问题消失.</p>
+<h2 id="总结">总结</h2>
+<h3 id="配置文档">配置文档</h3>
+<p>在<a href="https://etcd.io/docs/v3.4.0/faq/" target="_blank" rel="noopener noreffer">官网文档</a>上其实已经提到了关于配置项的:</p>
+<p><strong>Configuration</strong></p>
+<p>What is the difference between <code>listen-&lt;client,peer&gt;-urls</code>, <code>advertise-client-urls</code> or <code>initial-advertise-peer-urls</code>?</p>
+<p><code>listen-client-urls</code> and <code>listen-peer-urls</code> specify the local addresses etcd server binds to for accepting incoming connections. To listen on a port for all interfaces, specify <code>0.0.0.0</code> as the listen IP address.</p>
+<p><code>advertise-client-urls</code> and <code>initial-advertise-peer-urls</code> specify the addresses etcd clients or other etcd members should use to contact the etcd server. The advertise addresses must be reachable from the remote machines. Do not advertise addresses like <code>localhost</code> or <code>0.0.0.0</code> for a production setup since these addresses are unreachable from remote machines.</p>
+<p>明确提到了不要把<code>advertise-client-urls</code>和<code>initial-advertise-peer-urls</code>设置成<code>localhost</code>或<code>0.0.0.0</code>,这些地址从远程机器是不能访问的,应该配置为具体的IP地址.</p>
+<h3 id="流程">流程</h3>
+<p><figure><a class="lightgallery" href="/images/etcd_follow.png" title="流程" data-thumbnail="/images/etcd_follow.png" data-sub-html="<h2>流程图</h2><p>流程</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/etcd_follow.png"
+            data-srcset="/images/etcd_follow.png, /images/etcd_follow.png 1.5x, /images/etcd_follow.png 2x"
+            data-sizes="auto"
+            alt="/images/etcd_follow.png" />
+    </a><figcaption class="image-caption">流程图</figcaption>
+    </figure></p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2020-11-03</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/2020/12/19/etcd-configure-error/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/2020/12/19/etcd-configure-error/" data-title="Etcd配置错误后的分析" data-via="shenbaise9527" data-hashtags="go,etcd,grpc"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/2020/12/19/etcd-configure-error/" data-hashtag="go"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/2020/12/19/etcd-configure-error/" data-title="Etcd配置错误后的分析"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/go/">go</a>,&nbsp;<a href="/tags/etcd/">etcd</a>,&nbsp;<a href="/tags/grpc/">grpc</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/2020/12/17/opentracing-jaeger-action/" class="prev" rel="prev" title="Jaeger实战"><i class="fas fa-angle-left fa-fw"></i>Jaeger实战</a>
+            <a href="/2020/12/21/etcd-application-start-warn/" class="next" rel="next" title="服务启动时连接etcd集群的告警分析">服务启动时连接etcd集群的告警分析<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.87.0-DEV">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>

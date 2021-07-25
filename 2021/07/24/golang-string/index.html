@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>golang字符串解析 - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="golang字符串解析" />
+<meta property="og:description" content="字符编码 计算机世界中只能识别二进制,所有的信息最终都会表示成一个二进制的字符串,每一个二进制位有0和1两种状态. 当在计算机中存储字符&rsq" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/2021/07/24/golang-string/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-24T16:57:37+08:00" />
+<meta property="article:modified_time" content="2021-07-24T16:57:37+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="golang字符串解析"/>
+<meta name="twitter:description" content="字符编码 计算机世界中只能识别二进制,所有的信息最终都会表示成一个二进制的字符串,每一个二进制位有0和1两种状态. 当在计算机中存储字符&rsq"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/2021/07/24/golang-string/" /><link rel="prev" href="https://shenbaise9527.com/2021/01/05/raft-consensus-algorithm/" /><link rel="next" href="https://shenbaise9527.com/2021/07/24/golang-c-call/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "golang字符串解析",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/2021\/07\/24\/golang-string\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go","wordcount":  10106 ,
+        "url": "https:\/\/shenbaise9527.com\/2021\/07\/24\/golang-string\/","datePublished": "2021-07-24T16:57:37+08:00","dateModified": "2021-07-24T16:57:37+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">golang字符串解析</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/golang/"><i class="far fa-folder fa-fw"></i>Golang</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-07-24">2021-07-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 10106 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 21 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#字符编码">字符编码</a>
+      <ul>
+        <li><a href="#ascii码">ASCII码</a></li>
+        <li><a href="#unicode">UNICODE</a></li>
+        <li><a href="#utf-8">UTF-8</a></li>
+        <li><a href="#bom头">BOM头</a></li>
+      </ul>
+    </li>
+    <li><a href="#string">string</a>
+      <ul>
+        <li><a href="#原理">原理</a></li>
+        <li><a href="#索引和遍历">索引和遍历</a></li>
+        <li><a href="#string和byte类型转换">string和[]byte类型转换</a>
+          <ul>
+            <li><a href="#强转换">强转换</a></li>
+            <li><a href="#性能比较">性能比较</a></li>
+            <li><a href="#标准转换的实现">标准转换的实现</a></li>
+            <li><a href="#如何取舍">如何取舍</a></li>
+            <li><a href="#编译器优化">编译器优化</a></li>
+          </ul>
+        </li>
+        <li><a href="#字符串拼接">字符串拼接</a>
+          <ul>
+            <li><a href="#拼接">+拼接</a></li>
+            <li><a href="#fmt拼接">fmt拼接</a></li>
+            <li><a href="#join拼接">join拼接</a></li>
+            <li><a href="#buffer拼接">buffer拼接</a></li>
+            <li><a href="#builder拼接">builder拼接</a></li>
+            <li><a href="#性能分析">性能分析</a></li>
+          </ul>
+        </li>
+        <li><a href="#乱码和不可打印字符">乱码和不可打印字符</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="字符编码">字符编码</h2>
+<p>计算机世界中只能识别二进制,所有的信息最终都会表示成一个二进制的字符串,每一个二进制位有0和1两种状态.</p>
+<p>当在计算机中存储字符&rsquo;A&rsquo;时,是如何存储的?在读取时又是如何还原为字符&rsquo;A&rsquo;的列?比如可以把&rsquo;A&rsquo;存储为<code>0100 0001</code>,然后在读取时把<code>0100 0001</code>还原为&rsquo;A',<code>0100 0001</code>与&rsquo;A&rsquo;的对应关系应该是唯一的,这种唯一映射规则就是编码.通过这种编码规则可以把字符映射到唯一的一种状态(二进制字符串).</p>
+<p>而最早出现的编码规则是ASCII码,在ASCII编码规则中,字符&rsquo;A&rsquo;对应的是<code>0100 0001</code>.</p>
+<h3 id="ascii码">ASCII码</h3>
+<p>在上世纪60年代,美国制定了一套字符编码,对英语字符与二进制位之间的关系,做了统一规定,这就是ASCII编码.</p>
+<p>ASCII码规定了128个字符的编码,比如空格<code>SPACE</code>是32(二进制<code>00100000</code>),字母&rsquo;A&rsquo;是65(二进制<code>0100 0001</code>).这128个字符(包括32个不能打印出来的控制符号),只占用一个字节的后7位,最前面一位统一为0.</p>
+<h3 id="unicode">UNICODE</h3>
+<p>英语用128个符号编码足够了,但世界上还有很多其它语言,128是远远不够的,如在法语中,字母上方有注音符号,它就无法用ASCII码表示.后来ISO组织制定了一些扩展规则,利用字节中闲置的最高位编入新的符号.如法语中<code>é</code>的编码为130(二进制<code>10000010</code>),这样可以表示最多256个符号.</p>
+<p>至于亚洲国家的文字,使用的符号就更多了,汉字就多达10万左右.使用一个字节是远远不够的,必须使用多个字节来表示一个符号.比如后来的<code>GB2312</code>、<code>BIG5</code>、<code>GBK</code>编码规则就是定义的多个字节来表述中文符号.</p>
+<p>不同的国家/组织采用不同的编码规则,导致世界上存在很多编码规则,同一个二进制串可以被解释成不同的符号.因此,在打开一个文件时就必须知道它的编码方式,否则用错误的编码方式去解读,就会出现乱码.以前的邮件经常出现乱码,就是因为发件人和收件人使用的编码方式不一样.</p>
+<p>就需要有一种编码,将世界上所有的符号都纳入其中,每一个符号都给予独一无二的编码,那么乱码就会消失.这就是UNICODE,现在的规模可以容纳100多万个符号.每个符号的编码不一样,具体的符号对应表,可以查询<a href="https://home.unicode.org/" target="_blank" rel="noopener noreffer">unicode.org</a>或专门的<a href="http://www.chi2ko.com/tool/CJK.htm" target="_blank" rel="noopener noreffer">汉字对应表</a></p>
+<p>Unicode是指一张表,里面包含了可能出现的所有字符,每个字符对应一个数字,这个数字称为码点(Code Point),如字符&rsquo;H&rsquo;的码点为72(十进制),字符&rsquo;李&rsquo;的码点为26446(十进制).Unicode表包含了1114112个码点，即从000000(十六进制) - 10FFFF(十六进制).地球上所有字符都可以在Unicode表中找到对应的唯一码点.<a href="https://unicode-table.com/cn/" target="_blank" rel="noopener noreffer">点击这里</a>,可查询字符对应的码点.</p>
+<p><strong>需要注意,Unicode只是个符号集,它只规定了符号的二进制代码,却没有规定这个二进制代码应该如何存储</strong></p>
+<p>比如汉字<code>周</code>的Unicode码点是<code>5468</code>,用二进制表示为<code>101 0100 0110 1000</code>,总共有15位,这个符号至少需要两个字节.表示其它更大的符号,可能需要3个字节或4个字节.这里引申出两个严重的问题:</p>
+<ol>
+<li>计算机怎么知道两个字节表示一个符号,而不是分别表示两个符号?</li>
+<li>英文字母只需要一个字节就可以表示,如果Unicode统一规定,每个符号用三个字节或四个字节表示,那每个英文字母前面必然有二到三个字节都是0,这对于存储是极大的浪费.</li>
+</ol>
+<h3 id="utf-8">UTF-8</h3>
+<p>互联网的普及,强烈要求出现一种统一的编码方式.<code>UTF-8</code>就是在互联网上使用最广的一种Unicode的实现方式.其它实现方式还包括<code>UTF-16</code>(字符用两个字节或四个字节表示)和<code>UTF-32</code>(字符用四个字节表示),不过在互联网上基本不用.</p>
+<p><strong>注意:<code>UTF-8</code>是Unicode的实现方式之一</strong></p>
+<p><code>UTF-8</code>最大的一个特点: 就是它是一种变长的编码方式.它可以使用1~4个字节表示一个符号,根据不同的符号而变化字节长度.</p>
+<p><code>UTF-8</code>的编码规则很简单,只有二条:</p>
+<ol>
+<li>对于单字节的符号,字节的第一位设为0,后面7位为这个符号的Unicode码.因此对于英语字母,<code>UTF-8</code>编码和<code>ASCII码</code>是相同的.</li>
+<li>对于n字节的符号(n &gt; 1),第一个字节的前n位都设为1,第n+1位设为0,后面字节的前两位一律设为10.剩下的没有提及的二进制位,全部为这个符号的<code>Unicode码</code>.</li>
+</ol>
+<p>规则如下:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Unicode符号范围(十六进制)</th>
+<th style="text-align:left">UTF-8编码方式(二进制)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">0000 0000-0000 007F(0-127)</td>
+<td style="text-align:left">0xxxxxxx</td>
+</tr>
+<tr>
+<td style="text-align:left">0000 0080-0000 07FF(128-2047)</td>
+<td style="text-align:left">110xxxxx 10xxxxxx</td>
+</tr>
+<tr>
+<td style="text-align:left">0000 0800-0000 FFFF(2048-65535)</td>
+<td style="text-align:left">1110xxxx 10xxxxxx 10xxxxxx</td>
+</tr>
+<tr>
+<td style="text-align:left">0001 0000-0010 FFFF(65536-111411)</td>
+<td style="text-align:left">11110xxx 10xxxxxx 10xxxxxx 10xxxxxx</td>
+</tr>
+</tbody>
+</table>
+<p>跟据上表,解读<code>UTF-8</code>编码非常简单.如果一个字节的第一位是0,则这个字节单独就是一个字符;如果第一位是1,则连续有多少个1,就表示当前字符占用多少个字节.</p>
+<p>下面以汉字<code>周</code>为例,Unicode码点为<code>5468</code>(101 0100 0110 1000),根据上表,<code>5468</code>处在第三行的范围内(<code>0000 0800-0000 FFFF</code>),因此需要三个字节,即格式为<code>1110xxxx 10xxxxxx 10xxxxxx</code>,然后,从<code>周</code>的最后一个二进制位开始,依次从后向前填入格式中的<code>x</code>,多出的位补0.这样<code>周</code>的<code>UTF-8</code>编码为<code>1110 0101 10 010001 10 101000</code>,转换为十六进制就是<code>E5 91A8</code></p>
+<p>如下代码,就会打印出<code>e591a8</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">name</span> <span class="o">:=</span> <span class="s">&#34;周&#34;</span>
+<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;%x&#34;</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="bom头">BOM头</h3>
+<p>对于<code>UTF-16</code>和<code>UTF-32</code>编码方式,是采用多字节编码,计算机就需要知道其顺序,如字符<code>A</code>的码点是65(十进制),十六进制为41,根据UTF-16来编码时会使用两个字节,但计算机是以字节为单位来存储的,那这两个字节应该表示为<code>0x0041</code>还是表示为<code>0x4100</code>?这就引出了字节序的问题,需要依赖BOM(<code>Byte Order Mark</code>)机制来解决.</p>
+<p>若为<code>0x0041</code>表示采用了大端序(Big endian),而为<code>0x4100</code>表示采用了小端序(Little endian).</p>
+<p>在UCS(Universal Multiple-Octet Coded Character Set,属于ISO组织,与unicode基本保持一致)编码中有一个叫做<code>Zero Width No-Break Space</code>(零宽无间断间隔)的字符,它的编码是<code>FEFF</code>.规范建议在传输字节流之前,先传输该字符,若收到<code>FEFF</code>就表示是<code>Big endian</code>的,若收到<code>FFFE</code>就表示是<code>Little endian</code>.因此该字符又被称为BOM.</p>
+<p>注意字节顺序这个概念对<code>UTF-8</code>来说是没有意义的,因为在<code>UTF-8</code>编码中,其自身已经带了控制信息,如<code>1110xxxx 10xxxxxx 10xxxxxx 10xxxxxx</code>,其中1110就起到了控制作用,所以不需要额外的BOM机制.</p>
+<p>但windows在保存UTF-8编码的文件时,会在文件开始的地方自动插入BOM,即三个字符<code>0xEF 0xBB 0xBF</code>(字符<code>Zero Width No-Break Space</code>的<code>UTF-8</code>编码是 EF BB BF).windows是利用BOM来标记文本文件的编码方式.</p>
+<h2 id="string">string</h2>
+<h3 id="原理">原理</h3>
+<p><strong>内建类型</strong></p>
+<p>代码在<code>src/builtin/builtin.go</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// string is the set of all strings of 8-bit bytes, conventionally but not
+</span><span class="c1">// necessarily representing UTF-8-encoded text. A string may be empty, but
+</span><span class="c1">// not nil. Values of string type are immutable.
+</span><span class="c1"></span><span class="kd">type</span> <span class="kt">string</span> <span class="kt">string</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>string</code>是8字节的集合,通常但并不一定是utf8编码的文本.可以为空,但不能为nil.且不可修改.</p>
+<p><strong>底层结构</strong></p>
+<p>代码在<code>src/runtime/string.go</code>里面</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">stringStruct</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">str</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span>
+	<span class="nx">len</span> <span class="kt">int</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li><code>str</code>: 指针,指向存储实际字符串的地址.</li>
+<li><code>len</code>: 字符串的长度,在代码中可以使用函数<code>len()</code>来获取该字段的值,<strong>注意:是指实际的字节数,而不是字符数</strong>.</li>
+</ul>
+<p>可以采用如下方式来输出字符串底层结构字段的值</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">stringStruct</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">str</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span>
+	<span class="nx">len</span> <span class="kt">int</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">s</span> <span class="o">:=</span> <span class="s">&#34;hello world&#34;</span>
+	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="nx">stringStruct</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">s</span><span class="p">)))</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>输出结果为：<code>{0x4bbad0 11}</code></p>
+<p><code>runtime.stringStruct</code>是非导出的,不能直接在外部使用,所有在代码中定义一个<code>stringStruct</code>结构,与<code>runtime.stringStruct</code>的字段保持一样.</p>
+<p><strong>构建</strong>
+先根据字符串构建<code>stringStruct</code>,再转换为<code>string</code>.代码在<code>src/runtime/string.go</code>里面</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">//go:nosplit
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">gostringnocopy</span><span class="p">(</span><span class="nx">str</span> <span class="o">*</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span> <span class="c1">// 根据字符串地址构建string
+</span><span class="c1"></span>	<span class="nx">ss</span> <span class="o">:=</span> <span class="nx">stringStruct</span><span class="p">{</span><span class="nx">str</span><span class="p">:</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">str</span><span class="p">),</span> <span class="nx">len</span><span class="p">:</span> <span class="nf">findnull</span><span class="p">(</span><span class="nx">str</span><span class="p">)}</span> <span class="c1">// 先构造stringStruct
+</span><span class="c1"></span>	<span class="nx">s</span> <span class="o">:=</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="kt">string</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ss</span><span class="p">))</span> <span class="c1">// 转换成string
+</span><span class="c1"></span>	<span class="k">return</span> <span class="nx">s</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="索引和遍历">索引和遍历</h3>
+<p>在使用<code>for-range</code>循环来遍历字符串时需要注意,<code>for-range</code>对多字节编码有特殊的支持.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">s</span> <span class="o">:=</span> <span class="s">&#34;hi 高盈&#34;</span>
+
+  <span class="k">for</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">c</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">s</span> <span class="p">{</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;%d %c\n&#34;</span><span class="p">,</span> <span class="nx">index</span><span class="p">,</span> <span class="nx">c</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>上面代码输出：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="mi">0</span> <span class="nx">h</span>
+<span class="mi">1</span> <span class="nx">i</span>
+<span class="mi">2</span>  
+<span class="mi">3</span> <span class="nx">高</span>
+<span class="mi">6</span> <span class="nx">盈</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>可以看出：<em><strong>遍历时是按照字符来循环的(如果有多字节字符,就会导致索引不连续).</strong></em></p>
+<h3 id="string和byte类型转换">string和[]byte类型转换</h3>
+<div id="standard"></div>
+#### 标准转换
+`[]byte`的底层结构如下:
+``` go
+type slice struct {
+	array unsafe.Pointer
+	len   int
+	cap   int
+}
+```
+<ul>
+<li><code>string</code> -&gt; <code>[]byte</code>: 语法为<code>[]byte(str)</code>.</li>
+<li><code>[]byte</code> -&gt; <code>string</code>: 语法为<code>string(bs)</code>.</li>
+</ul>
+<p><code>string</code>转<code>[]byte</code>的实现在<code>src/runtime/string.go</code>中</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// The constant is known to the compiler.
+</span><span class="c1">// There is no fundamental theory behind this number.
+</span><span class="c1"></span><span class="kd">const</span> <span class="nx">tmpStringBufSize</span> <span class="p">=</span> <span class="mi">32</span>
+
+<span class="kd">type</span> <span class="nx">tmpBuf</span> <span class="p">[</span><span class="nx">tmpStringBufSize</span><span class="p">]</span><span class="kt">byte</span>
+
+<span class="kd">func</span> <span class="nf">stringtoslicebyte</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">s</span> <span class="kt">string</span><span class="p">)</span> <span class="p">[]</span><span class="kt">byte</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="p">[]</span><span class="kt">byte</span>
+	<span class="k">if</span> <span class="nx">buf</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">buf</span><span class="p">)</span> <span class="p">{</span>
+		<span class="o">*</span><span class="nx">buf</span> <span class="p">=</span> <span class="nx">tmpBuf</span><span class="p">{}</span>
+		<span class="nx">b</span> <span class="p">=</span> <span class="nx">buf</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">)]</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">b</span> <span class="p">=</span> <span class="nf">rawbyteslice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">))</span> <span class="c1">// 当长度超过了32,需要新申请一块内存.
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="nb">copy</span><span class="p">(</span><span class="nx">b</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">b</span>
+<span class="p">}</span>
+
+<span class="c1">// rawbyteslice allocates a new byte slice. The byte slice is not zeroed.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">rawbyteslice</span><span class="p">(</span><span class="nx">size</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">b</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">cap</span> <span class="o">:=</span> <span class="nf">roundupsize</span><span class="p">(</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">))</span>
+	<span class="nx">p</span> <span class="o">:=</span> <span class="nf">mallocgc</span><span class="p">(</span><span class="nx">cap</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">cap</span> <span class="o">!=</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nf">memclrNoHeapPointers</span><span class="p">(</span><span class="nf">add</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">)),</span> <span class="nx">cap</span><span class="o">-</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="nx">slice</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">b</span><span class="p">))</span> <span class="p">=</span> <span class="nx">slice</span><span class="p">{</span><span class="nx">p</span><span class="p">,</span> <span class="nx">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nx">cap</span><span class="p">)}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>注意: 当<code>s</code>的长度大于32时,需要调用<code>mallocgc</code>分配一块新的内存来存放<code>[]byte</code>.在转换时,如果字符串比较长(字节数超过32),标准转换方式会有一次内存分配的操作.</p>
+<p><code>[]byte</code>转<code>string</code>的实现也在<code>src/runtime/string.go</code>中</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// slicebytetostring converts a byte slice to a string.
+</span><span class="c1">// It is inserted by the compiler into generated code.
+</span><span class="c1">// ptr is a pointer to the first element of the slice;
+</span><span class="c1">// n is the length of the slice.
+</span><span class="c1">// Buf is a fixed-size buffer for the result,
+</span><span class="c1">// it is not nil if the result does not escape.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">slicebytetostring</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">ptr</span> <span class="o">*</span><span class="kt">byte</span><span class="p">,</span> <span class="nx">n</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">str</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">n</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="c1">// Turns out to be a relatively common case.
+</span><span class="c1"></span>		<span class="c1">// Consider that you want to parse out data between parens in &#34;foo()bar&#34;,
+</span><span class="c1"></span>		<span class="c1">// you find the indices and convert the subslice to string.
+</span><span class="c1"></span>		<span class="k">return</span> <span class="s">&#34;&#34;</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">raceenabled</span> <span class="p">{</span>
+		<span class="nf">racereadrangepc</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">ptr</span><span class="p">),</span>
+			<span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">),</span>
+			<span class="nf">getcallerpc</span><span class="p">(),</span>
+			<span class="nf">funcPC</span><span class="p">(</span><span class="nx">slicebytetostring</span><span class="p">))</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">msanenabled</span> <span class="p">{</span>
+		<span class="nf">msanread</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">ptr</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">))</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">n</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">{</span>
+		<span class="nx">p</span> <span class="o">:=</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">staticuint64s</span><span class="p">[</span><span class="o">*</span><span class="nx">ptr</span><span class="p">])</span> <span class="c1">// 当长度为1时,使用静态数组staticuint64s,其保存了从0x00-&gt;0xFF之间的数字.
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">sys</span><span class="p">.</span><span class="nx">BigEndian</span> <span class="p">{</span>
+			<span class="nx">p</span> <span class="p">=</span> <span class="nf">add</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">str</span> <span class="p">=</span> <span class="nx">p</span>
+		<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">len</span> <span class="p">=</span> <span class="mi">1</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">p</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span>
+	<span class="k">if</span> <span class="nx">buf</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">n</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">buf</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">p</span> <span class="p">=</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">buf</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">p</span> <span class="p">=</span> <span class="nf">mallocgc</span><span class="p">(</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">),</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span> <span class="c1">// 长度超过32时,需要新申请一块内存.
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">str</span> <span class="p">=</span> <span class="nx">p</span>
+	<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">len</span> <span class="p">=</span> <span class="nx">n</span>
+	<span class="nf">memmove</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">ptr</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">))</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="强转换">强转换</h4>
+<p><code>string</code>和<code>[]byte</code>的底层结构是很类似的,可以通过<code>unsafe</code>和<code>reflect</code>包来强制转换</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">String2Bytes</span><span class="p">(</span><span class="nx">str</span> <span class="kt">string</span><span class="p">)</span> <span class="p">[]</span><span class="kt">byte</span> <span class="p">{</span>
+	<span class="nx">sh</span> <span class="o">:=</span> <span class="p">(</span><span class="o">*</span><span class="nx">reflect</span><span class="p">.</span><span class="nx">StringHeader</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">))</span>
+	<span class="nx">bh</span> <span class="o">:=</span> <span class="nx">reflect</span><span class="p">.</span><span class="nx">SliceHeader</span><span class="p">{</span>
+		<span class="nx">Data</span><span class="p">:</span> <span class="nx">sh</span><span class="p">.</span><span class="nx">Data</span><span class="p">,</span>
+		<span class="nx">Len</span><span class="p">:</span>  <span class="nx">sh</span><span class="p">.</span><span class="nx">Len</span><span class="p">,</span>
+		<span class="nx">Cap</span><span class="p">:</span>  <span class="nx">sh</span><span class="p">.</span><span class="nx">Len</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="p">[]</span><span class="kt">byte</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">bh</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Bytes2String</span><span class="p">(</span><span class="nx">b</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="kt">string</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">b</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="性能比较">性能比较</h4>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">import</span> <span class="s">&#34;testing&#34;</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_NormalBytes2String</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;Going International Group&#34;</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Bytes2String</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;Going International Group&#34;</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="nf">Bytes2String</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_NormalString2Bytes</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="s">&#34;Going International Group&#34;</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_String2Bytes</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="s">&#34;Going International Group&#34;</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="nf">String2Bytes</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_NormalBytes2String1</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;Going International Group, Going International Group, Going International Group, Going International Group, Going International Group&#34;</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Bytes2String1</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;Going International Group, Going International Group, Going International Group, Going International Group, Going International Group&#34;</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="nf">Bytes2String</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_NormalString2Bytes1</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="s">&#34;Going International Group, Going International Group, Going International Group, Going International Group, Going International Group&#34;</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_String2Bytes1</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">x</span> <span class="o">:=</span> <span class="s">&#34;Going International Group, Going International Group, Going International Group, Going International Group, Going International Group&#34;</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">_</span> <span class="p">=</span> <span class="nf">String2Bytes</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>运行结果:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go <span class="nb">test</span> -bench<span class="o">=</span>. -benchmem
+goos: linux
+goarch: amd64
+pkg: string
+cpu: Intel<span class="o">(</span>R<span class="o">)</span> Core<span class="o">(</span>TM<span class="o">)</span> i7-8700 CPU @ 3.20GHz
+Benchmark_NormalBytes2String-6    	254173088	         4.320 ns/op	       <span class="m">0</span> B/op	       <span class="m">0</span> allocs/op
+Benchmark_Bytes2String-6          	1000000000	         0.2536 ns/op	       <span class="m">0</span> B/op	       <span class="m">0</span> allocs/op
+Benchmark_NormalString2Bytes-6    	163714125	         7.257 ns/op	       <span class="m">0</span> B/op	       <span class="m">0</span> allocs/op
+Benchmark_String2Bytes-6          	1000000000	         0.2647 ns/op	       <span class="m">0</span> B/op	       <span class="m">0</span> allocs/op
+Benchmark_NormalBytes2String1-6   	18545620	        57.28 ns/op	      <span class="m">96</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Bytes2String1-6         	1000000000	         0.3686 ns/op	       <span class="m">0</span> B/op	       <span class="m">0</span> allocs/op
+Benchmark_NormalString2Bytes1-6   	14502368	        70.26 ns/op	      <span class="m">96</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_String2Bytes1-6         	1000000000	         0.2787 ns/op	       <span class="m">0</span> B/op	       <span class="m">0</span> allocs/op
+PASS
+ok  	string	7.124s
+</code></pre></td></tr></table>
+</div>
+</div><p>注意: 当字符串比较长时,<code>string</code>和<code>[]byte</code>的标准转换会额外进行一次内存分配(<a href="#standard" rel="">参考上面的标准转换</a>).</p>
+<h4 id="标准转换的实现">标准转换的实现</h4>
+<p>如下代码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">main</span>
+ 
+<span class="kn">import</span> <span class="s">&#34;fmt&#34;</span>
+ 
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">str</span> <span class="o">:=</span> <span class="s">&#34;steven&#34;</span>
+    <span class="nx">b</span> <span class="o">:=</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">str</span><span class="p">)</span>
+ 
+    <span class="nx">str1</span> <span class="o">:=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">str1</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>使用指令<code>go tool compile -N -l -S main.go</code>,可以看到<code>string</code>转换为<code>[]byte</code>是调用的<code>runtme.stringtoslicebyte</code>,<code>[]byte</code>转换为<code>string</code>是调用的<code>runtime.slicebytetostring</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go tool compile -N -l -S main.go
+<span class="s2">&#34;&#34;</span>.main STEXT <span class="nv">size</span><span class="o">=</span><span class="m">382</span> <span class="nv">args</span><span class="o">=</span>0x0 <span class="nv">locals</span><span class="o">=</span>0xc8 <span class="nv">funcid</span><span class="o">=</span>0x0
+	0x0000 <span class="m">00000</span> <span class="o">(</span>main.go:5<span class="o">)</span>	TEXT	<span class="s2">&#34;&#34;</span>.main<span class="o">(</span>SB<span class="o">)</span>, ABIInternal, <span class="nv">$200</span>-0
+	0x0000 <span class="m">00000</span> <span class="o">(</span>main.go:5<span class="o">)</span>	MOVQ	<span class="o">(</span>TLS<span class="o">)</span>, CX
+	0x0009 <span class="m">00009</span> <span class="o">(</span>main.go:5<span class="o">)</span>	LEAQ	-72<span class="o">(</span>SP<span class="o">)</span>, AX
+	0x000e <span class="m">00014</span> <span class="o">(</span>main.go:5<span class="o">)</span>	CMPQ	AX, 16<span class="o">(</span>CX<span class="o">)</span>
+	0x0012 <span class="m">00018</span> <span class="o">(</span>main.go:5<span class="o">)</span>	PCDATA	<span class="nv">$0</span>, <span class="nv">$-</span><span class="m">2</span>
+	0x0012 <span class="m">00018</span> <span class="o">(</span>main.go:5<span class="o">)</span>	JLS	<span class="m">372</span>
+	0x0018 <span class="m">00024</span> <span class="o">(</span>main.go:5<span class="o">)</span>	PCDATA	<span class="nv">$0</span>, <span class="nv">$-</span><span class="m">1</span>
+	0x0018 <span class="m">00024</span> <span class="o">(</span>main.go:5<span class="o">)</span>	SUBQ	<span class="nv">$200</span>, SP
+	0x001f <span class="m">00031</span> <span class="o">(</span>main.go:5<span class="o">)</span>	MOVQ	BP, 192<span class="o">(</span>SP<span class="o">)</span>
+	0x0027 <span class="m">00039</span> <span class="o">(</span>main.go:5<span class="o">)</span>	LEAQ	192<span class="o">(</span>SP<span class="o">)</span>, BP
+	0x002f <span class="m">00047</span> <span class="o">(</span>main.go:5<span class="o">)</span>	FUNCDATA	<span class="nv">$0</span>, gclocals·69c1753bd5f81501d95132d08af04464<span class="o">(</span>SB<span class="o">)</span>
+	0x002f <span class="m">00047</span> <span class="o">(</span>main.go:5<span class="o">)</span>	FUNCDATA	<span class="nv">$1</span>, gclocals·6cb97e7811aee91aade906c749dc574d<span class="o">(</span>SB<span class="o">)</span>
+	0x002f <span class="m">00047</span> <span class="o">(</span>main.go:5<span class="o">)</span>	FUNCDATA	<span class="nv">$2</span>, <span class="s2">&#34;&#34;</span>.main.stkobj<span class="o">(</span>SB<span class="o">)</span>
+	0x002f <span class="m">00047</span> <span class="o">(</span>main.go:6<span class="o">)</span>	LEAQ	go.string.<span class="s2">&#34;steven&#34;</span><span class="o">(</span>SB<span class="o">)</span>, AX
+	0x0036 <span class="m">00054</span> <span class="o">(</span>main.go:6<span class="o">)</span>	MOVQ	AX, <span class="s2">&#34;&#34;</span>.str+112<span class="o">(</span>SP<span class="o">)</span>
+	0x003b <span class="m">00059</span> <span class="o">(</span>main.go:6<span class="o">)</span>	MOVQ	<span class="nv">$6</span>, <span class="s2">&#34;&#34;</span>.str+120<span class="o">(</span>SP<span class="o">)</span>
+	0x0044 <span class="m">00068</span> <span class="o">(</span>main.go:7<span class="o">)</span>	LEAQ	<span class="s2">&#34;&#34;</span>..autotmp_4+48<span class="o">(</span>SP<span class="o">)</span>, CX
+	0x0049 <span class="m">00073</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	CX, <span class="o">(</span>SP<span class="o">)</span>
+	0x004d <span class="m">00077</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	AX, 8<span class="o">(</span>SP<span class="o">)</span>
+	0x0052 <span class="m">00082</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	<span class="nv">$6</span>, 16<span class="o">(</span>SP<span class="o">)</span>
+	0x005b <span class="m">00091</span> <span class="o">(</span>main.go:7<span class="o">)</span>	PCDATA	<span class="nv">$1</span>, <span class="nv">$0</span>
+	0x005b <span class="m">00091</span> <span class="o">(</span>main.go:7<span class="o">)</span>	NOP
+	0x0060 <span class="m">00096</span> <span class="o">(</span>main.go:7<span class="o">)</span>	CALL	runtime.stringtoslicebyte<span class="o">(</span>SB<span class="o">)</span>
+	0x0065 <span class="m">00101</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	24<span class="o">(</span>SP<span class="o">)</span>, AX
+	0x006a <span class="m">00106</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	32<span class="o">(</span>SP<span class="o">)</span>, CX
+	0x006f <span class="m">00111</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	40<span class="o">(</span>SP<span class="o">)</span>, DX
+	0x0074 <span class="m">00116</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	AX, <span class="s2">&#34;&#34;</span>.b+144<span class="o">(</span>SP<span class="o">)</span>
+	0x007c <span class="m">00124</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	CX, <span class="s2">&#34;&#34;</span>.b+152<span class="o">(</span>SP<span class="o">)</span>
+	0x0084 <span class="m">00132</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	DX, <span class="s2">&#34;&#34;</span>.b+160<span class="o">(</span>SP<span class="o">)</span>
+	0x008c <span class="m">00140</span> <span class="o">(</span>main.go:9<span class="o">)</span>	MOVQ	<span class="nv">$0</span>, <span class="o">(</span>SP<span class="o">)</span>
+	0x0094 <span class="m">00148</span> <span class="o">(</span>main.go:9<span class="o">)</span>	MOVQ	AX, 8<span class="o">(</span>SP<span class="o">)</span>
+	0x0099 <span class="m">00153</span> <span class="o">(</span>main.go:9<span class="o">)</span>	MOVQ	CX, 16<span class="o">(</span>SP<span class="o">)</span>
+	0x009e <span class="m">00158</span> <span class="o">(</span>main.go:9<span class="o">)</span>	NOP
+	0x00a0 <span class="m">00160</span> <span class="o">(</span>main.go:9<span class="o">)</span>	CALL	runtime.slicebytetostring<span class="o">(</span>SB<span class="o">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>runtime.stringtoslicebyte</strong></p>
+<p>代码在<code>src\runtime\string.go</code>里.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// The constant is known to the compiler.
+</span><span class="c1">// There is no fundamental theory behind this number.
+</span><span class="c1"></span><span class="kd">const</span> <span class="nx">tmpStringBufSize</span> <span class="p">=</span> <span class="mi">32</span>
+
+<span class="kd">type</span> <span class="nx">tmpBuf</span> <span class="p">[</span><span class="nx">tmpStringBufSize</span><span class="p">]</span><span class="kt">byte</span>
+
+<span class="kd">func</span> <span class="nf">stringtoslicebyte</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">s</span> <span class="kt">string</span><span class="p">)</span> <span class="p">[]</span><span class="kt">byte</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="p">[]</span><span class="kt">byte</span>
+	<span class="k">if</span> <span class="nx">buf</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">buf</span><span class="p">)</span> <span class="p">{</span>
+		<span class="o">*</span><span class="nx">buf</span> <span class="p">=</span> <span class="nx">tmpBuf</span><span class="p">{}</span>
+		<span class="nx">b</span> <span class="p">=</span> <span class="nx">buf</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">)]</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">b</span> <span class="p">=</span> <span class="nf">rawbyteslice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">))</span>
+	<span class="p">}</span>
+	<span class="nb">copy</span><span class="p">(</span><span class="nx">b</span><span class="p">,</span> <span class="nx">s</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">b</span>
+<span class="p">}</span>
+
+<span class="c1">// rawbyteslice allocates a new byte slice. The byte slice is not zeroed.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">rawbyteslice</span><span class="p">(</span><span class="nx">size</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">b</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">cap</span> <span class="o">:=</span> <span class="nf">roundupsize</span><span class="p">(</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">))</span>
+	<span class="nx">p</span> <span class="o">:=</span> <span class="nf">mallocgc</span><span class="p">(</span><span class="nx">cap</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">cap</span> <span class="o">!=</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nf">memclrNoHeapPointers</span><span class="p">(</span><span class="nf">add</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">)),</span> <span class="nx">cap</span><span class="o">-</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">size</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="nx">slice</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">b</span><span class="p">))</span> <span class="p">=</span> <span class="nx">slice</span><span class="p">{</span><span class="nx">p</span><span class="p">,</span> <span class="nx">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nx">cap</span><span class="p">)}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>预先定义了一个长度为32的数组,如果字符串的长度超过了这个数组的长度,说明<code>[]byte</code>不够用了,需要重新分配内存.<code>32</code>是阈值,只有超过了才会进行内存分配.</p>
+<p>最后通过调用<code>copy</code>方法实现<code>string</code>到<code>[]byte</code>的拷贝,具体实现在<code>src/runtime/slice.go</code>中的<code>slicestringcopy</code>方法.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">slicestringcopy</span><span class="p">(</span><span class="nx">toPtr</span> <span class="o">*</span><span class="kt">byte</span><span class="p">,</span> <span class="nx">toLen</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">fm</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">int</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">fm</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">toLen</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="mi">0</span>
+	<span class="p">}</span>
+
+	<span class="nx">n</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">fm</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">toLen</span> <span class="p">&lt;</span> <span class="nx">n</span> <span class="p">{</span>
+		<span class="nx">n</span> <span class="p">=</span> <span class="nx">toLen</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">raceenabled</span> <span class="p">{</span>
+		<span class="nx">callerpc</span> <span class="o">:=</span> <span class="nf">getcallerpc</span><span class="p">()</span>
+		<span class="nx">pc</span> <span class="o">:=</span> <span class="nf">funcPC</span><span class="p">(</span><span class="nx">slicestringcopy</span><span class="p">)</span>
+		<span class="nf">racewriterangepc</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">toPtr</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">),</span> <span class="nx">callerpc</span><span class="p">,</span> <span class="nx">pc</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">msanenabled</span> <span class="p">{</span>
+		<span class="nf">msanwrite</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">toPtr</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">))</span>
+	<span class="p">}</span>
+
+	<span class="nf">memmove</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">toPtr</span><span class="p">),</span> <span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">fm</span><span class="p">).</span><span class="nx">str</span><span class="p">,</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">))</span>
+	<span class="k">return</span> <span class="nx">n</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>核心思路是:将string的底层数组从头部复制n个到[]byte对应的底层数组中.</p>
+<p><strong>runtime.slicebytetostring</strong></p>
+<p>代码在<code>src\runtime\string.go</code>里.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// slicebytetostring converts a byte slice to a string.
+</span><span class="c1">// It is inserted by the compiler into generated code.
+</span><span class="c1">// ptr is a pointer to the first element of the slice;
+</span><span class="c1">// n is the length of the slice.
+</span><span class="c1">// Buf is a fixed-size buffer for the result,
+</span><span class="c1">// it is not nil if the result does not escape.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">slicebytetostring</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">ptr</span> <span class="o">*</span><span class="kt">byte</span><span class="p">,</span> <span class="nx">n</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">str</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">n</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="c1">// Turns out to be a relatively common case.
+</span><span class="c1"></span>		<span class="c1">// Consider that you want to parse out data between parens in &#34;foo()bar&#34;,
+</span><span class="c1"></span>		<span class="c1">// you find the indices and convert the subslice to string.
+</span><span class="c1"></span>		<span class="k">return</span> <span class="s">&#34;&#34;</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">raceenabled</span> <span class="p">{</span>
+		<span class="nf">racereadrangepc</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">ptr</span><span class="p">),</span>
+			<span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">),</span>
+			<span class="nf">getcallerpc</span><span class="p">(),</span>
+			<span class="nf">funcPC</span><span class="p">(</span><span class="nx">slicebytetostring</span><span class="p">))</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">msanenabled</span> <span class="p">{</span>
+		<span class="nf">msanread</span><span class="p">(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">ptr</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">))</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">n</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">{</span>
+		<span class="nx">p</span> <span class="o">:=</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">staticuint64s</span><span class="p">[</span><span class="o">*</span><span class="nx">ptr</span><span class="p">])</span>
+		<span class="k">if</span> <span class="nx">sys</span><span class="p">.</span><span class="nx">BigEndian</span> <span class="p">{</span>
+			<span class="nx">p</span> <span class="p">=</span> <span class="nf">add</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">str</span> <span class="p">=</span> <span class="nx">p</span>
+		<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">len</span> <span class="p">=</span> <span class="mi">1</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">p</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span>
+	<span class="k">if</span> <span class="nx">buf</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">n</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">buf</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">p</span> <span class="p">=</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">buf</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">p</span> <span class="p">=</span> <span class="nf">mallocgc</span><span class="p">(</span><span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">),</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">str</span> <span class="p">=</span> <span class="nx">p</span>
+	<span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">).</span><span class="nx">len</span> <span class="p">=</span> <span class="nx">n</span>
+	<span class="nf">memmove</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="nx">ptr</span><span class="p">),</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nx">n</span><span class="p">))</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>会根据<code>[]byte</code>的长度来决定是否重新分配内存,最后通过<code>memmove</code>拷贝数组到字符串中.</p>
+<h4 id="如何取舍">如何取舍</h4>
+<p>非必要推荐使用标准转换方式,标准的才是安全的.除非是特别的高性能场景,才应该考虑强转换方式,但强转换是不安全的,使用上要特别注意.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">String2Bytes</span><span class="p">(</span><span class="nx">str</span> <span class="kt">string</span><span class="p">)</span> <span class="p">[]</span><span class="kt">byte</span> <span class="p">{</span>
+	<span class="nx">sh</span> <span class="o">:=</span> <span class="p">(</span><span class="o">*</span><span class="nx">reflect</span><span class="p">.</span><span class="nx">StringHeader</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">str</span><span class="p">))</span>
+	<span class="nx">bh</span> <span class="o">:=</span> <span class="nx">reflect</span><span class="p">.</span><span class="nx">SliceHeader</span><span class="p">{</span>
+		<span class="nx">Data</span><span class="p">:</span> <span class="nx">sh</span><span class="p">.</span><span class="nx">Data</span><span class="p">,</span>
+		<span class="nx">Len</span><span class="p">:</span>  <span class="nx">sh</span><span class="p">.</span><span class="nx">Len</span><span class="p">,</span>
+		<span class="nx">Cap</span><span class="p">:</span>  <span class="nx">sh</span><span class="p">.</span><span class="nx">Len</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="p">[]</span><span class="kt">byte</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">bh</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">str1</span> <span class="o">:=</span> <span class="s">&#34;steven&#34;</span>
+	<span class="nx">b</span> <span class="o">:=</span> <span class="nf">String2Bytes</span><span class="p">(</span><span class="nx">str1</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">=</span> <span class="sc">&#39;H&#39;</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>运行会报错,如下,这种错误是程序直接发生了严重错误,使用<code>defer+recover</code>也是无法捕获的.<code>string</code>的底层数据是不允许更改的,这种方式相当于更改了<code>string</code>的内容,就会出现问题导致整个程序<code>dump</code>.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">unexpected fault address 0x49d1f4
+fatal error: fault
+<span class="o">[</span>signal SIGSEGV: segmentation violation <span class="nv">code</span><span class="o">=</span>0x2 <span class="nv">addr</span><span class="o">=</span>0x49d1f4 <span class="nv">pc</span><span class="o">=</span>0x47dfdc<span class="o">]</span>
+
+goroutine <span class="m">1</span> <span class="o">[</span>running<span class="o">]</span>:
+runtime.throw<span class="o">(</span>0x49d054, 0x5<span class="o">)</span>
+	/opt/go/src/runtime/panic.go:1117 +0x72 <span class="nv">fp</span><span class="o">=</span>0xc000072f08 <span class="nv">sp</span><span class="o">=</span>0xc000072ed8 <span class="nv">pc</span><span class="o">=</span>0x431032
+runtime.sigpanic<span class="o">()</span>
+	/opt/go/src/runtime/signal_unix.go:741 +0x268 <span class="nv">fp</span><span class="o">=</span>0xc000072f40 <span class="nv">sp</span><span class="o">=</span>0xc000072f08 <span class="nv">pc</span><span class="o">=</span>0x445ba8
+main.main<span class="o">()</span>
+	/home/steven/go/module/test/strtobyte/main.go:22 +0x5c <span class="nv">fp</span><span class="o">=</span>0xc000072f88 <span class="nv">sp</span><span class="o">=</span>0xc000072f40 <span class="nv">pc</span><span class="o">=</span>0x47dfdc
+runtime.main<span class="o">()</span>
+	/opt/go/src/runtime/proc.go:225 +0x256 <span class="nv">fp</span><span class="o">=</span>0xc000072fe0 <span class="nv">sp</span><span class="o">=</span>0xc000072f88 <span class="nv">pc</span><span class="o">=</span>0x433876
+runtime.goexit<span class="o">()</span>
+	/opt/go/src/runtime/asm_amd64.s:1371 +0x1 <span class="nv">fp</span><span class="o">=</span>0xc000072fe8 <span class="nv">sp</span><span class="o">=</span>0xc000072fe0 <span class="nv">pc</span><span class="o">=</span>0x461d21
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="编译器优化">编译器优化</h4>
+<p>出于性能上的考虑,有些场景编译器做了优化不涉及到内存拷贝,主要是<code>[]byte</code>临时转换为<code>string</code>的场景.</p>
+<ul>
+<li>map查找: <code>m[string(b)]</code></li>
+<li>字符串拼接: <code>&quot;&lt;&quot; + string(b) + &quot;&gt;&quot;</code></li>
+<li>字符串比较: <code>string(b) == &quot;foo&quot;</code>
+以上string只是临时使用,期间切片不会发生变化,所以可以进行优化,共享底层存储空间.</li>
+</ul>
+<h3 id="字符串拼接">字符串拼接</h3>
+<h4 id="拼接">+拼接</h4>
+<p>最常用最简单的就是通过<code>+</code>来拼接字符串</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">StringPlus</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">s</span> <span class="kt">string</span>
+	<span class="nx">s</span> <span class="o">+=</span> <span class="s">&#34;steven&#34;</span> <span class="o">+</span> <span class="s">&#34; zhou&#34;</span>
+	<span class="nx">s</span> <span class="o">+=</span> <span class="s">&#34; works&#34;</span> <span class="o">+</span> <span class="s">&#34; at&#34;</span>
+	<span class="nx">s</span> <span class="o">+=</span> <span class="s">&#34; Going International Group&#34;</span>
+
+	<span class="k">return</span> <span class="nx">s</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>使用指令<code>go tool compile -N -l -S main.go</code>来查看具体的实现.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go tool compile -N -l -S main.go 
+<span class="s2">&#34;&#34;</span>.StringPlus STEXT <span class="nv">size</span><span class="o">=</span><span class="m">269</span> <span class="nv">args</span><span class="o">=</span>0x10 <span class="nv">locals</span><span class="o">=</span>0x50 <span class="nv">funcid</span><span class="o">=</span>0x0
+	0x0000 <span class="m">00000</span> <span class="o">(</span>main.go:7<span class="o">)</span>	TEXT	<span class="s2">&#34;&#34;</span>.StringPlus<span class="o">(</span>SB<span class="o">)</span>, ABIInternal, <span class="nv">$80</span>-16
+	0x0000 <span class="m">00000</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	<span class="o">(</span>TLS<span class="o">)</span>, CX
+	0x0009 <span class="m">00009</span> <span class="o">(</span>main.go:7<span class="o">)</span>	CMPQ	SP, 16<span class="o">(</span>CX<span class="o">)</span>
+	0x000d <span class="m">00013</span> <span class="o">(</span>main.go:7<span class="o">)</span>	PCDATA	<span class="nv">$0</span>, <span class="nv">$-</span><span class="m">2</span>
+	0x000d <span class="m">00013</span> <span class="o">(</span>main.go:7<span class="o">)</span>	JLS	<span class="m">259</span>
+	0x0013 <span class="m">00019</span> <span class="o">(</span>main.go:7<span class="o">)</span>	PCDATA	<span class="nv">$0</span>, <span class="nv">$-</span><span class="m">1</span>
+	0x0013 <span class="m">00019</span> <span class="o">(</span>main.go:7<span class="o">)</span>	SUBQ	<span class="nv">$80</span>, SP
+	0x0017 <span class="m">00023</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVQ	BP, 72<span class="o">(</span>SP<span class="o">)</span>
+	0x001c <span class="m">00028</span> <span class="o">(</span>main.go:7<span class="o">)</span>	LEAQ	72<span class="o">(</span>SP<span class="o">)</span>, BP
+	0x0021 <span class="m">00033</span> <span class="o">(</span>main.go:7<span class="o">)</span>	FUNCDATA	<span class="nv">$0</span>, gclocals·2a5305abe05176240e61b8620e19a815<span class="o">(</span>SB<span class="o">)</span>
+	0x0021 <span class="m">00033</span> <span class="o">(</span>main.go:7<span class="o">)</span>	FUNCDATA	<span class="nv">$1</span>, gclocals·f207267fbf96a0178e8758c6e3e0ce28<span class="o">(</span>SB<span class="o">)</span>
+	0x0021 <span class="m">00033</span> <span class="o">(</span>main.go:7<span class="o">)</span>	XORPS	X0, X0
+	0x0024 <span class="m">00036</span> <span class="o">(</span>main.go:7<span class="o">)</span>	MOVUPS	X0, <span class="s2">&#34;&#34;</span>.~r0+88<span class="o">(</span>SP<span class="o">)</span>
+	0x0029 <span class="m">00041</span> <span class="o">(</span>main.go:8<span class="o">)</span>	XORPS	X0, X0
+	0x002c <span class="m">00044</span> <span class="o">(</span>main.go:8<span class="o">)</span>	MOVUPS	X0, <span class="s2">&#34;&#34;</span>.s+56<span class="o">(</span>SP<span class="o">)</span>
+	0x0031 <span class="m">00049</span> <span class="o">(</span>main.go:9<span class="o">)</span>	XORPS	X0, X0
+	0x0034 <span class="m">00052</span> <span class="o">(</span>main.go:9<span class="o">)</span>	MOVUPS	X0, <span class="o">(</span>SP<span class="o">)</span>
+	0x0038 <span class="m">00056</span> <span class="o">(</span>main.go:9<span class="o">)</span>	MOVQ	<span class="nv">$0</span>, 16<span class="o">(</span>SP<span class="o">)</span>
+	0x0041 <span class="m">00065</span> <span class="o">(</span>main.go:9<span class="o">)</span>	LEAQ	go.string.<span class="s2">&#34;steven zhou&#34;</span><span class="o">(</span>SB<span class="o">)</span>, AX
+	0x0048 <span class="m">00072</span> <span class="o">(</span>main.go:9<span class="o">)</span>	MOVQ	AX, 24<span class="o">(</span>SP<span class="o">)</span>
+	0x004d <span class="m">00077</span> <span class="o">(</span>main.go:9<span class="o">)</span>	MOVQ	<span class="nv">$11</span>, 32<span class="o">(</span>SP<span class="o">)</span>
+	0x0056 <span class="m">00086</span> <span class="o">(</span>main.go:9<span class="o">)</span>	PCDATA	<span class="nv">$1</span>, <span class="nv">$0</span>
+	0x0056 <span class="m">00086</span> <span class="o">(</span>main.go:9<span class="o">)</span>	CALL	runtime.concatstring2<span class="o">(</span>SB<span class="o">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>需要注意<code>&quot;steven&quot; + &quot; zhou&quot;</code>直接被合并为<code>&quot;steven zhou&quot;</code>,编译器已经做了优化.</p>
+<p><code>+</code>的具体实现是<code>runtime.concatstring2(SB)</code>函数.代码在<code>src/runtime/string.go</code>里</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// The constant is known to the compiler.
+</span><span class="c1">// There is no fundamental theory behind this number.
+</span><span class="c1"></span><span class="kd">const</span> <span class="nx">tmpStringBufSize</span> <span class="p">=</span> <span class="mi">32</span>
+
+<span class="kd">type</span> <span class="nx">tmpBuf</span> <span class="p">[</span><span class="nx">tmpStringBufSize</span><span class="p">]</span><span class="kt">byte</span>
+
+<span class="c1">// concatstrings implements a Go string concatenation x+y+z+...
+</span><span class="c1">// The operands are passed in the slice a.
+</span><span class="c1">// If buf != nil, the compiler has determined that the result does not
+</span><span class="c1">// escape the calling function, so the string data can be stored in buf
+</span><span class="c1">// if small enough.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">concatstrings</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">a</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="nx">idx</span> <span class="o">:=</span> <span class="mi">0</span>
+	<span class="nx">l</span> <span class="o">:=</span> <span class="mi">0</span>
+	<span class="nx">count</span> <span class="o">:=</span> <span class="mi">0</span>
+	<span class="k">for</span> <span class="nx">i</span><span class="p">,</span> <span class="nx">x</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">a</span> <span class="p">{</span>
+		<span class="nx">n</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">n</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+			<span class="k">continue</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">l</span><span class="o">+</span><span class="nx">n</span> <span class="p">&lt;</span> <span class="nx">l</span> <span class="p">{</span>
+			<span class="nf">throw</span><span class="p">(</span><span class="s">&#34;string concatenation too long&#34;</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="nx">l</span> <span class="o">+=</span> <span class="nx">n</span>
+		<span class="nx">count</span><span class="o">++</span>
+		<span class="nx">idx</span> <span class="p">=</span> <span class="nx">i</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">count</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="s">&#34;&#34;</span>
+	<span class="p">}</span>
+
+	<span class="c1">// If there is just one string and either it is not on the stack
+</span><span class="c1"></span>	<span class="c1">// or our result does not escape the calling frame (buf != nil),
+</span><span class="c1"></span>	<span class="c1">// then we can return that string directly.
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">count</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">buf</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">||</span> <span class="p">!</span><span class="nf">stringDataOnStack</span><span class="p">(</span><span class="nx">a</span><span class="p">[</span><span class="nx">idx</span><span class="p">]))</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">a</span><span class="p">[</span><span class="nx">idx</span><span class="p">]</span>
+	<span class="p">}</span>
+	<span class="nx">s</span><span class="p">,</span> <span class="nx">b</span> <span class="o">:=</span> <span class="nf">rawstringtmp</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="nx">l</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">x</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">a</span> <span class="p">{</span>
+		<span class="nb">copy</span><span class="p">(</span><span class="nx">b</span><span class="p">,</span> <span class="nx">x</span><span class="p">)</span>
+		<span class="nx">b</span> <span class="p">=</span> <span class="nx">b</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">x</span><span class="p">):]</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">s</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">concatstring2</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">a</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">concatstrings</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="nx">a</span><span class="p">[:])</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">concatstring3</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">a</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">concatstrings</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="nx">a</span><span class="p">[:])</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">concatstring4</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">a</span> <span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">concatstrings</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="nx">a</span><span class="p">[:])</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">concatstring5</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">a</span> <span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">concatstrings</span><span class="p">(</span><span class="nx">buf</span><span class="p">,</span> <span class="nx">a</span><span class="p">[:])</span>
+<span class="p">}</span>
+
+<span class="c1">// stringDataOnStack reports whether the string&#39;s data is
+</span><span class="c1">// stored on the current goroutine&#39;s stack.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">stringDataOnStack</span><span class="p">(</span><span class="nx">s</span> <span class="kt">string</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="nx">ptr</span> <span class="o">:=</span> <span class="nb">uintptr</span><span class="p">(</span><span class="nf">stringStructOf</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">s</span><span class="p">).</span><span class="nx">str</span><span class="p">)</span>
+	<span class="nx">stk</span> <span class="o">:=</span> <span class="nf">getg</span><span class="p">().</span><span class="nx">stack</span>
+	<span class="k">return</span> <span class="nx">stk</span><span class="p">.</span><span class="nx">lo</span> <span class="o">&lt;=</span> <span class="nx">ptr</span> <span class="o">&amp;&amp;</span> <span class="nx">ptr</span> <span class="p">&lt;</span> <span class="nx">stk</span><span class="p">.</span><span class="nx">hi</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">rawstringtmp</span><span class="p">(</span><span class="nx">buf</span> <span class="o">*</span><span class="nx">tmpBuf</span><span class="p">,</span> <span class="nx">l</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="nx">s</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">b</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">buf</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">l</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">buf</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">b</span> <span class="p">=</span> <span class="nx">buf</span><span class="p">[:</span><span class="nx">l</span><span class="p">]</span>
+		<span class="nx">s</span> <span class="p">=</span> <span class="nf">slicebytetostringtmp</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="nx">b</span><span class="p">))</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">s</span><span class="p">,</span> <span class="nx">b</span> <span class="p">=</span> <span class="nf">rawstring</span><span class="p">(</span><span class="nx">l</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>内置了<code>concatstring2</code>到<code>concatstring5</code>,但实际上最终都是调用<code>concatstring</code>函数.</p>
+<ol>
+<li>先计算所有字符串的累加长度.</li>
+<li>如果有效的字符串个数为0,直接返回&quot;&quot;.</li>
+<li>如果只有一个字符串且该字符串不在当前栈空间内或返回结果的字符串没有逃逸,则直接返回该字符串本身.</li>
+<li>如果buf不为nil且累计长度没有超过32,直接使用该数组空间.否则就重新分配一块内存.</li>
+<li>依次循环拷贝字符串.</li>
+</ol>
+<h4 id="fmt拼接">fmt拼接</h4>
+<p>使用<code>fmt.Sprint</code>的系列函数来进行拼接,然后返回拼接的字符串.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">StringFmt</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprint</span><span class="p">(</span><span class="s">&#34;steven&#34;</span><span class="p">,</span> <span class="s">&#34; zhou&#34;</span><span class="p">,</span> <span class="s">&#34; works&#34;</span><span class="p">,</span> <span class="s">&#34; at&#34;</span><span class="p">,</span> <span class="s">&#34; Going International Group&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="join拼接">join拼接</h4>
+<p>使用<code>strings.Join</code>函数进行拼接,接受一个字符串数组,转换为一个拼接好的字符串.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">StringJoin</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="nx">s</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">string</span><span class="p">{</span><span class="s">&#34;steven&#34;</span><span class="p">,</span> <span class="s">&#34; zhou&#34;</span><span class="p">,</span> <span class="s">&#34; works&#34;</span><span class="p">,</span> <span class="s">&#34; at&#34;</span><span class="p">,</span> <span class="s">&#34; Going International Group&#34;</span><span class="p">}</span>
+	<span class="k">return</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">s</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="buffer拼接">buffer拼接</h4>
+<p>使用<code>bytes.Buffer</code>来进行拼接,该结构体不止可以拼接字符串,还可以是<code>byte</code>,<code>rune</code>等,且实现了<code>io.Writer</code>接口.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">StringBuffer</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34;steven&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; zhou&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; works&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; at&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; Going International Group&#34;</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="builder拼接">builder拼接</h4>
+<p>使用<code>strings.Builder</code>来进行拼接,使用方式和<code>bytes.Buffer</code>类似.<code>1.10</code>版本提供的,主要是为了改善<code>bytes.Buffer</code>的拼接性能.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">StringBuilder</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Builder</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34;steven&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; zhou&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; works&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; at&#34;</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="s">&#34; Going International Group&#34;</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id="性能分析">性能分析</h4>
+<p>测试代码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Benchmark_Plus</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringPlus</span><span class="p">()</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Fmt</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringFmt</span><span class="p">()</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Join</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringJoin</span><span class="p">()</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Buffer</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringBuffer</span><span class="p">()</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Builder</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringBuilder</span><span class="p">()</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>性能测试结果:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go <span class="nb">test</span> -bench<span class="o">=</span>. -benchmem                        
+goos: linux
+goarch: amd64
+pkg: strjoin
+cpu: Intel<span class="o">(</span>R<span class="o">)</span> Core<span class="o">(</span>TM<span class="o">)</span> i7-8700 CPU @ 3.20GHz
+Benchmark_Plus-6      	 9745922	       120.5 ns/op	      <span class="m">72</span> B/op	       <span class="m">2</span> allocs/op
+Benchmark_Fmt-6       	 7163672	       192.0 ns/op	      <span class="m">48</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Join-6      	13101292	        91.44 ns/op	      <span class="m">48</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Buffer-6    	10681605	       121.6 ns/op	     <span class="m">112</span> B/op	       <span class="m">2</span> allocs/op
+Benchmark_Builder-6   	 7664673	       167.2 ns/op	     <span class="m">120</span> B/op	       <span class="m">4</span> allocs/op
+PASS
+ok  	strjoin	7.030s
+</code></pre></td></tr></table>
+</div>
+</div><p><code>strings.Join</code>耗时最短,而<code>fmt.Sprint</code>耗时最长,性能最差.这种情况下<code>bytes.Buffer</code>和<code>strings.Builder</code>好像没什么优势.</p>
+<p>关注下<code>+</code>方式,多次使用了<code>+</code>,但总共只分配了2次内存,在前面也已经分析过,编译器做了优化,直接合并了字符串.</p>
+<p>把代码改造下,使用更多的字符串来拼接.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">StringPlus</span><span class="p">(</span><span class="nx">ss</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">s</span> <span class="kt">string</span>
+	<span class="nx">l</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">l</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">s</span> <span class="o">+=</span> <span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">s</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">StringFmt</span><span class="p">(</span><span class="nx">ss</span> <span class="p">[]</span><span class="kd">interface</span><span class="p">{})</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprint</span><span class="p">(</span><span class="nx">ss</span><span class="o">...</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">StringJoin</span><span class="p">(</span><span class="nx">ss</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="nx">ss</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">StringBuffer</span><span class="p">(</span><span class="nx">ss</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span>
+	<span class="nx">l</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">l</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">StringBuilder</span><span class="p">(</span><span class="nx">ss</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Builder</span>
+	<span class="nx">l</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">l</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">const</span> <span class="nx">content</span> <span class="p">=</span> <span class="s">&#34;steven zhou works at Going International Group&#34;</span>
+<span class="kd">func</span> <span class="nf">initStrings</span><span class="p">(</span><span class="nx">N</span> <span class="kt">int</span><span class="p">)</span> <span class="p">[]</span><span class="kt">string</span> <span class="p">{</span>
+	<span class="nx">ss</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="kt">string</span><span class="p">,</span> <span class="nx">N</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="nx">content</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">ss</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">initInterface</span><span class="p">(</span><span class="nx">N</span> <span class="kt">int</span><span class="p">)</span> <span class="p">[]</span><span class="kd">interface</span><span class="p">{}</span> <span class="p">{</span>
+	<span class="nx">ss</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="kd">interface</span><span class="p">{},</span> <span class="nx">N</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="nx">content</span>
+	<span class="p">}</span>
+
+	<span class="k">return</span> <span class="nx">ss</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>测试代码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">Benchmark_Plus</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ss</span> <span class="o">:=</span> <span class="nf">initStrings</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">ResetTimer</span><span class="p">()</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringPlus</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Fmt</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ss</span> <span class="o">:=</span> <span class="nf">initInterface</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">ResetTimer</span><span class="p">()</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringFmt</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Join</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ss</span> <span class="o">:=</span> <span class="nf">initStrings</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">ResetTimer</span><span class="p">()</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringJoin</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Buffer</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ss</span> <span class="o">:=</span> <span class="nf">initStrings</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">ResetTimer</span><span class="p">()</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringBuffer</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">Benchmark_Builder</span><span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">B</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">ss</span> <span class="o">:=</span> <span class="nf">initStrings</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">ResetTimer</span><span class="p">()</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">.</span><span class="nx">N</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nf">StringBuilder</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>测试结果:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go <span class="nb">test</span> -bench<span class="o">=</span>. -benchmem
+goos: linux
+goarch: amd64
+pkg: strjoin
+cpu: Intel<span class="o">(</span>R<span class="o">)</span> Core<span class="o">(</span>TM<span class="o">)</span> i7-8700 CPU @ 3.20GHz
+Benchmark_Plus-6      	  835051	      <span class="m">1479</span> ns/op	    <span class="m">2592</span> B/op	       <span class="m">9</span> allocs/op
+Benchmark_Fmt-6       	 2368869	       532.0 ns/op	     <span class="m">480</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Join-6      	 3631810	       321.2 ns/op	     <span class="m">480</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Buffer-6    	 1183435	      <span class="m">1165</span> ns/op	    <span class="m">2032</span> B/op	       <span class="m">5</span> allocs/op
+Benchmark_Builder-6   	 1484762	       771.1 ns/op	    <span class="m">1488</span> B/op	       <span class="m">5</span> allocs/op
+PASS
+ok  	strjoin	9.385s
+</code></pre></td></tr></table>
+</div>
+</div><p>随着字符串数量加多,<code>+</code>拼接时每次都会涉及内存分配次数,导致耗时越长,10个字符串拼接供分配9次.</p>
+<p>把字符串个数修改为100,继续测试:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go <span class="nb">test</span> -bench<span class="o">=</span>. -benchmem
+goos: linux
+goarch: amd64
+pkg: strjoin
+cpu: Intel<span class="o">(</span>R<span class="o">)</span> Core<span class="o">(</span>TM<span class="o">)</span> i7-8700 CPU @ 3.20GHz
+Benchmark_Plus-6      	   10507	    <span class="m">104382</span> ns/op	  <span class="m">249441</span> B/op	      <span class="m">99</span> allocs/op
+Benchmark_Fmt-6       	  256449	      <span class="m">5048</span> ns/op	    <span class="m">4865</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Join-6      	  333220	      <span class="m">3143</span> ns/op	    <span class="m">4864</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Buffer-6    	  118428	      <span class="m">8802</span> ns/op	   <span class="m">20496</span> B/op	       <span class="m">8</span> allocs/op
+Benchmark_Builder-6   	  163093	      <span class="m">7220</span> ns/op	   <span class="m">16080</span> B/op	      <span class="m">10</span> allocs/op
+PASS
+ok  	strjoin	6.813s
+</code></pre></td></tr></table>
+</div>
+</div><p><code>+</code>拼接共分配内存99次,性能越来越差,依然是<code>strings.Join</code>的表现最好.</p>
+<p>把字符串个数修改为1000,继续测试:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go <span class="nb">test</span> -bench<span class="o">=</span>. -benchmem
+goos: linux
+goarch: amd64
+pkg: strjoin
+cpu: Intel<span class="o">(</span>R<span class="o">)</span> Core<span class="o">(</span>TM<span class="o">)</span> i7-8700 CPU @ 3.20GHz
+Benchmark_Plus-6      	     132	   <span class="m">7778708</span> ns/op	<span class="m">24993274</span> B/op	    <span class="m">1000</span> allocs/op
+Benchmark_Fmt-6       	   24487	     <span class="m">44290</span> ns/op	   <span class="m">49189</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Join-6      	   44905	     <span class="m">28059</span> ns/op	   <span class="m">49152</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Buffer-6    	   19155	     <span class="m">53682</span> ns/op	  <span class="m">165136</span> B/op	      <span class="m">11</span> allocs/op
+Benchmark_Builder-6   	   15176	     <span class="m">76206</span> ns/op	  <span class="m">228304</span> B/op	      <span class="m">19</span> allocs/op
+PASS
+ok  	strjoin	8.737s
+</code></pre></td></tr></table>
+</div>
+</div><p><code>strings.Builder</code>共分配了19次内存,<code>bytes.Buffer</code>共分配了11次内存,<code>strings.Join</code>和<code>fmt.Sprint</code>都只分配了1次内存,性能表现也是和内存分配次数有直接关系.</p>
+<p>要想优化<code>strings.Builder</code>和<code>bytes.Buffer</code>的性能,必定要减少其内存分配次数.</p>
+<p>这两个结构的底层都是采用<code>[]byte</code>来存储数据的,如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// A Builder is used to efficiently build a string using Write methods.
+</span><span class="c1">// It minimizes memory copying. The zero value is ready to use.
+</span><span class="c1">// Do not copy a non-zero Builder.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Builder</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">addr</span> <span class="o">*</span><span class="nx">Builder</span> <span class="c1">// of receiver, to detect copies by value
+</span><span class="c1"></span>	<span class="nx">buf</span>  <span class="p">[]</span><span class="kt">byte</span>
+<span class="p">}</span>
+
+<span class="c1">// A Buffer is a variable-sized buffer of bytes with Read and Write methods.
+</span><span class="c1">// The zero value for Buffer is an empty buffer ready to use.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Buffer</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">buf</span>      <span class="p">[]</span><span class="kt">byte</span> <span class="c1">// contents are the bytes buf[off : len(buf)]
+</span><span class="c1"></span>	<span class="nx">off</span>      <span class="kt">int</span>    <span class="c1">// read at &amp;buf[off], write at &amp;buf[len(buf)]
+</span><span class="c1"></span>	<span class="nx">lastRead</span> <span class="nx">readOp</span> <span class="c1">// last read operation, so that Unread* can work correctly.
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当底层slice容量不够,就会引发扩容,则就会涉及内存分配,如果提前预设<code>[]byte</code>的容量列?</p>
+<p>修改函数,先调用<code>Grow</code>方法,预设容量.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">StringBuffer</span><span class="p">(</span><span class="nx">ss</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="nx">bytes</span><span class="p">.</span><span class="nx">Buffer</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(</span><span class="mi">1000</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="nx">content</span><span class="p">))</span>
+	<span class="nx">l</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">l</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nf">StringBuilder</span><span class="p">(</span><span class="nx">ss</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">b</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Builder</span>
+	<span class="nx">b</span><span class="p">.</span><span class="nf">Grow</span><span class="p">(</span><span class="mi">1000</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="nx">content</span><span class="p">))</span>
+	<span class="nx">l</span> <span class="o">:=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ss</span><span class="p">)</span>
+	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">l</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+		<span class="nx">b</span><span class="p">.</span><span class="nf">WriteString</span><span class="p">(</span><span class="nx">ss</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">b</span><span class="p">.</span><span class="nf">String</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>再运行测试:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">$ go <span class="nb">test</span> -bench<span class="o">=</span>. -benchmem
+goos: linux
+goarch: amd64
+pkg: strjoin
+cpu: Intel<span class="o">(</span>R<span class="o">)</span> Core<span class="o">(</span>TM<span class="o">)</span> i7-8700 CPU @ 3.20GHz
+Benchmark_Fmt-6       	   28171	     <span class="m">44338</span> ns/op	   <span class="m">49202</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Join-6      	   40654	     <span class="m">29231</span> ns/op	   <span class="m">49152</span> B/op	       <span class="m">1</span> allocs/op
+Benchmark_Buffer-6    	   38374	     <span class="m">35796</span> ns/op	   <span class="m">98304</span> B/op	       <span class="m">2</span> allocs/op
+Benchmark_Builder-6   	   59942	     <span class="m">21109</span> ns/op	   <span class="m">49152</span> B/op	       <span class="m">1</span> allocs/op
+PASS
+ok  	strjoin	6.365s
+</code></pre></td></tr></table>
+</div>
+</div><p><code>strings.Builder</code>只分配1次内存,性能表现最好,而<code>bytes.Buffer</code>分配了2次内存,其底层容量已经足够,为什么还有2次内存分配?</p>
+<p>分析<code>String()</code>的源码:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="c1">// String returns the contents of the unread portion of the buffer
+</span><span class="c1">// as a string. If the Buffer is a nil pointer, it returns &#34;&lt;nil&gt;&#34;.
+</span><span class="c1">//
+</span><span class="c1">// To build strings more efficiently, see the strings.Builder type.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">Buffer</span><span class="p">)</span> <span class="nf">String</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">b</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="c1">// Special case, useful in debugging.
+</span><span class="c1"></span>		<span class="k">return</span> <span class="s">&#34;&lt;nil&gt;&#34;</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nb">string</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">buf</span><span class="p">[</span><span class="nx">b</span><span class="p">.</span><span class="nx">off</span><span class="p">:])</span> <span class="c1">// 采用标准转换方式,把[]byte转换为string,会涉及一次内存分配.
+</span><span class="c1"></span><span class="p">}</span>
+
+<span class="c1">// String returns the accumulated string.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">Builder</span><span class="p">)</span> <span class="nf">String</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="kt">string</span><span class="p">)(</span><span class="nx">unsafe</span><span class="p">.</span><span class="nf">Pointer</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">b</span><span class="p">.</span><span class="nx">buf</span><span class="p">))</span> <span class="c1">// 采用强制转换方式,共用底层存储,不涉及内存分配.
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>结论</strong></p>
+<ol>
+<li><code>+</code>拼接适用于短小的、常量字符串(明确的,非变量),因为编译器会优化.</li>
+<li><code>strings.Join</code>的性能一直很坚挺,当有现成的字符串数组或切片需要拼接时,优先使用该方法.但其灵活度有限.</li>
+<li><code>fmt.Sprint</code>系列主要是在格式化不同类型的数据方面有很大的灵活性.</li>
+<li><code>bytes.Buffer</code>不推荐使用.</li>
+<li>在使用<code>strings.Builder</code>时可以先预设容量,这样其灵活性和性能会有比较大的优势.</li>
+</ol>
+<h3 id="乱码和不可打印字符">乱码和不可打印字符</h3>
+<p>如果字符串中出现不合法的utf8编码,打印时对于每个不合法的编码字节都会输出一个特定的符号�：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">s</span> <span class="o">:=</span> <span class="s">&#34;高盈&#34;</span>
+  <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">s</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>上面代码输出：<code>高�</code>,由于&quot;盈&quot;编码有三个字节,<code>s[:5]</code>只取前两个字节,无法组成一个合法的UTF8字符,故输出该特定符号.</p>
+<p>还需要注意不可打印字符,两个字符串打印输出的内容相同,但两个字符串就是不相等:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">b1</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">{</span><span class="mh">0xEF</span><span class="p">,</span> <span class="mh">0xBB</span><span class="p">,</span> <span class="mh">0xBF</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="mi">108</span><span class="p">,</span> <span class="mi">108</span><span class="p">,</span> <span class="mi">111</span><span class="p">}</span>
+  <span class="nx">b2</span> <span class="o">:=</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">{</span><span class="mi">72</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="mi">108</span><span class="p">,</span> <span class="mi">108</span><span class="p">,</span> <span class="mi">111</span><span class="p">}</span>
+
+  <span class="nx">s1</span> <span class="o">:=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">b1</span><span class="p">)</span>
+  <span class="nx">s2</span> <span class="o">:=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">b2</span><span class="p">)</span>
+
+  <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">s1</span><span class="p">)</span>
+  <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">s2</span><span class="p">)</span>
+  <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">s1</span> <span class="o">==</span> <span class="nx">s2</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>上面代码输出:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">hello</span>
+<span class="nx">hello</span>
+<span class="kc">false</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>字符串比较是会比较长度和每个字节的,虽然打印出来是相同的,但b1是带了BOM头的(<code>0xEFBBBF</code>就是BOM头),b2没有带,这种一般会出现在从文件读取数据,一定要注意文件是否带了BOM头.</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2021-07-24</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/2021/07/24/golang-string/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/2021/07/24/golang-string/" data-title="golang字符串解析" data-via="shenbaise9527" data-hashtags="go"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/2021/07/24/golang-string/" data-hashtag="go"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/2021/07/24/golang-string/" data-title="golang字符串解析"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/go/">go</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/2021/01/05/raft-consensus-algorithm/" class="prev" rel="prev" title="分布式一致性算法:Raft"><i class="fas fa-angle-left fa-fw"></i>分布式一致性算法:Raft</a>
+            <a href="/2021/07/24/golang-c-call/" class="next" rel="next" title="Golang与C语言相互调用">Golang与C语言相互调用<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.87.0-DEV">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>
