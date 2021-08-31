@@ -29,7 +29,7 @@
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "https:\/\/shenbaise9527.com\/2021\/07\/24\/golang-string\/"
-        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go","wordcount":  10106 ,
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go","wordcount":  10105 ,
         "url": "https:\/\/shenbaise9527.com\/2021\/07\/24\/golang-string\/","datePublished": "2021-07-24T16:57:37+08:00","dateModified": "2021-07-24T16:57:37+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
             "@type": "Organization",
             "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
@@ -38,7 +38,7 @@
             },"description": ""
     }
     </script></head>
-    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('dark' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'dark' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
 
         <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
     <div class="header-wrapper">
@@ -106,7 +106,7 @@
             <div class="toc-content always-active" id="toc-content-auto"></div>
         </div><article class="page single"><h1 class="single-title animated flipInX">golang字符串解析</h1><div class="post-meta">
             <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/golang/"><i class="far fa-folder fa-fw"></i>Golang</a></span></div>
-            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-07-24">2021-07-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 10106 字&nbsp;
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-07-24">2021-07-24</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 10105 字&nbsp;
                 <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 21 分钟&nbsp;</div>
         </div><div class="details toc" id="toc-static"  kept="">
                 <div class="details-summary toc-title">
@@ -129,6 +129,7 @@
         <li><a href="#索引和遍历">索引和遍历</a></li>
         <li><a href="#string和byte类型转换">string和[]byte类型转换</a>
           <ul>
+            <li><a href="#标准转换">标准转换</a></li>
             <li><a href="#强转换">强转换</a></li>
             <li><a href="#性能比较">性能比较</a></li>
             <li><a href="#标准转换的实现">标准转换的实现</a></li>
@@ -152,34 +153,34 @@
   </ul>
 </nav></div>
             </div><div class="content" id="content"><h2 id="字符编码">字符编码</h2>
-<p>计算机世界中只能识别二进制,所有的信息最终都会表示成一个二进制的字符串,每一个二进制位有0和1两种状态.</p>
-<p>当在计算机中存储字符&rsquo;A&rsquo;时,是如何存储的?在读取时又是如何还原为字符&rsquo;A&rsquo;的列?比如可以把&rsquo;A&rsquo;存储为<code>0100 0001</code>,然后在读取时把<code>0100 0001</code>还原为&rsquo;A',<code>0100 0001</code>与&rsquo;A&rsquo;的对应关系应该是唯一的,这种唯一映射规则就是编码.通过这种编码规则可以把字符映射到唯一的一种状态(二进制字符串).</p>
-<p>而最早出现的编码规则是ASCII码,在ASCII编码规则中,字符&rsquo;A&rsquo;对应的是<code>0100 0001</code>.</p>
+<p>    计算机世界中只能识别二进制,所有的信息最终都会表示成一个二进制的字符串,每一个二进制位有0和1两种状态.</p>
+<p>    当在计算机中存储字符&rsquo;A&rsquo;时,是如何存储的?在读取时又是如何还原为字符&rsquo;A&rsquo;的列?比如可以把&rsquo;A&rsquo;存储为<code>0100 0001</code>,然后在读取时把<code>0100 0001</code>还原为&rsquo;A',<code>0100 0001</code>与&rsquo;A&rsquo;的对应关系应该是唯一的,这种唯一映射规则就是编码.通过这种编码规则可以把字符映射到唯一的一种状态(二进制字符串).</p>
+<p>    而最早出现的编码规则是ASCII码,在ASCII编码规则中,字符&rsquo;A&rsquo;对应的是<code>0100 0001</code>.</p>
 <h3 id="ascii码">ASCII码</h3>
-<p>在上世纪60年代,美国制定了一套字符编码,对英语字符与二进制位之间的关系,做了统一规定,这就是ASCII编码.</p>
-<p>ASCII码规定了128个字符的编码,比如空格<code>SPACE</code>是32(二进制<code>00100000</code>),字母&rsquo;A&rsquo;是65(二进制<code>0100 0001</code>).这128个字符(包括32个不能打印出来的控制符号),只占用一个字节的后7位,最前面一位统一为0.</p>
+<p>    在上世纪60年代,美国制定了一套字符编码,对英语字符与二进制位之间的关系,做了统一规定,这就是ASCII编码.</p>
+<p>    ASCII码规定了128个字符的编码,比如空格<code>SPACE</code>是32(二进制<code>00100000</code>),字母&rsquo;A&rsquo;是65(二进制<code>0100 0001</code>).这128个字符(包括32个不能打印出来的控制符号),只占用一个字节的后7位,最前面一位统一为0.</p>
 <h3 id="unicode">UNICODE</h3>
-<p>英语用128个符号编码足够了,但世界上还有很多其它语言,128是远远不够的,如在法语中,字母上方有注音符号,它就无法用ASCII码表示.后来ISO组织制定了一些扩展规则,利用字节中闲置的最高位编入新的符号.如法语中<code>é</code>的编码为130(二进制<code>10000010</code>),这样可以表示最多256个符号.</p>
-<p>至于亚洲国家的文字,使用的符号就更多了,汉字就多达10万左右.使用一个字节是远远不够的,必须使用多个字节来表示一个符号.比如后来的<code>GB2312</code>、<code>BIG5</code>、<code>GBK</code>编码规则就是定义的多个字节来表述中文符号.</p>
-<p>不同的国家/组织采用不同的编码规则,导致世界上存在很多编码规则,同一个二进制串可以被解释成不同的符号.因此,在打开一个文件时就必须知道它的编码方式,否则用错误的编码方式去解读,就会出现乱码.以前的邮件经常出现乱码,就是因为发件人和收件人使用的编码方式不一样.</p>
-<p>就需要有一种编码,将世界上所有的符号都纳入其中,每一个符号都给予独一无二的编码,那么乱码就会消失.这就是UNICODE,现在的规模可以容纳100多万个符号.每个符号的编码不一样,具体的符号对应表,可以查询<a href="https://home.unicode.org/" target="_blank" rel="noopener noreffer">unicode.org</a>或专门的<a href="http://www.chi2ko.com/tool/CJK.htm" target="_blank" rel="noopener noreffer">汉字对应表</a></p>
-<p>Unicode是指一张表,里面包含了可能出现的所有字符,每个字符对应一个数字,这个数字称为码点(Code Point),如字符&rsquo;H&rsquo;的码点为72(十进制),字符&rsquo;李&rsquo;的码点为26446(十进制).Unicode表包含了1114112个码点，即从000000(十六进制) - 10FFFF(十六进制).地球上所有字符都可以在Unicode表中找到对应的唯一码点.<a href="https://unicode-table.com/cn/" target="_blank" rel="noopener noreffer">点击这里</a>,可查询字符对应的码点.</p>
-<p><strong>需要注意,Unicode只是个符号集,它只规定了符号的二进制代码,却没有规定这个二进制代码应该如何存储</strong></p>
-<p>比如汉字<code>周</code>的Unicode码点是<code>5468</code>,用二进制表示为<code>101 0100 0110 1000</code>,总共有15位,这个符号至少需要两个字节.表示其它更大的符号,可能需要3个字节或4个字节.这里引申出两个严重的问题:</p>
+<p>    英语用128个符号编码足够了,但世界上还有很多其它语言,128是远远不够的,如在法语中,字母上方有注音符号,它就无法用ASCII码表示.后来ISO组织制定了一些扩展规则,利用字节中闲置的最高位编入新的符号.如法语中<code>é</code>的编码为130(二进制<code>10000010</code>),这样可以表示最多256个符号.</p>
+<p>    至于亚洲国家的文字,使用的符号就更多了,汉字就多达10万左右.使用一个字节是远远不够的,必须使用多个字节来表示一个符号.比如后来的<code>GB2312</code>、<code>BIG5</code>、<code>GBK</code>编码规则就是定义的多个字节来表述中文符号.</p>
+<p>    不同的国家/组织采用不同的编码规则,导致世界上存在很多编码规则,同一个二进制串可以被解释成不同的符号.因此,在打开一个文件时就必须知道它的编码方式,否则用错误的编码方式去解读,就会出现乱码.以前的邮件经常出现乱码,就是因为发件人和收件人使用的编码方式不一样.</p>
+<p>    就需要有一种编码,将世界上所有的符号都纳入其中,每一个符号都给予独一无二的编码,那么乱码就会消失.这就是UNICODE,现在的规模可以容纳100多万个符号.每个符号的编码不一样,具体的符号对应表,可以查询<a href="https://home.unicode.org/" target="_blank" rel="noopener noreffer">unicode.org</a>或专门的<a href="http://www.chi2ko.com/tool/CJK.htm" target="_blank" rel="noopener noreffer">汉字对应表</a></p>
+<p>    Unicode是指一张表,里面包含了可能出现的所有字符,每个字符对应一个数字,这个数字称为码点(Code Point),如字符&rsquo;H&rsquo;的码点为72(十进制),字符&rsquo;李&rsquo;的码点为26446(十进制).Unicode表包含了1114112个码点，即从000000(十六进制) - 10FFFF(十六进制).地球上所有字符都可以在Unicode表中找到对应的唯一码点.<a href="https://unicode-table.com/cn/" target="_blank" rel="noopener noreffer">点击这里</a>,可查询字符对应的码点.</p>
+<p>    <strong>需要注意,Unicode只是个符号集,它只规定了符号的二进制代码,却没有规定这个二进制代码应该如何存储</strong></p>
+<p>    比如汉字<code>周</code>的Unicode码点是<code>5468</code>,用二进制表示为<code>101 0100 0110 1000</code>,总共有15位,这个符号至少需要两个字节.表示其它更大的符号,可能需要3个字节或4个字节.这里引申出两个严重的问题:</p>
 <ol>
 <li>计算机怎么知道两个字节表示一个符号,而不是分别表示两个符号?</li>
 <li>英文字母只需要一个字节就可以表示,如果Unicode统一规定,每个符号用三个字节或四个字节表示,那每个英文字母前面必然有二到三个字节都是0,这对于存储是极大的浪费.</li>
 </ol>
 <h3 id="utf-8">UTF-8</h3>
-<p>互联网的普及,强烈要求出现一种统一的编码方式.<code>UTF-8</code>就是在互联网上使用最广的一种Unicode的实现方式.其它实现方式还包括<code>UTF-16</code>(字符用两个字节或四个字节表示)和<code>UTF-32</code>(字符用四个字节表示),不过在互联网上基本不用.</p>
-<p><strong>注意:<code>UTF-8</code>是Unicode的实现方式之一</strong></p>
-<p><code>UTF-8</code>最大的一个特点: 就是它是一种变长的编码方式.它可以使用1~4个字节表示一个符号,根据不同的符号而变化字节长度.</p>
-<p><code>UTF-8</code>的编码规则很简单,只有二条:</p>
+<p>    互联网的普及,强烈要求出现一种统一的编码方式.<code>UTF-8</code>就是在互联网上使用最广的一种Unicode的实现方式.其它实现方式还包括<code>UTF-16</code>(字符用两个字节或四个字节表示)和<code>UTF-32</code>(字符用四个字节表示),不过在互联网上基本不用.</p>
+<p>    <strong>注意:<code>UTF-8</code>是Unicode的实现方式之一</strong></p>
+<p>    <code>UTF-8</code>最大的一个特点: 就是它是一种变长的编码方式.它可以使用1~4个字节表示一个符号,根据不同的符号而变化字节长度.</p>
+<p>    <code>UTF-8</code>的编码规则很简单,只有二条:</p>
 <ol>
 <li>对于单字节的符号,字节的第一位设为0,后面7位为这个符号的Unicode码.因此对于英语字母,<code>UTF-8</code>编码和<code>ASCII码</code>是相同的.</li>
 <li>对于n字节的符号(n &gt; 1),第一个字节的前n位都设为1,第n+1位设为0,后面字节的前两位一律设为10.剩下的没有提及的二进制位,全部为这个符号的<code>Unicode码</code>.</li>
 </ol>
-<p>规则如下:</p>
+<p>    规则如下:</p>
 <table>
 <thead>
 <tr>
@@ -206,9 +207,9 @@
 </tr>
 </tbody>
 </table>
-<p>跟据上表,解读<code>UTF-8</code>编码非常简单.如果一个字节的第一位是0,则这个字节单独就是一个字符;如果第一位是1,则连续有多少个1,就表示当前字符占用多少个字节.</p>
-<p>下面以汉字<code>周</code>为例,Unicode码点为<code>5468</code>(101 0100 0110 1000),根据上表,<code>5468</code>处在第三行的范围内(<code>0000 0800-0000 FFFF</code>),因此需要三个字节,即格式为<code>1110xxxx 10xxxxxx 10xxxxxx</code>,然后,从<code>周</code>的最后一个二进制位开始,依次从后向前填入格式中的<code>x</code>,多出的位补0.这样<code>周</code>的<code>UTF-8</code>编码为<code>1110 0101 10 010001 10 101000</code>,转换为十六进制就是<code>E5 91A8</code></p>
-<p>如下代码,就会打印出<code>e591a8</code></p>
+<p>    根据上表,解读<code>UTF-8</code>编码非常简单.如果一个字节的第一位是0,则这个字节单独就是一个字符;如果第一位是1,则连续有多少个1,就表示当前字符占用多少个字节.</p>
+<p>    下面以汉字<code>周</code>为例,Unicode码点为<code>5468</code>(101 0100 0110 1000),根据上表,<code>5468</code>处在第三行的范围内(<code>0000 0800-0000 FFFF</code>),因此需要三个字节,即格式为<code>1110xxxx 10xxxxxx 10xxxxxx</code>,然后,从<code>周</code>的最后一个二进制位开始,依次从后向前填入格式中的<code>x</code>,多出的位补0.这样<code>周</code>的<code>UTF-8</code>编码为<code>1110 0101 10 010001 10 101000</code>,转换为十六进制就是<code>E5 91A8</code></p>
+<p>    如下代码,就会打印出<code>e591a8</code></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -220,11 +221,11 @@
 </code></pre></td></tr></table>
 </div>
 </div><h3 id="bom头">BOM头</h3>
-<p>对于<code>UTF-16</code>和<code>UTF-32</code>编码方式,是采用多字节编码,计算机就需要知道其顺序,如字符<code>A</code>的码点是65(十进制),十六进制为41,根据UTF-16来编码时会使用两个字节,但计算机是以字节为单位来存储的,那这两个字节应该表示为<code>0x0041</code>还是表示为<code>0x4100</code>?这就引出了字节序的问题,需要依赖BOM(<code>Byte Order Mark</code>)机制来解决.</p>
-<p>若为<code>0x0041</code>表示采用了大端序(Big endian),而为<code>0x4100</code>表示采用了小端序(Little endian).</p>
-<p>在UCS(Universal Multiple-Octet Coded Character Set,属于ISO组织,与unicode基本保持一致)编码中有一个叫做<code>Zero Width No-Break Space</code>(零宽无间断间隔)的字符,它的编码是<code>FEFF</code>.规范建议在传输字节流之前,先传输该字符,若收到<code>FEFF</code>就表示是<code>Big endian</code>的,若收到<code>FFFE</code>就表示是<code>Little endian</code>.因此该字符又被称为BOM.</p>
-<p>注意字节顺序这个概念对<code>UTF-8</code>来说是没有意义的,因为在<code>UTF-8</code>编码中,其自身已经带了控制信息,如<code>1110xxxx 10xxxxxx 10xxxxxx 10xxxxxx</code>,其中1110就起到了控制作用,所以不需要额外的BOM机制.</p>
-<p>但windows在保存UTF-8编码的文件时,会在文件开始的地方自动插入BOM,即三个字符<code>0xEF 0xBB 0xBF</code>(字符<code>Zero Width No-Break Space</code>的<code>UTF-8</code>编码是 EF BB BF).windows是利用BOM来标记文本文件的编码方式.</p>
+<p>    对于<code>UTF-16</code>和<code>UTF-32</code>编码方式,是采用多字节编码,计算机就需要知道其顺序,如字符<code>A</code>的码点是65(十进制),十六进制为41,根据UTF-16来编码时会使用两个字节,但计算机是以字节为单位来存储的,那这两个字节应该表示为<code>0x0041</code>还是表示为<code>0x4100</code>?这就引出了字节序的问题,需要依赖BOM(<code>Byte Order Mark</code>)机制来解决.</p>
+<p>    若为<code>0x0041</code>表示采用了大端序(Big endian),而为<code>0x4100</code>表示采用了小端序(Little endian).</p>
+<p>    在UCS(Universal Multiple-Octet Coded Character Set,属于ISO组织,与unicode基本保持一致)编码中有一个叫做<code>Zero Width No-Break Space</code>(零宽无间断间隔)的字符,它的编码是<code>FEFF</code>.规范建议在传输字节流之前,先传输该字符,若收到<code>FEFF</code>就表示是<code>Big endian</code>的,若收到<code>FFFE</code>就表示是<code>Little endian</code>.因此该字符又被称为BOM.</p>
+<p>    注意字节顺序这个概念对<code>UTF-8</code>来说是没有意义的,因为在<code>UTF-8</code>编码中,其自身已经带了控制信息,如<code>1110xxxx 10xxxxxx 10xxxxxx 10xxxxxx</code>,其中1110就起到了控制作用,所以不需要额外的BOM机制.</p>
+<p>    但windows在保存UTF-8编码的文件时,会在文件开始的地方自动插入BOM,即三个字符<code>0xEF 0xBB 0xBF</code>(字符<code>Zero Width No-Break Space</code>的<code>UTF-8</code>编码是 EF BB BF).windows是利用BOM来标记文本文件的编码方式.</p>
 <h2 id="string">string</h2>
 <h3 id="原理">原理</h3>
 <p><strong>内建类型</strong></p>
@@ -291,8 +292,8 @@
 </div>
 </div><p>输出结果为：<code>{0x4bbad0 11}</code></p>
 <p><code>runtime.stringStruct</code>是非导出的,不能直接在外部使用,所有在代码中定义一个<code>stringStruct</code>结构,与<code>runtime.stringStruct</code>的字段保持一样.</p>
-<p><strong>构建</strong>
-先根据字符串构建<code>stringStruct</code>,再转换为<code>string</code>.代码在<code>src/runtime/string.go</code>里面</p>
+<p><strong>构建</strong></p>
+<p>先根据字符串构建<code>stringStruct</code>,再转换为<code>string</code>.代码在<code>src/runtime/string.go</code>里面</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -353,16 +354,25 @@
 </div><p>可以看出：<em><strong>遍历时是按照字符来循环的(如果有多字节字符,就会导致索引不连续).</strong></em></p>
 <h3 id="string和byte类型转换">string和[]byte类型转换</h3>
 <div id="standard"></div>
-#### 标准转换
-`[]byte`的底层结构如下:
-``` go
-type slice struct {
-	array unsafe.Pointer
-	len   int
-	cap   int
-}
-```
-<ul>
+<h4 id="标准转换">标准转换</h4>
+<p><code>[]byte</code>的底层结构如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">slice</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">array</span> <span class="nx">unsafe</span><span class="p">.</span><span class="nx">Pointer</span>
+	<span class="nx">len</span>   <span class="kt">int</span>
+	<span class="nx">cap</span>   <span class="kt">int</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><ul>
 <li><code>string</code> -&gt; <code>[]byte</code>: 语法为<code>[]byte(str)</code>.</li>
 <li><code>[]byte</code> -&gt; <code>string</code>: 语法为<code>string(bs)</code>.</li>
 </ul>
