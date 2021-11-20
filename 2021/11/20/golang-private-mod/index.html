@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Golang Private Mod - 深白色9527</title><meta name="Description" content="深白色9527"><meta property="og:title" content="Golang Private Mod" />
+<meta property="og:description" content="前言 目前使用go的工程越来越多,每个工程都有很多重复的逻辑,需要把重复的进行提炼统一起来,就在bitbucket上新建了一个新的仓库fram" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shenbaise9527.com/2021/11/20/golang-private-mod/" /><meta property="og:image" content="https://shenbaise9527.com/logo.png"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-11-20T19:56:51+08:00" />
+<meta property="article:modified_time" content="2021-11-20T19:57:37+08:00" />
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shenbaise9527.com/logo.png"/>
+
+<meta name="twitter:title" content="Golang Private Mod"/>
+<meta name="twitter:description" content="前言 目前使用go的工程越来越多,每个工程都有很多重复的逻辑,需要把重复的进行提炼统一起来,就在bitbucket上新建了一个新的仓库fram"/>
+<meta name="application-name" content="深白色9527">
+<meta name="apple-mobile-web-app-title" content="深白色9527"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="/site.webmanifest"><link rel="canonical" href="https://shenbaise9527.com/2021/11/20/golang-private-mod/" /><link rel="prev" href="https://shenbaise9527.com/2021/07/24/golang-c-call/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="/css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Golang Private Mod",
+        "inLanguage": "zh-CN",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/shenbaise9527.com\/2021\/11\/20\/golang-private-mod\/"
+        },"image": ["https:\/\/shenbaise9527.com\/images\/Apple-Devices-Preview.png"],"genre": "posts","keywords": "go","wordcount":  1612 ,
+        "url": "https:\/\/shenbaise9527.com\/2021\/11\/20\/golang-private-mod\/","datePublished": "2021-11-20T19:56:51+08:00","dateModified": "2021-11-20T19:57:37+08:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+            "@type": "Organization",
+            "name": "xxxx","logo": "https:\/\/shenbaise9527.com\/images\/avatar.png"},"author": {
+                "@type": "Person",
+                "name": "深白色"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="/posts/"> 所有文章 </a><a class="menu-item" href="/tags/"> 标签 </a><a class="menu-item" href="/categories/"> 分类 </a><a class="menu-item" href="/about/"> 关于 </a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><span class="menu-item search" id="search-desktop">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-desktop">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-desktop" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-desktop" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-desktop">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </span><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="/" title="深白色9527"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>深白色9527</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><div class="search-wrapper">
+                    <div class="search mobile" id="search-mobile">
+                        <input type="text" placeholder="搜索文章标题或内容..." id="search-input-mobile">
+                        <a href="javascript:void(0);" class="search-button search-toggle" id="search-toggle-mobile" title="搜索">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <a href="javascript:void(0);" class="search-button search-clear" id="search-clear-mobile" title="清空">
+                            <i class="fas fa-times-circle fa-fw"></i>
+                        </a>
+                        <span class="search-button search-loading" id="search-loading-mobile">
+                            <i class="fas fa-spinner fa-fw fa-spin"></i>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="search-cancel" id="search-cancel-mobile">
+                        取消
+                    </a>
+                </div><a class="menu-item" href="/posts/" title="">所有文章</a><a class="menu-item" href="/tags/" title="">标签</a><a class="menu-item" href="/categories/" title="">分类</a><a class="menu-item" href="/about/" title="">关于</a><a class="menu-item" href="https://github.com/shenbaise9527" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="切换主题">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">目录</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Golang Private Mod</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="https://shenbaise9527.com" title="Author" target="_blank" rel="noopener noreffer author" class="author"><i class="fas fa-user-circle fa-fw"></i>深白色</a></span>&nbsp;<span class="post-category">收录于 <a href="/categories/golang/"><i class="far fa-folder fa-fw"></i>Golang</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2021-11-20">2021-11-20</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 1612 字&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 4 分钟&nbsp;</div>
+        </div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>目录</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#前言">前言</a></li>
+    <li><a href="#工作环境设置个人">工作环境设置(个人)</a>
+      <ul>
+        <li><a href="#dns设置">DNS设置</a>
+          <ul>
+            <li><a href="#windows">windows</a></li>
+            <li><a href="#linux">linux</a></li>
+            <li><a href="#测试">测试</a></li>
+          </ul>
+        </li>
+        <li><a href="#配置git">配置git</a>
+          <ul>
+            <li><a href="#生成密钥">生成密钥</a></li>
+            <li><a href="#配置多个ssh-key">配置多个SSH key</a></li>
+            <li><a href="#配置bitbucket">配置bitbucket</a></li>
+            <li><a href="#配置git-config">配置git config</a></li>
+          </ul>
+        </li>
+        <li><a href="#配置golang环境变量">配置golang环境变量</a></li>
+      </ul>
+    </li>
+    <li><a href="#后端相关设置">后端相关设置</a>
+      <ul>
+        <li><a href="#域名配置">域名配置</a></li>
+        <li><a href="#goframe库设置">goframe库设置</a></li>
+      </ul>
+    </li>
+    <li><a href="#引用private-mod">引用private mod</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><h2 id="前言">前言</h2>
+<p>    目前使用go的工程越来越多,每个工程都有很多重复的逻辑,需要把重复的进行提炼统一起来,就在bitbucket上新建了一个新的仓库<code>frame/goframe.git</code>,后续所有通用的基础组件都会放在<code>goframe</code>库中,由于库是私有的,就需要支持私有的<code>go mod</code>.</p>
+<p>    下面主要说明为了支持go工程能引用私有的<code>go mod</code>,而需要做的配置.</p>
+<h2 id="工作环境设置个人">工作环境设置(个人)</h2>
+<h3 id="dns设置">DNS设置</h3>
+<p>    内网DNS地址: <code>172.16.30.243</code>, 内网域名: <code>go.goingint.io</code></p>
+<h4 id="windows">windows</h4>
+<p><figure><a class="lightgallery" href="/images/golang-private-windows.JPG" title="windows" data-thumbnail="/images/golang-private-windows.JPG" data-sub-html="<h2>windows设置内网dns</h2><p>windows</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-windows.JPG"
+            data-srcset="/images/golang-private-windows.JPG, /images/golang-private-windows.JPG 1.5x, /images/golang-private-windows.JPG 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-windows.JPG" />
+    </a><figcaption class="image-caption">windows设置内网dns</figcaption>
+    </figure></p>
+<h4 id="linux">linux</h4>
+<p>    编辑文件<code>/etc/resolv.conf</code>,新增一行<code>nameserver 172.16.30.243</code>
+<figure><a class="lightgallery" href="/images/golang-private-linux.JPG" title="linux" data-thumbnail="/images/golang-private-linux.JPG" data-sub-html="<h2>linux设置内网dns</h2><p>linux</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-linux.JPG"
+            data-srcset="/images/golang-private-linux.JPG, /images/golang-private-linux.JPG 1.5x, /images/golang-private-linux.JPG 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-linux.JPG" />
+    </a><figcaption class="image-caption">linux设置内网dns</figcaption>
+    </figure></p>
+<h4 id="测试">测试</h4>
+<p>    可以使用命令<code>ping go.goingint.io</code>来测试dns是否生效,如果能ping通,就表示已经生效了
+<figure><a class="lightgallery" href="/images/golang-private-ping.JPG" title="ping" data-thumbnail="/images/golang-private-ping.JPG" data-sub-html="<h2>测试dns是否生效</h2><p>ping</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-ping.JPG"
+            data-srcset="/images/golang-private-ping.JPG, /images/golang-private-ping.JPG 1.5x, /images/golang-private-ping.JPG 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-ping.JPG" />
+    </a><figcaption class="image-caption">测试dns是否生效</figcaption>
+    </figure></p>
+<h3 id="配置git">配置git</h3>
+<h4 id="生成密钥">生成密钥</h4>
+<p>    使用<code>ssh-keygen</code>工具来生成公私钥,使用命令<code>ssh-keygen -t rsa -C &quot;steven.zhou@1quant.com&quot; -f private</code>,如图:
+<figure><a class="lightgallery" href="/images/golang-private-git.JPG" title="keygen" data-thumbnail="/images/golang-private-git.JPG" data-sub-html="<h2>生成密钥</h2><p>keygen</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-git.JPG"
+            data-srcset="/images/golang-private-git.JPG, /images/golang-private-git.JPG 1.5x, /images/golang-private-git.JPG 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-git.JPG" />
+    </a><figcaption class="image-caption">生成密钥</figcaption>
+    </figure>
+注意:</p>
+<ol>
+<li><code>-C &quot;steven.zhou@1quant.com&quot;</code>换成自己的邮箱</li>
+<li><code>-f private</code>,<code>private</code>是文件名,生成的文件要放在<code>~/.ssh</code>目录下(<em><strong>windows下目录为C:\Users\Admin\.ssh</strong></em>)</li>
+</ol>
+<h4 id="配置多个ssh-key">配置多个SSH key</h4>
+<p>    在目录<code>~/.ssh</code>下(<em><strong>windows下目录为C:\Users\Admin\.ssh</strong></em>),生成文件<code>config</code>,注意文件名必须为<code>config</code>.</p>
+<p>文件内容如下:
+<figure><a class="lightgallery" href="/images/golang-private-config.JPG" title="config" data-thumbnail="/images/golang-private-config.JPG" data-sub-html="<h2>config文件内容</h2><p>config</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-config.JPG"
+            data-srcset="/images/golang-private-config.JPG, /images/golang-private-config.JPG 1.5x, /images/golang-private-config.JPG 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-config.JPG" />
+    </a><figcaption class="image-caption">config文件内容</figcaption>
+    </figure></p>
+<p>注意:
+如果在执行命令<code>git pull</code>时报错,信息如下: <code>Bad owner or permissions on /home/admin/.ssh/config</code>.</p>
+<p>解决方案: 修改<code>~/.ssh/config</code>的权限,运行命令<code>chmod 0600 ~/.ssh/config</code></p>
+<p>最终目录<code>~/.ssh</code>下的文件情况:
+<figure><a class="lightgallery" href="/images/golang-private-ssh.JPG" title="ssh" data-thumbnail="/images/golang-private-ssh.JPG" data-sub-html="<h2>ssh目录下的文件</h2><p>ssh</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-ssh.JPG"
+            data-srcset="/images/golang-private-ssh.JPG, /images/golang-private-ssh.JPG 1.5x, /images/golang-private-ssh.JPG 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-ssh.JPG" />
+    </a><figcaption class="image-caption">ssh目录下的文件</figcaption>
+    </figure></p>
+<p>注意文件<code>id_rsa</code>和<code>id_rsa.pub</code>是之前配置bitbucket用的.</p>
+<h4 id="配置bitbucket">配置bitbucket</h4>
+<p>    查看文件<code>private.pub</code>文件的内容:
+<figure><a class="lightgallery" href="/images/golang-private-pub.JPG" title="pub" data-thumbnail="/images/golang-private-pub.JPG" data-sub-html="<h2>公钥内容</h2><p>pub</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-pub.JPG"
+            data-srcset="/images/golang-private-pub.JPG, /images/golang-private-pub.JPG 1.5x, /images/golang-private-pub.JPG 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-pub.JPG" />
+    </a><figcaption class="image-caption">公钥内容</figcaption>
+    </figure></p>
+<p>把以上内容粘贴到bitbucket中,如下图:
+<figure><a class="lightgallery" href="/images/golang-private-bitbucket.png" title="bitbucket" data-thumbnail="/images/golang-private-bitbucket.png" data-sub-html="<h2>bitbucket中添加公钥</h2><p>bitbucket</p>">
+        <img
+            class="lazyload"
+            src="/svg/loading.min.svg"
+            data-src="/images/golang-private-bitbucket.png"
+            data-srcset="/images/golang-private-bitbucket.png, /images/golang-private-bitbucket.png 1.5x, /images/golang-private-bitbucket.png 2x"
+            data-sizes="auto"
+            alt="/images/golang-private-bitbucket.png" />
+    </a><figcaption class="image-caption">bitbucket中添加公钥</figcaption>
+    </figure></p>
+<h4 id="配置git-config">配置git config</h4>
+<p>    使用如下命令: <code>git config --global url.&quot;git@go.goingint.io:&quot;.insteadOf &quot;http://go.goingint.io/&quot;</code></p>
+<h3 id="配置golang环境变量">配置golang环境变量</h3>
+<p>    需要设置私有仓库,如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash">go env -w <span class="nv">GOINSECURE</span><span class="o">=</span><span class="s2">&#34;go.goingint.io&#34;</span>
+go env -w <span class="nv">GOPRIVATE</span><span class="o">=</span><span class="s2">&#34;go.goingint.io&#34;</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="后端相关设置">后端相关设置</h2>
+<h3 id="域名配置">域名配置</h3>
+<p>    由于内网的bitbucket的地址是<code>172.16.30.215:7999</code>,域名<code>go.goingint.io</code>实际指向的nginx,然后通过nginx转发到bitbucket.</p>
+<p>nginx就需要支持转发ssh,如下配置:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-nginx" data-lang="nginx"><span class="k">stream</span> <span class="p">{</span>
+    <span class="kn">upstream</span> <span class="s">ssh</span> <span class="p">{</span>
+        <span class="kn">server</span>  <span class="n">172.16.30.215</span><span class="p">:</span><span class="mi">7999</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kn">server</span> <span class="p">{</span>
+        <span class="kn">listen</span>       <span class="mi">22</span><span class="p">;</span>
+        <span class="kn">proxy_pass</span> <span class="s">ssh</span><span class="p">;</span>
+        <span class="kn">proxy_connect_timeout</span> <span class="s">1h</span><span class="p">;</span>
+        <span class="kn">proxy_timeout</span> <span class="s">1h</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在使用命令<code>go mod tidy</code>或<code>go mod download</code>下载依赖时,会调用<code>GET /frame/goframe?go-get=1</code>(可查看源码,<code>src/cmd/go/internal/vcs/vcs.go:urlForImportPath</code>),需要配置http,如下:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-nginx" data-lang="nginx"><span class="k">server</span> <span class="p">{</span>
+        <span class="kn">listen</span>       <span class="mi">80</span><span class="p">;</span>
+        <span class="kn">server_name</span>  <span class="s">go.goingint.io</span><span class="p">;</span>
+        <span class="kn">if</span> <span class="s">(</span><span class="nv">$args</span> <span class="p">~</span><span class="sr">*</span> <span class="s">&#34;^go-get=1&#34;)</span> <span class="p">{</span>
+            <span class="kn">set</span> <span class="nv">$condition</span> <span class="s">goget</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="kn">if</span> <span class="s">(</span><span class="nv">$uri</span> <span class="p">~</span> <span class="sr">^/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$)</span> <span class="p">{</span>
+            <span class="kn">set</span> <span class="nv">$condition</span> <span class="s">&#34;</span><span class="nv">${condition}path&#34;</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="kn">if</span> <span class="s">(</span><span class="nv">$condition</span> <span class="p">=</span> <span class="s">gogetpath)</span> <span class="p">{</span>
+            <span class="kn">return</span> <span class="mi">200</span> <span class="s">&#34;&lt;!DOCTYPE</span> <span class="s">html&gt;&lt;html&gt;&lt;head&gt;&lt;meta</span> <span class="s">content=&#39;go.goingint.io/</span><span class="nv">$1/$2</span> <span class="s">git</span> <span class="s">http://go.goingint.io/</span><span class="nv">$1/$2.git&#39;</span> <span class="s">name=&#39;go-import&#39;&gt;&lt;/head&gt;&lt;/html&gt;&#34;</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="kn">location</span> <span class="s">/</span> <span class="p">{</span>
+            <span class="kn">proxy_pass</span> <span class="s">http://172.16.30.215:7999/</span><span class="p">;</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在nginx中对请求<code>/frame/goframe?go-get=1</code>直接进行拦截.</p>
+<p>注意: 配置文件中的正则表达式可根据需要调整,还要把<code>go.goingint.io</code>换成自己的域名.</p>
+<h3 id="goframe库设置">goframe库设置</h3>
+<p>    由于库的路径为<code>/frame/goframe</code>,在初始化时需要使用命令: <code>go mod init go.goingint.io/frame/goframe</code>,<code>go.mod</code>内容:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="nx">module</span> <span class="k">go</span><span class="p">.</span><span class="nx">goingint</span><span class="p">.</span><span class="nx">io</span><span class="o">/</span><span class="nx">frame</span><span class="o">/</span><span class="nx">goframe</span>
+
+<span class="k">go</span> <span class="mf">1.16</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="引用private-mod">引用private mod</h2>
+<p>    新建测试工程,<code>go mod init example</code>,然后新建<code>main.go</code>文件:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&#34;fmt&#34;</span>
+    <span class="s">&#34;go.goingint.io/frame/goframe/core/mq&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">bus</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">mq</span><span class="p">.</span><span class="nf">NewRabbitMQ</span><span class="p">(</span><span class="s">&#34;test&#34;</span><span class="p">,</span> <span class="nx">mq</span><span class="p">.</span><span class="nf">WithRabbitMQUrl</span><span class="p">(</span><span class="s">&#34;amqp://guest:guest@172.16.60.12:45672/quote&#34;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;mq init err: %s\n&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nf">Error</span><span class="p">())</span>
+
+        <span class="k">return</span>
+    <span class="p">}</span>
+
+    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Print</span><span class="p">(</span><span class="s">&#34;mq init successfully\n&#34;</span><span class="p">)</span>
+    <span class="k">defer</span> <span class="nx">bus</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>然后使用<code>go mod tidy</code>引入goframe私有包.</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>更新于 2021-11-20</span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="/2021/11/20/golang-private-mod/index.md" target="_blank">阅读原始文档</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="分享到 Twitter" data-sharer="twitter" data-url="https://shenbaise9527.com/2021/11/20/golang-private-mod/" data-title="Golang Private Mod" data-via="shenbaise9527" data-hashtags="go"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://shenbaise9527.com/2021/11/20/golang-private-mod/" data-hashtag="go"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://shenbaise9527.com/2021/11/20/golang-private-mod/" data-title="Golang Private Mod"><i class="fab fa-weibo fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="/tags/go/">go</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="/2021/07/24/golang-c-call/" class="prev" rel="prev" title="Golang与C语言相互调用"><i class="fas fa-angle-left fa-fw"></i>Golang与C语言相互调用</a></div>
+</div>
+</article></div>
+            </main><footer class="footer">
+        <div class="footer-container"><div class="footer-line">由 <a href="https://gohugo.io/" target="_blank" rel="noopener noreffer" title="Hugo 0.90.0-DEV">Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/dillonzq/LoveIt" target="_blank" rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+                </div><div class="footer-line"><i class="far fa-copyright fa-fw"></i><span itemprop="copyrightYear">2020 - 2021</span><span class="author" itemprop="copyrightHolder">&nbsp;<a href="https://shenbaise9527.com" target="_blank">深白色</a></span>&nbsp;|&nbsp;<span class="license"><a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a></span></div>
+        </div>
+    </footer></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="回到顶部">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="查看评论">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/autocomplete.js@0.37.1/dist/autocomplete.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/algoliasearch@4.2.0/dist/algoliasearch-lite.umd.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.2/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"复制到剪贴板","maxShownLines":100},"comment":{},"search":{"algoliaAppID":"PASDMWALPK","algoliaIndex":"index.zh-cn","algoliaSearchKey":"b42948e51daaa93df92381c8e2ac0f93","highlightTag":"em","maxResultLength":10,"noResultsFound":"没有找到结果","snippetLength":50,"type":"algolia"}};</script><script type="text/javascript" src="/js/theme.min.js"></script><script type="text/javascript">
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());
+            gtag('config', 'G-R1HW7DNZ94', { 'anonymize_ip': true });
+        </script><script type="text/javascript" src="https://www.googletagmanager.com/gtag/js?id=G-R1HW7DNZ94" async></script></body>
+</html>

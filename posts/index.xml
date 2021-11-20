@@ -4,7 +4,14 @@
         <link>https://shenbaise9527.com/posts/</link>
         <description>所有文章 | 深白色9527</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
-            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/posts/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 20 Nov 2021 19:56:51 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Golang Private Mod</title>
+    <link>https://shenbaise9527.com/2021/11/20/golang-private-mod/</link>
+    <pubDate>Sat, 20 Nov 2021 19:56:51 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/2021/11/20/golang-private-mod/</guid>
+    <description><![CDATA[前言 目前使用go的工程越来越多,每个工程都有很多重复的逻辑,需要把重复的进行提炼统一起来,就在bitbucket上新建了一个新的仓库fram]]></description>
+</item><item>
     <title>Golang与C语言相互调用</title>
     <link>https://shenbaise9527.com/2021/07/24/golang-c-call/</link>
     <pubDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://shenbaise9527.com/2020/12/10/opentracing-zipkin-guide/</guid>
     <description><![CDATA[快速启动 可以通过http://your_host:9411去访问zipkin UI. Docker docker run -d -p 9411:9411 openzipkin/zipkin Java 需要Java8或更高版本. 1 2 curl -sSL https://zipkin.io/quickstart.sh | bash -s java -jar]]></description>
-</item><item>
-    <title>OpenTracing最佳实践</title>
-    <link>https://shenbaise9527.com/2020/12/10/opentracing-best-practices/</link>
-    <pubDate>Thu, 10 Dec 2020 21:35:32 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://shenbaise9527.com/2020/12/10/opentracing-best-practices/</guid>
-    <description><![CDATA[回顾: OpenTracing的目标是什么? OpenTracing是一个位于应用程序/库代码和追踪系统之间的一个标准中间层.结构如下: 1 2 3 4]]></description>
 </item></channel>
 </rss>

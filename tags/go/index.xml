@@ -4,7 +4,14 @@
         <link>https://shenbaise9527.com/tags/go/</link>
         <description>go - 标签 - 深白色9527</description>
         <generator>Hugo -- gohugo.io</generator><language>zh-CN</language><managingEditor>zhouyingan@gmail.com (深白色)</managingEditor>
-            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+            <webMaster>zhouyingan@gmail.com (深白色)</webMaster><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sat, 20 Nov 2021 19:56:51 &#43;0800</lastBuildDate><atom:link href="https://shenbaise9527.com/tags/go/" rel="self" type="application/rss+xml" /><item>
+    <title>Golang Private Mod</title>
+    <link>https://shenbaise9527.com/2021/11/20/golang-private-mod/</link>
+    <pubDate>Sat, 20 Nov 2021 19:56:51 &#43;0800</pubDate>
+    <author>作者</author>
+    <guid>https://shenbaise9527.com/2021/11/20/golang-private-mod/</guid>
+    <description><![CDATA[前言 目前使用go的工程越来越多,每个工程都有很多重复的逻辑,需要把重复的进行提炼统一起来,就在bitbucket上新建了一个新的仓库fram]]></description>
+</item><item>
     <title>Golang与C语言相互调用</title>
     <link>https://shenbaise9527.com/2021/07/24/golang-c-call/</link>
     <pubDate>Sat, 24 Jul 2021 21:56:42 &#43;0800</pubDate>
@@ -67,12 +74,5 @@
     <author>作者</author>
     <guid>https://shenbaise9527.com/2020/11/07/grpc-client-call/</guid>
     <description><![CDATA[Dail/DailContext与服务端建立连接 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46]]></description>
-</item><item>
-    <title>gRPC系列之server端调用</title>
-    <link>https://shenbaise9527.com/2020/11/07/grpc-server-call/</link>
-    <pubDate>Sat, 07 Nov 2020 11:47:48 &#43;0800</pubDate>
-    <author>作者</author>
-    <guid>https://shenbaise9527.com/2020/11/07/grpc-server-call/</guid>
-    <description><![CDATA[NewServer创建gRPC服务对象 主要是基于grpc-go的1.33.1版本Unary RPC来分析. 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18]]></description>
 </item></channel>
 </rss>
